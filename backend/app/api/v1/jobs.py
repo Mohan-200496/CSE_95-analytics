@@ -201,12 +201,12 @@ async def publish_job(
     Publish a draft job for admin approval
     Employers use this to submit jobs for review
     """
-    # Verify user can access this job
+    # Verify user can access this job (using user_id string)
     job_result = await session.execute(
         select(Job).where(
             and_(
                 Job.job_id == job_id,
-                Job.employer_id == current_user.id
+                Job.employer_id == current_user.user_id
             )
         )
     )
@@ -267,8 +267,8 @@ async def get_employer_jobs(
             detail="Only employers can access their job listings"
         )
     
-    # Build query for current user's jobs
-    query = select(Job).where(Job.employer_id == current_user.id)
+    # Build query for current user's jobs (using user_id string, not integer id)
+    query = select(Job).where(Job.employer_id == current_user.user_id)
     
     # Optional status filter
     if status_filter:
@@ -320,7 +320,7 @@ async def get_employer_job_stats(
     for job_status in JobStatus:
         count_result = await session.execute(
             select(func.count(Job.id)).where(
-                and_(Job.employer_id == current_user.id, Job.status == job_status)
+                and_(Job.employer_id == current_user.user_id, Job.status == job_status)
             )
         )
         stats[job_status.value] = count_result.scalar() or 0
@@ -329,7 +329,7 @@ async def get_employer_job_stats(
     total_apps_result = await session.execute(
         select(func.count(JobApplication.id))
         .join(Job, JobApplication.job_id == Job.job_id)
-        .where(Job.employer_id == current_user.id)
+        .where(Job.employer_id == current_user.user_id)
     )
     total_applications = total_apps_result.scalar() or 0
     
