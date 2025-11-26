@@ -11,7 +11,7 @@ from datetime import datetime
 import uuid
 
 from app.core.database import get_database
-from app.models.job import Job, JobStatus, JobType, EmployerType
+from app.models.job import Job, JobStatus, JobType, EmployerType, JobApplication
 from app.models.user import User, UserRole
 from app.core.security import verify_token
 from app.analytics.tracker import get_analytics_tracker
@@ -247,6 +247,99 @@ async def publish_job(
         "message": "Job submitted for admin approval",
         "job_id": job.job_id,
         "status": "pending_approval"
+    }
+
+@router.get("/my-jobs", response_model=List[JobPublicResponse])
+async def get_employer_jobs(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    status_filter: Optional[str] = None,
+    session: AsyncSession = Depends(get_database),
+    current_user: User = Depends(get_current_user),
+    analytics = Depends(get_analytics_tracker)
+):
+    """Get all jobs posted by current employer (including drafts and pending approval)"""
+    
+    # Only employers and admins can access this
+    if current_user.role not in [UserRole.EMPLOYER, UserRole.ADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only employers can access their job listings"
+        )
+    
+    # Build query for current user's jobs
+    query = select(Job).where(Job.employer_id == current_user.id)
+    
+    # Optional status filter
+    if status_filter:
+        try:
+            job_status = JobStatus(status_filter)
+            query = query.where(Job.status == job_status)
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid status filter: {status_filter}")
+    
+    # Apply pagination and ordering
+    query = query.order_by(desc(Job.created_at)).offset(skip).limit(limit)
+    
+    # Execute query
+    result = await session.execute(query)
+    jobs = result.scalars().all()
+    
+    # Convert to response format
+    job_responses = []
+    for job in jobs:
+        job_responses.append(_to_public_response(job))
+    
+    # Track analytics
+    await analytics.track_event(
+        user_id=current_user.user_id,
+        event_name="employer_viewed_jobs",
+        properties={
+            "job_count": len(jobs),
+            "status_filter": status_filter
+        }
+    )
+    
+    return job_responses
+
+@router.get("/my-stats")
+async def get_employer_job_stats(
+    session: AsyncSession = Depends(get_database),
+    current_user: User = Depends(get_current_user)
+):
+    """Get job statistics for current employer"""
+    
+    if current_user.role not in [UserRole.EMPLOYER, UserRole.ADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only employers can access job statistics"
+        )
+    
+    # Get counts by status
+    stats = {}
+    for job_status in JobStatus:
+        count_result = await session.execute(
+            select(func.count(Job.id)).where(
+                and_(Job.employer_id == current_user.id, Job.status == job_status)
+            )
+        )
+        stats[job_status.value] = count_result.scalar() or 0
+    
+    # Get total applications across all jobs
+    total_apps_result = await session.execute(
+        select(func.count(JobApplication.id))
+        .join(Job, JobApplication.job_id == Job.job_id)
+        .where(Job.employer_id == current_user.id)
+    )
+    total_applications = total_apps_result.scalar() or 0
+    
+    return {
+        "job_stats": stats,
+        "total_jobs": sum(stats.values()),
+        "total_applications": total_applications,
+        "active_jobs": stats.get("active", 0),
+        "pending_approval": stats.get("pending_approval", 0),
+        "draft_jobs": stats.get("draft", 0)
     }
 
 @router.get("/", response_model=List[JobPublicResponse])

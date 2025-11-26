@@ -243,8 +243,8 @@
             color: #ffc107;
         }
 
-        .stat-card.views .stat-icon {
-            color: #17a2b8;
+        .stat-card.pending .stat-icon {
+            color: #fd7e14;
         }
 
         .stat-card.hired .stat-icon {
@@ -374,6 +374,21 @@
 
         .status-draft {
             background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-pending_approval {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-paused {
+            background: #d6d8db;
+            color: #495057;
+        }
+
+        .status-closed {
+            background: #f5c6cb;
             color: #721c24;
         }
 
@@ -599,12 +614,12 @@
                     <div class="stat-label">New Applications</div>
                 </div>
 
-                <div class="stat-card views">
+                <div class="stat-card pending">
                     <div class="stat-icon">
-                        <i class="fas fa-eye"></i>
+                        <i class="fas fa-clock"></i>
                     </div>
-                    <div class="stat-number">2,847</div>
-                    <div class="stat-label">Total Views</div>
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Pending Approval</div>
                 </div>
 
                 <div class="stat-card hired">
@@ -756,9 +771,53 @@
                 }
             }
 
-            // Load employer jobs
+            // Load employer jobs and stats
             loadEmployerJobs();
+            loadEmployerStats();
         });
+
+        async function loadEmployerStats() {
+            try {
+                const token = authManager.getAccessToken();
+                if (!token) {
+                    console.error('No access token available');
+                    return;
+                }
+
+                const response = await fetch(`${apiBaseUrl}/jobs/my-stats`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const stats = await response.json();
+                    console.log('Employer stats:', stats);
+                    
+                    // Update stat cards
+                    updateStatCard('jobs', stats.active_jobs || 0, 'Active Jobs');
+                    updateStatCard('applications', stats.total_applications || 0, 'Total Applications');
+                    updateStatCard('pending', stats.pending_approval || 0, 'Pending Approval');
+                    
+                } else {
+                    console.error('Failed to load employer stats:', response.status);
+                }
+            } catch (error) {
+                console.error('Error loading employer stats:', error);
+            }
+        }
+
+        function updateStatCard(type, number, label) {
+            const statCard = document.querySelector(`.stat-card.${type}`);
+            if (statCard) {
+                const numberEl = statCard.querySelector('.stat-number');
+                const labelEl = statCard.querySelector('.stat-label');
+                if (numberEl) numberEl.textContent = number;
+                if (labelEl) labelEl.textContent = label;
+            }
+        }
 
         async function loadEmployerJobs() {
             try {
@@ -808,9 +867,9 @@
                     return;
                 }
 
-                // Fetch jobs for this employer  
-                const url = `${apiBaseUrl}/jobs/?employer_id=${employerId}&only_active=false`; // Add trailing slash
-                console.log('Fetching from:', url);
+                // Fetch jobs for this employer using the new my-jobs endpoint
+                const url = `${apiBaseUrl}/jobs/my-jobs`;
+                console.log('Fetching employer jobs from:', url);
                 
                 const response = await fetch(url, {
                     method: 'GET',
