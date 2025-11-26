@@ -189,7 +189,7 @@ app.include_router(
 
 app.include_router(
     recommendations_router,
-    prefix="/api/v1/jobs/recommendations",
+    prefix="/api/v1/recommendations",
     tags=["Recommendations"]
 )
 
