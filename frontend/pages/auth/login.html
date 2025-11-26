@@ -477,6 +477,8 @@
         </div>
     </div>
 
+    <!-- Environment Configuration -->
+    <script src="../../config/environment.js"></script>
     <!-- Auth Script -->
     <script src="../../js/auth.js"></script>
     
@@ -546,26 +548,37 @@
         // Test backend connection
         async function testConnection() {
             try {
-                console.log('Testing backend connection...');
-                const response = await fetch('http://10.219.89.241:8000/health', {
+                console.log('🔍 Testing backend connection...');
+                console.log('🌐 Current environment:', window.ENV_CONFIG?.environment);
+                console.log('🔗 API URL:', window.ENV_CONFIG?.apiUrl);
+                
+                const apiUrl = window.ENV_CONFIG?.apiUrl || 'https://punjab-rozgar-api.onrender.com';
+                const healthUrl = `${apiUrl}/health`;
+                
+                console.log('📡 Making request to:', healthUrl);
+                
+                const response = await fetch(healthUrl, {
                     method: 'GET',
                     headers: {
-                        'Accept': 'application/json'
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
                     },
                     mode: 'cors'
                 });
                 
-                console.log('Health check status:', response.status);
+                console.log('📊 Health check status:', response.status);
+                console.log('📋 Response headers:', [...response.headers.entries()]);
+                
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('Backend is reachable:', data);
-                    showSuccess('Backend connection successful!');
+                    console.log('✅ Backend is reachable:', data);
+                    showSuccess(`Backend connection successful! Environment: ${window.ENV_CONFIG?.environment}`);
                 } else {
-                    console.error('Health check failed:', response.status);
-                    showError('Backend connection failed');
+                    console.error('❌ Health check failed:', response.status);
+                    showError(`Backend connection failed (Status: ${response.status})`);
                 }
             } catch (error) {
-                console.error('Connection test failed:', error);
+                console.error('💥 Connection test failed:', error);
                 showError('Network connection failed: ' + error.message);
             }
         }

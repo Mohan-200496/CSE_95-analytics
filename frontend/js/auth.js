@@ -11,9 +11,30 @@ class AuthManager {
             EMPLOYER: 'employer', 
             JOB_SEEKER: 'job_seeker'
         };
-        this.apiBaseUrl = 'http://localhost:8000/api/v1';
+        
+        // Use environment configuration for API base URL
+        this.apiBaseUrl = this.getApiBaseUrl();
         this.accessToken = null;
         this.init();
+    }
+
+    getApiBaseUrl() {
+        // Check if environment config is available
+        if (window.ENV_CONFIG && window.ENV_CONFIG.apiUrl) {
+            console.log('🌐 Using environment API URL:', window.ENV_CONFIG.apiUrl);
+            return window.ENV_CONFIG.apiUrl + '/api/v1';
+        }
+        
+        // Fallback - try to detect environment manually
+        const hostname = window.location.hostname;
+        if (hostname.includes('onrender.com')) {
+            console.log('🌐 Detected Render environment, using live API');
+            return 'https://punjab-rozgar-api.onrender.com/api/v1';
+        }
+        
+        // Development fallback
+        console.log('🌐 Using development API URL');
+        return 'http://localhost:8000/api/v1';
     }
 
     init() {
