@@ -77,15 +77,31 @@ app = FastAPI(
 # app.add_middleware(SecurityMiddleware)
 # app.add_middleware(AnalyticsMiddleware)
 
-# Configure CORS LAST so it wraps other middleware and adds headers to all responses
+# Configure CORS with settings from config
+settings = get_settings()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins (no credentials needed)
-    allow_credentials=False,  # Disable credentials to allow wildcard origin
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=["*"],
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+    allow_methods=settings.CORS_ALLOW_METHODS,
+    allow_headers=settings.CORS_ALLOW_HEADERS,
     expose_headers=["*"]
 )
+
+# Add debugging middleware for requests
+@app.middleware("http")
+async def debug_requests(request: Request, call_next):
+    """Log all requests for debugging"""
+    start_time = datetime.utcnow()
+    logger.info(f"Request: {request.method} {request.url}")
+    logger.info(f"Headers: {dict(request.headers)}")
+    
+    response = await call_next(request)
+    
+    process_time = (datetime.utcnow() - start_time).total_seconds()
+    logger.info(f"Response: {response.status_code} in {process_time:.3f}s")
+    
+    return response
 
 # Health check endpoint
 @app.get("/health", tags=["System"])

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connection Test - Punjab Rozgar Portal</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+            color: white;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            color: black;
+            padding: 30px;
+            border-radius: 15px;
+        }
+        .test-result {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-family: monospace;
+        }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Punjab Rozgar Portal - Connection Diagnostics</h1>
+        
+        <h3>Environment Detection:</h3>
+        <div id="env-info" class="test-result info">Checking...</div>
+        
+        <h3>Backend Connection Tests:</h3>
+        <button onclick="testBackend()">Test Backend Health</button>
+        <button onclick="testCORS()">Test CORS</button>
+        <button onclick="testAuth()">Test Auth Endpoint</button>
+        
+        <div id="results"></div>
+        
+        <h3>Current URLs Being Tested:</h3>
+        <ul>
+            <li><strong>Render Backend:</strong> https://punjab-rozgar-api.onrender.com</li>
+            <li><strong>Frontend:</strong> <span id="current-url"></span></li>
+        </ul>
+    </div>
+
+    <script src="../config/environment.js"></script>
+    <script>
+        document.getElementById('current-url').textContent = window.location.origin;
+        
+        // Show environment detection
+        if (window.ENV_CONFIG) {
+            document.getElementById('env-info').innerHTML = `
+                <strong>Environment:</strong> ${window.ENV_CONFIG.environment}<br>
+                <strong>API URL:</strong> ${window.ENV_CONFIG.apiUrl}<br>
+                <strong>Hostname:</strong> ${window.location.hostname}
+            `;
+        } else {
+            document.getElementById('env-info').innerHTML = '❌ Environment config not loaded!';
+            document.getElementById('env-info').className = 'test-result error';
+        }
+
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = message;
+            document.getElementById('results').appendChild(div);
+        }
+
+        async function testBackend() {
+            addResult('🔄 Testing backend health...', 'info');
+            
+            const urls = [
+                'https://punjab-rozgar-api.onrender.com/health',
+                'https://punjab-rozgar-api.onrender.com/',
+                window.ENV_CONFIG?.apiUrl + '/health'
+            ];
+
+            for (const url of urls) {
+                try {
+                    addResult(`Testing: ${url}`, 'info');
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        mode: 'cors'
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.text();
+                        addResult(`✅ SUCCESS: ${url} - Status: ${response.status}`, 'success');
+                        addResult(`Response: ${data}`, 'info');
+                    } else {
+                        addResult(`❌ FAILED: ${url} - Status: ${response.status}`, 'error');
+                    }
+                } catch (error) {
+                    addResult(`💥 ERROR: ${url} - ${error.message}`, 'error');
+                }
+            }
+        }
+
+        async function testCORS() {
+            addResult('🔄 Testing CORS...', 'info');
+            
+            try {
+                const response = await fetch('https://punjab-rozgar-api.onrender.com/health', {
+                    method: 'OPTIONS'
+                });
+                addResult(`✅ CORS preflight: ${response.status}`, 'success');
+            } catch (error) {
+                addResult(`❌ CORS error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAuth() {
+            addResult('🔄 Testing auth endpoint...', 'info');
+            
+            try {
+                const response = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'test@test.com',
+                        password: 'test'
+                    })
+                });
+                
+                addResult(`Auth endpoint response: ${response.status}`, response.status < 500 ? 'success' : 'error');
+                const text = await response.text();
+                addResult(`Response: ${text.substring(0, 200)}...`, 'info');
+            } catch (error) {
+                addResult(`❌ Auth test error: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run tests
+        setTimeout(testBackend, 1000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Backend Connection Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+        .test-container { background: white; padding: 20px; border-radius: 8px; max-width: 600px; margin: 0 auto; }
+        button { padding: 10px 20px; margin: 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 4px; border-left: 4px solid #007bff; }
+        .error { border-left-color: #dc3545; background: #f8d7da; }
+        .success { border-left-color: #28a745; background: #d4edda; }
+        pre { white-space: pre-wrap; word-break: break-word; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 Punjab Rozgar Portal - Backend Connection Test</h1>
+        
+        <h3>Quick Tests:</h3>
+        <button onclick="testLocal()">Test Local Backend (localhost:8000)</button>
+        <button onclick="testRender()">Test Render Backend (onrender.com)</button>
+        <button onclick="testEnvironment()">Test Environment Detection</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${message}`;
+            results.appendChild(div);
+            results.scrollTop = results.scrollHeight;
+        }
+
+        async function testLocal() {
+            log('🔍 Testing local backend connection...', 'info');
+            try {
+                const response = await fetch('http://localhost:8000/health', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ Local backend is working!<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                } else {
+                    log(`❌ Local backend error: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                log(`💥 Local backend connection failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testRender() {
+            log('🌐 Testing Render backend connection...', 'info');
+            try {
+                const response = await fetch('https://punjab-rozgar-api.onrender.com/health', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                log(`📊 Response status: ${response.status}`, 'info');
+                log(`📋 Response headers: ${JSON.stringify([...response.headers.entries()], null, 2)}`, 'info');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ Render backend is working!<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                } else {
+                    const text = await response.text();
+                    log(`❌ Render backend error: ${response.status} ${response.statusText}<br><pre>${text}</pre>`, 'error');
+                }
+            } catch (error) {
+                log(`💥 Render backend connection failed: ${error.message}<br>Error details: ${error.toString()}`, 'error');
+            }
+        }
+
+        async function testEnvironment() {
+            log('🌍 Testing environment detection...', 'info');
+            
+            // Check current hostname
+            log(`🏠 Current hostname: ${window.location.hostname}`, 'info');
+            log(`🔗 Current URL: ${window.location.href}`, 'info');
+            
+            // Test if environment config exists
+            if (typeof window.ENV_CONFIG !== 'undefined') {
+                log(`✅ Environment config found:<br><pre>${JSON.stringify(window.ENV_CONFIG, null, 2)}</pre>`, 'success');
+            } else {
+                log('❌ Environment config not found!', 'error');
+            }
+            
+            // Test what API URL would be used
+            let apiUrl = 'http://localhost:8000'; // fallback
+            
+            if (window.location.hostname.includes('onrender.com')) {
+                apiUrl = 'https://punjab-rozgar-api.onrender.com';
+                log('📍 Detected: Render environment', 'info');
+            } else if (window.location.hostname === 'localhost') {
+                log('📍 Detected: Local development', 'info');
+            }
+            
+            log(`🔗 API URL that would be used: ${apiUrl}`, 'info');
+        }
+
+        // Auto-run environment test
+        window.onload = () => {
+            testEnvironment();
+        };
+    </script>
+</body>
+</html>

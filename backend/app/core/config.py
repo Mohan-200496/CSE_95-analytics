@@ -37,6 +37,12 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
+    # CORS settings
+    CORS_ORIGINS: List[str] = ["*"]  # Allow all origins for now
+    CORS_ALLOW_CREDENTIALS: bool = False
+    CORS_ALLOW_METHODS: List[str] = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+    CORS_ALLOW_HEADERS: List[str] = ["*"]
+    
     # Database settings
     DATABASE_URL: str = "sqlite:///./punjab_rozgar.db"
     DATABASE_POOL_SIZE: int = 10
