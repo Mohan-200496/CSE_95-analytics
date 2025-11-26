@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saved Jobs - Punjab Rozgar Portal</title>
+    
+    <!-- Punjab Rozgar Authentication -->
+    <script src="../../js/auth.js"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: white;
+        }
+
+        .header .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .header .nav-links a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .header .nav-links a:hover {
+            opacity: 0.8;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .page-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #667eea;
+            border: 1px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .search-filters {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .search-btn {
+            padding: 0.75rem 1.5rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .search-btn:hover {
+            background: #5a6fd8;
+        }
+
+        .filter-options {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .filter-options select {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+
+        .jobs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .job-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .job-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .job-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+        }
+
+        .job-company {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+
+        .job-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .job-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .job-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .job-body {
+            padding: 1.5rem;
+        }
+
+        .job-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .job-requirements {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .requirement-tag {
+            background: #f8f9fa;
+            color: #667eea;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            border: 1px solid #e1e5e9;
+        }
+
+        .job-footer {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            gap: 1rem;
+            padding: 0 1.5rem 1.5rem;
+        }
+
+        .job-saved-date {
+            font-size: 0.8rem;
+            color: #666;
+            flex: 1;
+        }
+
+        .job-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .empty-state {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 4rem 2rem;
+            text-align: center;
+            color: #666;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: #ddd;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 1rem;
+        }
+
+        .bulk-actions {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        .bulk-actions.active {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .selected-count {
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .bulk-action-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .job-checkbox {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .job-card {
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            .header .nav-links {
+                display: none;
+            }
+
+            .page-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .search-bar {
+                flex-direction: column;
+            }
+
+            .filter-options {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .jobs-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .job-footer {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+
+            .job-actions {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (!authManager.requireRole('job_seeker', '/pages/auth/login.html')) return;
+        });
+    </script>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <a href="../../index.html" class="logo">Punjab Rozgar</a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="../../index.html">Home</a></li>
+                    <li><a href="../jobs/browse.html">Jobs</a></li>
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="#" onclick="authManager.logout()">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div>
+                <h1>Saved Jobs</h1>
+                <p>Manage your bookmarked job opportunities</p>
+            </div>
+            <div class="header-actions">
+                <a href="../jobs/browse.html" class="btn">Browse More Jobs</a>
+                <button class="btn btn-secondary" onclick="toggleSelectMode()">Select Jobs</button>
+            </div>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="bulk-actions" id="bulkActions">
+            <div class="selected-count" id="selectedCount">0 jobs selected</div>
+            <div class="bulk-action-buttons">
+                <button class="btn btn-success btn-sm" onclick="applyToSelected()">Apply to Selected</button>
+                <button class="btn btn-danger btn-sm" onclick="removeSelected()">Remove Selected</button>
+                <button class="btn btn-secondary btn-sm" onclick="cancelSelectMode()">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="search-filters">
+            <div class="search-bar">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search saved jobs by title, company, or keywords...">
+                <button class="search-btn" onclick="searchJobs()">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+
+            <div class="filter-options">
+                <select id="sortFilter" onchange="sortJobs()">
+                    <option value="newest">Newest Saved</option>
+                    <option value="oldest">Oldest Saved</option>
+                    <option value="title">Job Title A-Z</option>
+                    <option value="company">Company A-Z</option>
+                    <option value="salary">Salary High-Low</option>
+                </select>
+
+                <select id="locationFilter" onchange="filterJobs()">
+                    <option value="">All Locations</option>
+                    <option value="lahore">Lahore</option>
+                    <option value="karachi">Karachi</option>
+                    <option value="islamabad">Islamabad</option>
+                    <option value="faisalabad">Faisalabad</option>
+                </select>
+
+                <select id="typeFilter" onchange="filterJobs()">
+                    <option value="">All Types</option>
+                    <option value="full-time">Full-time</option>
+                    <option value="part-time">Part-time</option>
+                    <option value="contract">Contract</option>
+                    <option value="remote">Remote</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Jobs Grid -->
+        <div class="jobs-grid" id="jobsGrid">
+            <!-- Jobs will be loaded here -->
+        </div>
+    </div>
+
+    <script>
+        // Ensure user is logged in and is a job seeker
+        if (!authManager.isLoggedIn()) {
+            window.location.href = '../auth/login.html';
+        }
+
+        const user = authManager.getCurrentUser();
+        if (!user || user.role !== 'job_seeker') {
+            alert('Access denied. This page is only for job seekers.');
+            window.location.href = '../../index.html';
+        }
+
+        // Comprehensive Punjab Saved Jobs Data
+        const savedJobs = [
+            {
+                id: 1,
+                title: "Senior Full Stack Developer",
+                company: "Punjab Tech Solutions Chandigarh",
+                location: "Chandigarh, Punjab",
+                type: "full-time",
+                salary: "₹8-12 LPA",
+                savedDate: "2024-11-25",
+                description: "Join our dynamic team to build cutting-edge web applications using modern technologies. Work on projects for Punjab government digitization initiatives.",
+                requirements: ["React", "Node.js", "MongoDB", "AWS", "3+ years exp", "Government project experience preferred"],
+                urgent: false,
+                category: "Technology",
+                experience: "3-6 years",
+                skills: ["JavaScript", "TypeScript", "Docker", "Microservices"],
+                benefits: ["Health Insurance", "Flexible Hours", "Remote Work Options", "Professional Development"],
+                deadline: "2024-12-15"
+            },
+            {
+                id: 2,
+                title: "Deputy Collector (General Administration)",
+                company: "Government of Punjab",
+                location: "Multiple Districts, Punjab",
+                type: "government",
+                salary: "₹56,100 - ₹1,77,500",
+                savedDate: "2024-11-23",
+                description: "Administrative position in Punjab Civil Services for district administration and public service delivery.",
+                requirements: ["Bachelor's Degree", "Age: 21-37 years", "Punjab domicile", "Clean background"],
+                urgent: true,
+                category: "Government",
+                experience: "Fresh Graduate",
+                examDate: "2024-12-15",
+                benefits: ["Government Benefits", "Job Security", "Pension", "Medical Coverage", "Housing Allowance"],
+                deadline: "2024-12-01"
+            },
+            {
+                id: 3,
+                title: "UI/UX Designer",
+                company: "Creative Studio Punjab Ludhiana",
+                location: "Ludhiana, Punjab",
+                type: "full-time",
+                salary: "₹4.5-7 LPA",
+                savedDate: "2024-11-22",
+                description: "Design beautiful and intuitive user interfaces for web and mobile applications focusing on Punjab cultural aesthetics.",
+                requirements: ["Figma", "Adobe XD", "Prototyping", "User Research", "2+ years exp", "Portfolio required"],
+                urgent: false,
+                category: "Design",
+                experience: "2-4 years",
+                skills: ["Visual Design", "Interaction Design", "Usability Testing", "Wireframing"],
+                benefits: ["Creative Environment", "Learning Opportunities", "Team Outings", "Flexible Hours"],
+                deadline: "2024-12-10"
+            },
+            {
+                id: 4,
+                title: "DevOps Engineer",
+                company: "CloudOps Technologies Jalandhar",
+                location: "Jalandhar, Punjab",
+                type: "full-time",
+                salary: "₹8.5-13 LPA",
+                savedDate: "2024-11-20",
+                description: "Manage cloud infrastructure and implement CI/CD pipelines for scalable applications serving Punjab region.",
+                requirements: ["AWS", "Docker", "Kubernetes", "Jenkins", "Linux", "4+ years exp"],
+                urgent: true,
+                category: "Technology",
+                experience: "4-6 years",
+                skills: ["Terraform", "Ansible", "Monitoring", "Security"],
+                benefits: ["Stock Options", "Health Insurance", "Training Budget", "Conference Attendance"],
+                deadline: "2024-11-30"
+            },
+            {
+                id: 5,
+                title: "Digital Marketing Specialist",
+                company: "Punjab Marketing Solutions Ludhiana",
+                location: "Ludhiana, Punjab",
+                type: "full-time",
+                salary: "₹3.5-5.5 LPA",
+                savedDate: "2024-11-18",
+                description: "Drive digital marketing campaigns for Punjab-based businesses to increase online presence and sales.",
+                requirements: ["Google Ads", "Facebook Ads", "SEO", "Content Marketing", "1+ years exp"],
+                urgent: false,
+                category: "Marketing",
+                experience: "1-3 years",
+                skills: ["Analytics", "Social Media", "Email Marketing", "Conversion Optimization"],
+                benefits: ["Performance Bonus", "Skill Development", "Creative Freedom", "Team Events"],
+                deadline: "2024-12-05"
+            },
+            {
+                id: 6,
+                title: "Data Analyst",
+                company: "Punjab Analytics Hub Patiala",
+                location: "Patiala, Punjab",
+                type: "full-time",
+                salary: "₹5.5-7.5 LPA",
+                savedDate: "2024-11-17",
+                description: "Analyze complex datasets to drive insights for Punjab government policy decisions and business optimization.",
+                requirements: ["Python", "SQL", "Tableau", "Excel", "Statistics", "2+ years exp"],
+                urgent: false,
+                category: "Analytics",
+                experience: "2-4 years",
+                skills: ["Data Visualization", "Machine Learning", "Statistical Analysis", "Report Writing"],
+                benefits: ["Professional Growth", "Training Programs", "Flexible Schedule", "Health Coverage"],
+                deadline: "2024-12-12"
+            },
+            {
+                id: 7,
+                title: "Assistant Engineer (Civil)",
+                company: "Punjab Public Works Department",
+                location: "Multiple Locations, Punjab",
+                type: "government",
+                salary: "₹35,400 - ₹1,12,400",
+                savedDate: "2024-11-16",
+                description: "Engineering position for infrastructure development and maintenance across Punjab state.",
+                requirements: ["Civil Engineering Degree", "Age: 18-37 years", "Punjab domicile", "Clean record"],
+                urgent: true,
+                category: "Government",
+                experience: "Fresh Graduate",
+                examDate: "2024-12-10",
+                benefits: ["Government Benefits", "Career Growth", "Pension", "Housing", "Medical"],
+                deadline: "2024-11-28"
+            },
+            {
+                id: 8,
+                title: "React Frontend Developer",
+                company: "Digital Innovations Mohali",
+                location: "Mohali, Punjab",
+                type: "full-time",
+                salary: "₹6-8.5 LPA",
+                savedDate: "2024-11-15",
+                description: "Develop responsive web applications using React.js for clients across Punjab and North India.",
+                requirements: ["React", "JavaScript", "CSS3", "Redux", "2+ years exp", "Portfolio required"],
+                urgent: false,
+                category: "Technology",
+                experience: "2-4 years",
+                skills: ["TypeScript", "Next.js", "Material-UI", "Testing"],
+                benefits: ["Learning Budget", "Flexible Hours", "Work from Home", "Team Building"],
+                deadline: "2024-12-08"
+            },
+            {
+                id: 9,
+                title: "Python Backend Developer",
+                company: "DataTech Solutions Amritsar",
+                location: "Amritsar, Punjab",
+                type: "full-time",
+                salary: "₹7-9.5 LPA",
+                savedDate: "2024-11-14",
+                description: "Build robust backend systems and APIs using Python frameworks for fintech applications.",
+                requirements: ["Python", "Django/Flask", "PostgreSQL", "Docker", "3+ years exp"],
+                urgent: false,
+                category: "Technology",
+                experience: "3-5 years",
+                skills: ["FastAPI", "Celery", "Redis", "API Development"],
+                benefits: ["Stock Options", "Health Insurance", "Skill Development", "Flexible Work"],
+                deadline: "2024-12-20"
+            },
+            {
+                id: 10,
+                title: "Quality Assurance Engineer",
+                company: "Punjab Software Testing Center Amritsar",
+                location: "Amritsar, Punjab",
+                type: "full-time",
+                salary: "₹4.5-6.5 LPA",
+                savedDate: "2024-11-12",
+                description: "Ensure software quality through comprehensive testing strategies for applications serving Punjab region.",
+                requirements: ["Manual Testing", "Automation", "Selenium", "JIRA", "2+ years exp"],
+                urgent: false,
+                category: "Quality Assurance",
+                experience: "2-4 years",
+                skills: ["TestNG", "API Testing", "Performance Testing", "Bug Tracking"],
+                benefits: ["Training Programs", "Certification Support", "Health Coverage", "Team Events"],
+                deadline: "2024-12-15"
+            },
+            {
+                id: 11,
+                title: "Mobile App Developer (Flutter)",
+                company: "AppCraft Studios Chandigarh",
+                location: "Chandigarh, Punjab",
+                type: "contract",
+                salary: "₹6.5-9 LPA",
+                savedDate: "2024-11-10",
+                description: "Develop cross-platform mobile applications using Flutter for Punjab government and private clients.",
+                requirements: ["Flutter", "Dart", "Firebase", "REST APIs", "2+ years exp"],
+                urgent: true,
+                category: "Mobile Development",
+                experience: "2-4 years",
+                skills: ["State Management", "Native Integration", "App Store Deployment", "UI/UX"],
+                benefits: ["Project Bonuses", "Flexible Schedule", "Latest Tech Stack", "Client Interaction"],
+                deadline: "2024-11-30"
+            },
+            {
+                id: 12,
+                title: "Junior Software Engineer",
+                company: "TechStart Punjab Mohali",
+                location: "Mohali, Punjab",
+                type: "full-time",
+                salary: "₹4-6 LPA",
+                savedDate: "2024-11-08",
+                description: "Entry-level position for fresh graduates to start their software development career with comprehensive training.",
+                requirements: ["Java/Python/JavaScript", "Basic web development", "Fresh Graduate", "Learning attitude"],
+                urgent: false,
+                category: "Technology",
+                experience: "0-1 years",
+                skills: ["Problem Solving", "Communication", "Teamwork", "Adaptability"],
+                benefits: ["Mentorship Program", "Training", "Career Growth", "Supportive Environment"],
+                deadline: "2024-12-25"
+            }
+        ];
+                savedDate: "2024-01-12",
+                description: "Lead product development from conception to launch, working with cross-functional teams.",
+                requirements: ["Product Strategy", "Agile", "Analytics", "Leadership", "5+ years exp"],
+                urgent: false
+            }
+        ];
+
+        let filteredJobs = [...savedJobs];
+        let selectedJobs = new Set();
+        let selectMode = false;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            renderJobs();
+            setupSearchListener();
+        });
+
+        function setupSearchListener() {
+            document.getElementById('searchInput').addEventListener('input', function() {
+                if (this.value === '') {
+                    filteredJobs = [...savedJobs];
+                    renderJobs();
+                }
+            });
+
+            document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchJobs();
+                }
+            });
+        }
+
+        function searchJobs() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (!query.trim()) {
+                filteredJobs = [...savedJobs];
+            } else {
+                filteredJobs = savedJobs.filter(job => 
+                    job.title.toLowerCase().includes(query) ||
+                    job.company.toLowerCase().includes(query) ||
+                    job.description.toLowerCase().includes(query) ||
+                    job.requirements.some(req => req.toLowerCase().includes(query))
+                );
+            }
+            
+            renderJobs();
+        }
+
+        function filterJobs() {
+            const location = document.getElementById('locationFilter').value;
+            const type = document.getElementById('typeFilter').value;
+            
+            filteredJobs = savedJobs.filter(job => {
+                const matchesLocation = !location || job.location.toLowerCase() === location;
+                const matchesType = !type || job.type === type;
+                return matchesLocation && matchesType;
+            });
+            
+            renderJobs();
+        }
+
+        function sortJobs() {
+            const sortBy = document.getElementById('sortFilter').value;
+            
+            filteredJobs.sort((a, b) => {
+                switch(sortBy) {
+                    case 'newest':
+                        return new Date(b.savedDate) - new Date(a.savedDate);
+                    case 'oldest':
+                        return new Date(a.savedDate) - new Date(b.savedDate);
+                    case 'title':
+                        return a.title.localeCompare(b.title);
+                    case 'company':
+                        return a.company.localeCompare(b.company);
+                    case 'salary':
+                        // Extract max salary for comparison
+                        const aMax = parseInt(a.salary.match(/\d+,?\d*/g).pop().replace(',', ''));
+                        const bMax = parseInt(b.salary.match(/\d+,?\d*/g).pop().replace(',', ''));
+                        return bMax - aMax;
+                    default:
+                        return 0;
+                }
+            });
+            
+            renderJobs();
+        }
+
+        function renderJobs() {
+            const container = document.getElementById('jobsGrid');
+            
+            if (filteredJobs.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-bookmark"></i>
+                        <h3>No saved jobs found</h3>
+                        <p>You haven't saved any jobs yet, or no jobs match your current search criteria.</p>
+                        <a href="../jobs/browse.html" class="btn">Browse Jobs</a>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filteredJobs.map(job => `
+                <div class="job-card" data-job-id="${job.id}">
+                    ${selectMode ? `<input type="checkbox" class="job-checkbox" onchange="toggleJobSelection(${job.id})">` : ''}
+                    <div class="job-header">
+                        <div class="job-company">${job.company} ${job.urgent ? '• <span style="color: #ffc107;">⚡ Urgent</span>' : ''}</div>
+                        <div class="job-title">${job.title}</div>
+                        <div class="job-meta">
+                            <span><i class="fas fa-map-marker-alt"></i> ${job.location}</span>
+                            <span><i class="fas fa-briefcase"></i> ${job.type.replace('-', ' ')}</span>
+                            <span><i class="fas fa-money-bill-wave"></i> ${job.salary}</span>
+                        </div>
+                    </div>
+                    <div class="job-body">
+                        <div class="job-description">${job.description}</div>
+                        <div class="job-requirements">
+                            ${job.requirements.map(req => `<span class="requirement-tag">${req}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="job-footer">
+                        <div class="job-saved-date">
+                            <i class="fas fa-bookmark"></i> Saved on ${formatDate(job.savedDate)}
+                        </div>
+                        <div class="job-actions">
+                            <button class="btn btn-success btn-sm" onclick="applyForJob(${job.id})">Apply Now</button>
+                            <button class="btn btn-secondary btn-sm" onclick="viewJobDetails(${job.id})">View Details</button>
+                            <button class="btn btn-danger btn-sm" onclick="removeFromSaved(${job.id})">Remove</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleSelectMode() {
+            selectMode = !selectMode;
+            selectedJobs.clear();
+            
+            if (selectMode) {
+                document.getElementById('bulkActions').classList.add('active');
+            } else {
+                document.getElementById('bulkActions').classList.remove('active');
+            }
+            
+            renderJobs();
+            updateSelectedCount();
+        }
+
+        function cancelSelectMode() {
+            selectMode = false;
+            selectedJobs.clear();
+            document.getElementById('bulkActions').classList.remove('active');
+            renderJobs();
+        }
+
+        function toggleJobSelection(jobId) {
+            if (selectedJobs.has(jobId)) {
+                selectedJobs.delete(jobId);
+            } else {
+                selectedJobs.add(jobId);
+            }
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const count = selectedJobs.size;
+            document.getElementById('selectedCount').textContent = `${count} job${count !== 1 ? 's' : ''} selected`;
+        }
+
+        function applyToSelected() {
+            if (selectedJobs.size === 0) {
+                alert('Please select jobs to apply to.');
+                return;
+            }
+            
+            const jobTitles = Array.from(selectedJobs).map(id => {
+                const job = savedJobs.find(j => j.id === id);
+                return job ? job.title : '';
+            }).filter(title => title);
+            
+            alert(`Applying to ${jobTitles.length} job(s): ${jobTitles.join(', ')}`);
+            cancelSelectMode();
+        }
+
+        function removeSelected() {
+            if (selectedJobs.size === 0) {
+                alert('Please select jobs to remove.');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to remove ${selectedJobs.size} job(s) from your saved list?`)) {
+                // Remove selected jobs from savedJobs array
+                selectedJobs.forEach(id => {
+                    const index = savedJobs.findIndex(job => job.id === id);
+                    if (index > -1) {
+                        savedJobs.splice(index, 1);
+                    }
+                });
+                
+                // Update filtered jobs
+                filteredJobs = filteredJobs.filter(job => !selectedJobs.has(job.id));
+                
+                selectedJobs.clear();
+                cancelSelectMode();
+                renderJobs();
+                
+                alert('Selected jobs removed from your saved list.');
+            }
+        }
+
+        function applyForJob(jobId) {
+            const job = savedJobs.find(j => j.id === jobId);
+            if (job) {
+                alert(`Applying for ${job.title} at ${job.company}`);
+                // In a real app, this would redirect to application form
+            }
+        }
+
+        function viewJobDetails(jobId) {
+            // Redirect to job details page
+            window.location.href = `../jobs/details.html?id=${jobId}`;
+        }
+
+        function removeFromSaved(jobId) {
+            const job = savedJobs.find(j => j.id === jobId);
+            if (job && confirm(`Remove "${job.title}" from your saved jobs?`)) {
+                const index = savedJobs.findIndex(j => j.id === jobId);
+                savedJobs.splice(index, 1);
+                
+                // Update filtered jobs
+                filteredJobs = filteredJobs.filter(j => j.id !== jobId);
+                
+                renderJobs();
+                alert('Job removed from your saved list.');
+            }
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+        }
+    </script>
+</body>
+</html>

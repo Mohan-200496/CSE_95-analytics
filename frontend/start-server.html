@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start API Server - Punjab Rozgar Portal</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 3rem;
+            max-width: 600px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+        
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            text-align: left;
+        }
+        
+        .step {
+            margin-bottom: 1rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .step:last-child {
+            border-bottom: none;
+        }
+        
+        code {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.3rem 0.6rem;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            color: #ffeb3b;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: #ff5722;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+        
+        .btn:hover {
+            background: #e64a19;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .status {
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            font-weight: bold;
+        }
+        
+        .status.loading {
+            background: rgba(255, 193, 7, 0.2);
+            border: 2px solid #ffc107;
+        }
+        
+        .status.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid #4caf50;
+        }
+        
+        .status.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 2px solid #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Punjab Rozgar API Server</h1>
+        <p>Start the API server to populate all job categories and company data across the portal.</p>
+        
+        <div class="instructions">
+            <h3>Manual Server Start Instructions:</h3>
+            <div class="step">
+                <strong>1. Open Command Prompt/PowerShell</strong><br>
+                Press <code>Win + R</code>, type <code>cmd</code> or <code>powershell</code>, and press Enter
+            </div>
+            <div class="step">
+                <strong>2. Navigate to API Directory</strong><br>
+                <code>cd "d:\cap pro\last\capstone-analytics\frontend\api"</code>
+            </div>
+            <div class="step">
+                <strong>3. Start the Server</strong><br>
+                <code>node server.js</code>
+            </div>
+            <div class="step">
+                <strong>4. Verify Server is Running</strong><br>
+                You should see: <code>Job API Server running on http://localhost:3001</code>
+            </div>
+        </div>
+        
+        <div id="status" class="status loading" style="display: none;">
+            Checking server status...
+        </div>
+        
+        <div style="margin-top: 2rem;">
+            <button class="btn" onclick="checkServer()">Check Server Status</button>
+            <a href="../index.html" class="btn">Go to Homepage</a>
+            <a href="../pages/jobseeker/browse-jobs.html" class="btn">Browse Jobs</a>
+        </div>
+        
+        <div style="margin-top: 2rem; font-size: 0.9rem; opacity: 0.7;">
+            <p><strong>Server Features:</strong></p>
+            <p>• 1,200+ Jobs across 8 categories</p>
+            <p>• 150+ Government Jobs</p>
+            <p>• 300+ Private Sector Jobs</p>
+            <p>• 15 Major Punjab Companies</p>
+            <p>• Real-time job filtering and search</p>
+        </div>
+    </div>
+    
+    <script>
+        function checkServer() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'status loading';
+            statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking server connection...';
+            
+            fetch('http://localhost:3001/jobs')
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Server not responding');
+                })
+                .then(data => {
+                    statusDiv.className = 'status success';
+                    statusDiv.innerHTML = `
+                        <i class="fas fa-check-circle"></i> Server is running successfully!<br>
+                        <small>Found ${data.length} jobs available</small>
+                    `;
+                })
+                .catch(error => {
+                    statusDiv.className = 'status error';
+                    statusDiv.innerHTML = `
+                        <i class="fas fa-exclamation-triangle"></i> Server is not running<br>
+                        <small>Please start the server manually using the instructions above</small>
+                    `;
+                });
+        }
+        
+        // Auto-check server status when page loads
+        window.addEventListener('load', () => {
+            setTimeout(checkServer, 1000);
+        });
+    </script>
+</body>
+</html>

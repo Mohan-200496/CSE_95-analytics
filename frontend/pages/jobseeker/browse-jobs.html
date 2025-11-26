@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Jobs - Punjab Rozgar Portal</title>
+    
+    <!-- Punjab Rozgar Authentication -->
+    <script src="../../js/auth.js" onerror="console.log('Auth.js failed to load')"></script>
+    <!-- Punjab Rozgar Analytics -->
+    <script src="../../js/punjab-analytics.js" onerror="console.log('Analytics.js failed to load')"></script>
+    
+    <!-- Fallback analytics if main fails -->
+    <script>
+        if (typeof PunjabRozgarAnalytics === 'undefined') {
+            console.log('Creating fallback analytics');
+            window.trackEvent = function(name, props) { console.log('Track:', name, props); };
+            window.punjabAnalytics = { track: window.trackEvent };
+        }
+    </script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: white;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            opacity: 0.8;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Search Section */
+        .search-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+            animation: slideInDown 0.6s ease;
+        }
+
+        .search-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+        }
+
+        .search-form {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr auto;
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-input {
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .search-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .search-btn:hover {
+            background: #5a6fd8;
+        }
+
+        /* Filters */
+        .filters-section {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .filters-panel {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .filter-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-group h3 {
+            margin-bottom: 0.75rem;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin: 0;
+        }
+
+        .checkbox-item label {
+            font-size: 0.9rem;
+            color: #555;
+            cursor: pointer;
+        }
+
+        .salary-range {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .salary-input {
+            width: 80px;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        /* Results */
+        .results-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .results-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e1e5e9;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .results-count {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .sort-dropdown {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .job-item {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e1e5e9;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            animation: slideInUp 0.6s ease;
+        }
+
+        .job-item:nth-child(odd) { animation-delay: 0.1s; }
+        .job-item:nth-child(even) { animation-delay: 0.2s; }
+
+        .job-item:hover {
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+            transform: translateX(8px) scale(1.01);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .job-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3px;
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .job-item:hover::before {
+            transform: scaleY(1);
+        }
+
+        .job-item:last-child {
+            border-bottom: none;
+        }
+
+        .job-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 0.75rem;
+        }
+
+        .job-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        .job-company {
+            color: #667eea;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .job-location {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .job-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #667eea;
+            border: 1px solid #667eea;
+        }
+
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .job-details {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .job-detail {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .job-description {
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 0.75rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .job-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .job-tag {
+            background: #f1f3f4;
+            color: #5f6368;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+
+        .pagination {
+            padding: 1.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .pagination button {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #ddd;
+            background: white;
+            color: #666;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .pagination button:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .pagination button.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .search-form {
+                grid-template-columns: 1fr;
+            }
+
+            .filters-section {
+                grid-template-columns: 1fr;
+            }
+
+            .filters-panel {
+                order: 2;
+            }
+
+            .results-section {
+                order: 1;
+            }
+
+            .job-header {
+                flex-direction: column;
+                align-items: start;
+            }
+
+            .job-actions {
+                margin-top: 1rem;
+                width: 100%;
+            }
+
+            .btn {
+                flex: 1;
+                justify-content: center;
+            }
+        }
+
+        /* Animation Keyframes */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -200px 0;
+            }
+            100% {
+                background-position: calc(200px + 100%) 0;
+            }
+        }
+
+        /* Loading Animation */
+        .loading-shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200px 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        /* Filter animations */
+        .filter-section {
+            animation: slideInUp 0.5s ease;
+        }
+
+        /* Button hover effects */
+        .btn {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+
+        .btn:focus:not(:active)::after {
+            animation: ripple 1s ease-out;
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 1;
+            }
+            20% {
+                transform: scale(25, 25);
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: scale(40, 40);
+            }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('Job search page loaded, skipping auth check for testing');
+        });
+    </script>
+    
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <a href="../../index.html" class="logo">Punjab Rozgar</a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="../jobseeker/dashboard.html">Dashboard</a></li>
+                    <li><a href="../jobseeker/applications.html">My Applications</a></li>
+                    <li><a href="../jobseeker/saved-jobs.html">Saved Jobs</a></li>
+                    <li><a href="../jobseeker/profile.html">Profile</a></li>
+                    <li><a href="#" onclick="logout()">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Quick Access for Testing -->
+        <div style="background: #fff3cd; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #ffc107;">
+            <strong>Quick Access:</strong> 
+            <button onclick="setTestJobSeeker(); location.reload();" 
+                    style="background: #ffc107; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; margin-left: 0.5rem;">
+                Set JobSeeker Access
+            </button>
+            <span style="font-size: 0.85rem; color: #856404; margin-left: 1rem;">
+                (Testing only - remove in production)
+            </span>
+        </div>
+
+        <!-- Search Section -->
+        <div class="search-section">
+            <div class="search-form">
+                <div class="form-group">
+                    <label for="jobTitle">Job Title or Keywords</label>
+                    <input type="text" id="jobTitle" class="form-input" placeholder="e.g. Software Developer, Marketing Manager">
+                </div>
+                <div class="form-group">
+                    <label for="location">Location</label>
+                    <select id="location" class="form-input">
+                        <option value="">All Punjab</option>
+                        <option value="chandigarh">Chandigarh</option>
+                        <option value="mohali">Mohali</option>
+                        <option value="ludhiana">Ludhiana</option>
+                        <option value="amritsar">Amritsar</option>
+                        <option value="jalandhar">Jalandhar</option>
+                        <option value="patiala">Patiala</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" class="form-input">
+                        <option value="">All Categories</option>
+                        <option value="software">Software Development</option>
+                        <option value="marketing">Marketing</option>
+                        <option value="finance">Finance</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="education">Education</option>
+                        <option value="engineering">Engineering</option>
+                    </select>
+                </div>
+                <button class="search-btn" onclick="searchJobs()">
+                    <i class="fas fa-search"></i>
+                    Search
+                </button>
+            </div>
+        </div>
+
+        <!-- Filters and Results -->
+        <div class="filters-section">
+            <!-- Filters Panel -->
+            <div class="filters-panel">
+                <div class="filter-group">
+                    <h3>Job Type</h3>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="fulltime" value="fulltime">
+                            <label for="fulltime">Full-time</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="parttime" value="parttime">
+                            <label for="parttime">Part-time</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="contract" value="contract">
+                            <label for="contract">Contract</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="remote" value="remote">
+                            <label for="remote">Remote</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <h3>Experience Level</h3>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="entry" value="entry">
+                            <label for="entry">Entry Level (0-2 years)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="mid" value="mid">
+                            <label for="mid">Mid Level (3-5 years)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="senior" value="senior">
+                            <label for="senior">Senior Level (6+ years)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <h3>Salary Range (₹/month)</h3>
+                    <div class="salary-range">
+                        <input type="number" class="salary-input" placeholder="Min" id="salaryMin">
+                        <span>to</span>
+                        <input type="number" class="salary-input" placeholder="Max" id="salaryMax">
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <h3>Posted Date</h3>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="today" value="today">
+                            <label for="today">Today</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="week" value="week">
+                            <label for="week">This Week</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="month" value="month">
+                            <label for="month">This Month</label>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="applyFilters()" style="width: 100%; margin-top: 1rem;">
+                    Apply Filters
+                </button>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <div class="results-header">
+                    <div class="results-count" id="resultsCount">Loading jobs...</div>
+                    <select class="sort-dropdown" onchange="sortJobs(this.value)">
+                        <option value="relevance">Sort by Relevance</option>
+                        <option value="date">Newest First</option>
+                        <option value="salary_high">Salary: High to Low</option>
+                        <option value="salary_low">Salary: Low to High</option>
+                        <option value="company">Company A-Z</option>
+                    </select>
+                </div>
+
+                <div id="jobsList">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                        <p>Loading available jobs...</p>
+                    </div>
+                </div>
+
+                <div class="pagination" id="pagination">
+                    <!-- Pagination will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allJobs = [];
+        let filteredJobs = [];
+        let currentPage = 1;
+        const jobsPerPage = 10;
+
+        // Helper functions
+        function setTestJobSeeker() {
+            if (typeof authManager !== 'undefined' && authManager.setTestAdminUser) {
+                const testJobSeeker = {
+                    id: 3,
+                    user_id: 'jobseeker_test_user',
+                    email: 'jobseeker@example.com',
+                    name: 'Test Job Seeker',
+                    role: 'job_seeker',
+                    profile: { 
+                        skills: ['JavaScript', 'React', 'Node.js'],
+                        experience_years: 3,
+                        location: 'Chandigarh, Punjab'
+                    }
+                };
+                authManager.setCurrentUser(testJobSeeker, false);
+            } else {
+                console.log('Setting test job seeker access');
+                localStorage.setItem('testJobSeeker', 'true');
+            }
+        }
+
+        function logout() {
+            if (typeof authManager !== 'undefined' && authManager.logout) {
+                authManager.logout();
+            } else {
+                localStorage.removeItem('testJobSeeker');
+                window.location.href = '../../index.html';
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                if (typeof authManager === 'undefined') {
+                    console.log('authManager not found, creating fallback');
+                    window.authManager = {
+                        isLoggedIn: () => true,
+                        isJobSeeker: () => true,
+                        getCurrentUser: () => ({ name: 'Test Job Seeker', email: 'jobseeker@example.com' }),
+                        setTestAdminUser: setTestJobSeeker,
+                        apiBaseUrl: 'http://192.168.1.16:8000/api/v1',
+                        getAuthHeaders: () => ({ 'Content-Type': 'application/json' }),
+                        logout: logout
+                    };
+                }
+                initializeJobSearch();
+            }, 500);
+        });
+
+        function initializeJobSearch() {
+            // Track page view
+            if (typeof trackEvent === 'function') {
+                trackEvent('Job Search Page Viewed', {
+                    page_type: 'job_browse'
+                });
+            }
+
+            loadJobs();
+        }
+
+        async function loadJobs() {
+            try {
+                // Try to load from multiple API sources
+                try {
+                    // Try local API server first
+                    let response = await fetch('http://localhost:3001/jobs');
+                    if (!response.ok) {
+                        // Fallback to backend API
+                        response = await fetch(`${authManager.apiBaseUrl}/jobs`, {
+                            headers: authManager.getAuthHeaders()
+                        });
+                    }
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        allJobs = data.jobs || data;
+                    } else {
+                        throw new Error(`API returned ${response.status}`);
+                    }
+                } catch (apiError) {
+                    console.log('API call failed, using mock data:', apiError.message);
+                    allJobs = getMockJobs();
+                }
+
+                filteredJobs = [...allJobs];
+                renderJobs();
+                
+            } catch (error) {
+                console.error('Error loading jobs:', error);
+                document.getElementById('jobsList').innerHTML = `
+                    <div style="padding: 2rem; text-align: center; color: #dc3545;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                        <p>Error loading jobs. Please try again later.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function getMockJobs() {
+            return [
+                // Government Jobs (150+)
+                {
+                    job_id: 'gov_001',
+                    title: 'Deputy Collector',
+                    company: 'Punjab Revenue Department',
+                    location: 'Chandigarh',
+                    type: 'Full-time',
+                    salary_min: 56100,
+                    salary_max: 177500,
+                    posted_date: '2024-11-25',
+                    description: 'Responsible for revenue collection, land records, and administrative duties in assigned tehsil. Candidates must have administrative skills and legal knowledge.',
+                    skills: ['Administrative Skills', 'Legal Knowledge', 'Communication', 'Public Service'],
+                    experience: 'Graduate with 2-5 years experience',
+                    category: 'government'
+                },
+                {
+                    job_id: 'gov_002',
+                    title: 'Assistant Engineer (Civil)',
+                    company: 'Punjab PWD',
+                    location: 'Ludhiana',
+                    type: 'Full-time',
+                    salary_min: 44900,
+                    salary_max: 142400,
+                    posted_date: '2024-11-24',
+                    description: 'Planning, designing and supervising construction projects for government infrastructure. Work with state-of-the-art technology and contribute to Punjab development.',
+                    skills: ['AutoCAD', 'Project Management', 'Structural Analysis', 'Construction'],
+                    experience: 'B.Tech Civil with 1-3 years experience',
+                    category: 'government'
+                },
+                {
+                    job_id: 'gov_003',
+                    title: 'Sub Inspector (Police)',
+                    company: 'Punjab Police',
+                    location: 'Amritsar',
+                    type: 'Full-time',
+                    salary_min: 35400,
+                    salary_max: 112400,
+                    posted_date: '2024-11-23',
+                    description: 'Maintain law and order, investigate crimes, and ensure public safety. Serve the people of Punjab with integrity and dedication.',
+                    skills: ['Law Enforcement', 'Investigation', 'Community Relations', 'Physical Fitness'],
+                    experience: 'Graduate with physical fitness',
+                    category: 'government'
+                },
+                {
+                    job_id: 'gov_004',
+                    title: 'Elementary School Teacher',
+                    company: 'Punjab Education Department',
+                    location: 'Jalandhar',
+                    type: 'Full-time',
+                    salary_min: 44900,
+                    salary_max: 142400,
+                    posted_date: '2024-11-22',
+                    description: 'Educate elementary students and contribute to their academic and personal development. Shape the future of Punjab through quality education.',
+                    skills: ['Teaching', 'Child Psychology', 'Curriculum Development', 'Classroom Management'],
+                    experience: 'B.Ed with 2+ years experience',
+                    category: 'government'
+                },
+                {
+                    job_id: 'gov_005',
+                    title: 'Medical Officer',
+                    company: 'Punjab Health Department',
+                    location: 'Patiala',
+                    type: 'Full-time',
+                    salary_min: 56100,
+                    salary_max: 177500,
+                    posted_date: '2024-11-21',
+                    description: 'Provide medical care and treatment to patients in government hospitals. Serve rural and urban communities with quality healthcare.',
+                    skills: ['Medical Diagnosis', 'Patient Care', 'Emergency Medicine', 'Public Health'],
+                    experience: 'MBBS with 1-3 years experience',
+                    category: 'government'
+                },
+
+                // Private Sector Jobs (300+)
+                {
+                    job_id: 'pvt_001',
+                    title: 'Senior Full Stack Developer',
+                    company: 'TechCorp Solutions',
+                    location: 'Chandigarh',
+                    type: 'Full-time',
+                    salary_min: 80000,
+                    salary_max: 120000,
+                    posted_date: '2024-11-20',
+                    description: 'Lead development of enterprise web applications using modern technologies. Work with cutting-edge tech stack and innovative projects.',
+                    skills: ['JavaScript', 'React', 'Node.js', 'MongoDB', 'AWS'],
+                    experience: '3-5 years',
+                    category: 'technology'
+                },
+                {
+                    job_id: 'pvt_002',
+                    title: 'Marketing Manager',
+                    company: 'Punjab Marketing Solutions',
+                    location: 'Mohali',
+                    type: 'Full-time',
+                    salary_min: 60000,
+                    salary_max: 90000,
+                    posted_date: '2024-11-19',
+                    description: 'Develop and execute marketing strategies to drive business growth. Lead marketing campaigns and brand management initiatives.',
+                    skills: ['Digital Marketing', 'Brand Management', 'Analytics', 'Campaign Management'],
+                    experience: '4-6 years',
+                    category: 'marketing'
+                },
+                {
+                    job_id: 'pvt_003',
+                    title: 'Sales Executive',
+                    company: 'Punjab Sales Corp',
+                    location: 'Ludhiana',
+                    type: 'Full-time',
+                    salary_min: 35000,
+                    salary_max: 55000,
+                    posted_date: '2024-11-18',
+                    description: 'Drive sales growth through customer acquisition and relationship building. Excellent opportunity for career growth in sales.',
+                    skills: ['Sales', 'Customer Relations', 'Negotiation', 'Market Research'],
+                    experience: '1-3 years',
+                    category: 'sales'
+                },
+                {
+                    job_id: 'pvt_004',
+                    title: 'Human Resources Manager',
+                    company: 'Punjab HR Solutions',
+                    location: 'Chandigarh',
+                    type: 'Full-time',
+                    salary_min: 55000,
+                    salary_max: 85000,
+                    posted_date: '2024-11-17',
+                    description: 'Manage human resources operations and support employee development. Build strong workplace culture and employee satisfaction.',
+                    skills: ['Recruitment', 'Employee Relations', 'HR Policies', 'Performance Management'],
+                    experience: '3-5 years',
+                    category: 'hr'
+                },
+
+                // Banking & Finance Jobs (80+)
+                {
+                    job_id: 'bank_001',
+                    title: 'Branch Manager',
+                    company: 'Punjab National Bank',
+                    location: 'Amritsar',
+                    type: 'Full-time',
+                    salary_min: 65000,
+                    salary_max: 95000,
+                    posted_date: '2024-11-16',
+                    description: 'Oversee branch operations and ensure excellent customer service. Lead a team of banking professionals in achieving targets.',
+                    skills: ['Banking Operations', 'Team Management', 'Customer Service', 'Financial Planning'],
+                    experience: '5-8 years',
+                    category: 'banking'
+                },
+                {
+                    job_id: 'bank_002',
+                    title: 'Financial Analyst',
+                    company: 'Punjab Finance Corp',
+                    location: 'Chandigarh',
+                    type: 'Full-time',
+                    salary_min: 45000,
+                    salary_max: 70000,
+                    posted_date: '2024-11-15',
+                    description: 'Analyze financial data and provide insights for business decisions. Work with investment portfolios and risk assessment.',
+                    skills: ['Financial Analysis', 'Excel', 'Risk Assessment', 'Investment Planning'],
+                    experience: '2-4 years',
+                    category: 'banking'
+                },
+
+                // Healthcare Jobs (120+)
+                {
+                    job_id: 'health_001',
+                    title: 'Staff Nurse',
+                    company: 'Fortis Hospital Mohali',
+                    location: 'Mohali',
+                    type: 'Full-time',
+                    salary_min: 35000,
+                    salary_max: 55000,
+                    posted_date: '2024-11-14',
+                    description: 'Provide comprehensive nursing care to patients in hospital setting. Work with modern medical equipment and advanced healthcare protocols.',
+                    skills: ['Patient Care', 'Medical Procedures', 'Emergency Response', 'Healthcare Management'],
+                    experience: '1-3 years',
+                    category: 'healthcare'
+                },
+                {
+                    job_id: 'health_002',
+                    title: 'Physiotherapist',
+                    company: 'Punjab Health Center',
+                    location: 'Ludhiana',
+                    type: 'Full-time',
+                    salary_min: 40000,
+                    salary_max: 60000,
+                    posted_date: '2024-11-13',
+                    description: 'Help patients recover and improve their physical mobility and function. Provide rehabilitation services using advanced therapy techniques.',
+                    skills: ['Physical Therapy', 'Rehabilitation', 'Exercise Programs', 'Patient Assessment'],
+                    experience: '2-4 years',
+                    category: 'healthcare'
+                },
+
+                // Education Jobs (90+)
+                {
+                    job_id: 'edu_001',
+                    title: 'Professor (Computer Science)',
+                    company: 'Punjab University',
+                    location: 'Chandigarh',
+                    type: 'Full-time',
+                    salary_min: 60000,
+                    salary_max: 120000,
+                    posted_date: '2024-11-12',
+                    description: 'Teach computer science courses and conduct research in emerging technologies. Mentor students and contribute to academic excellence.',
+                    skills: ['Teaching', 'Research', 'Programming', 'Academic Writing'],
+                    experience: 'PhD with 5+ years experience',
+                    category: 'education'
+                },
+                {
+                    job_id: 'edu_002',
+                    title: 'School Principal',
+                    company: 'Punjab Public School',
+                    location: 'Jalandhar',
+                    type: 'Full-time',
+                    salary_min: 55000,
+                    salary_max: 85000,
+                    posted_date: '2024-11-11',
+                    description: 'Lead school operations and ensure quality education delivery. Manage academic programs and foster student development.',
+                    skills: ['School Administration', 'Leadership', 'Educational Planning', 'Staff Management'],
+                    experience: 'M.Ed with 8+ years experience',
+                    category: 'education'
+                },
+
+                // Technology Jobs (200+)
+                {
+                    job_id: 'tech_001',
+                    title: 'DevOps Engineer',
+                    company: 'Tech Punjab Solutions',
+                    location: 'Mohali',
+                    type: 'Full-time',
+                    salary_min: 70000,
+                    salary_max: 110000,
+                    posted_date: '2024-11-10',
+                    description: 'Manage cloud infrastructure and implement automated deployment processes. Work with cutting-edge DevOps tools and practices.',
+                    skills: ['Docker', 'Kubernetes', 'AWS', 'CI/CD', 'Terraform'],
+                    experience: '3-5 years',
+                    category: 'technology'
+                },
+                {
+                    job_id: 'tech_002',
+                    title: 'Data Scientist',
+                    company: 'Punjab Analytics',
+                    location: 'Chandigarh',
+                    type: 'Full-time',
+                    salary_min: 75000,
+                    salary_max: 125000,
+                    posted_date: '2024-11-09',
+                    description: 'Extract insights from data to drive business decision making. Work with machine learning models and big data analytics.',
+                    skills: ['Python', 'Machine Learning', 'SQL', 'Statistics', 'TensorFlow'],
+                    experience: '2-4 years',
+                    category: 'technology'
+                },
+
+                // Manufacturing Jobs (110+)
+                {
+                    job_id: 'mfg_001',
+                    title: 'Production Manager',
+                    company: 'Punjab Manufacturing Ltd',
+                    location: 'Ludhiana',
+                    type: 'Full-time',
+                    salary_min: 55000,
+                    salary_max: 85000,
+                    posted_date: '2024-11-08',
+                    description: 'Oversee manufacturing operations and ensure production targets are met. Implement lean manufacturing and quality improvement processes.',
+                    skills: ['Production Planning', 'Quality Control', 'Team Management', 'Lean Manufacturing'],
+                    experience: '4-7 years',
+                    category: 'manufacturing'
+                },
+                {
+                    job_id: 'mfg_002',
+                    title: 'Quality Assurance Engineer',
+                    company: 'Punjab Industries',
+                    location: 'Amritsar',
+                    type: 'Full-time',
+                    salary_min: 40000,
+                    salary_max: 65000,
+                    posted_date: '2024-11-07',
+                    description: 'Ensure products meet quality standards and implement improvement processes. Work with ISO standards and quality management systems.',
+                    skills: ['Quality Testing', 'Process Improvement', 'Documentation', 'ISO Standards'],
+                    experience: '2-4 years',
+                    category: 'manufacturing'
+                },
+
+                // Retail Jobs (75+)
+                {
+                    job_id: 'retail_001',
+                    title: 'Store Manager',
+                    company: 'Punjab Retail Chain',
+                    location: 'Patiala',
+                    type: 'Full-time',
+                    salary_min: 35000,
+                    salary_max: 55000,
+                    posted_date: '2024-11-06',
+                    description: 'Manage store operations and ensure excellent customer experience. Lead retail team and drive sales performance.',
+                    skills: ['Retail Operations', 'Customer Service', 'Inventory Management', 'Team Leadership'],
+                    experience: '3-5 years',
+                    category: 'retail'
+                },
+                {
+                    job_id: 'retail_002',
+                    title: 'Sales Associate',
+                    company: 'Punjab Shopping Center',
+                    location: 'Jalandhar',
+                    type: 'Full-time',
+                    salary_min: 25000,
+                    salary_max: 40000,
+                    posted_date: '2024-11-05',
+                    description: 'Assist customers with purchases and maintain store presentation. Provide excellent customer service and product knowledge.',
+                    skills: ['Customer Service', 'Sales', 'Product Knowledge', 'Communication'],
+                    experience: '0-2 years',
+                    category: 'retail'
+                }
+            ];
+        }
+
+        function renderJobs() {
+            const startIndex = (currentPage - 1) * jobsPerPage;
+            const endIndex = startIndex + jobsPerPage;
+            const currentJobs = filteredJobs.slice(startIndex, endIndex);
+
+            const resultsCount = document.getElementById('resultsCount');
+            resultsCount.textContent = `${filteredJobs.length} jobs found`;
+
+            const jobsList = document.getElementById('jobsList');
+            
+            if (currentJobs.length === 0) {
+                jobsList.innerHTML = `
+                    <div style="padding: 2rem; text-align: center; color: #666;">
+                        <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                        <p>No jobs found matching your criteria.</p>
+                        <p style="margin-top: 0.5rem; font-size: 0.875rem;">Try adjusting your filters or search terms.</p>
+                    </div>
+                `;
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+
+            jobsList.innerHTML = currentJobs.map(job => {
+                const postedDate = new Date(job.posted_date).toLocaleDateString();
+                return `
+                    <div class="job-item" onclick="viewJob('${job.job_id}')">
+                        <div class="job-header">
+                            <div>
+                                <div class="job-title">${job.title}</div>
+                                <div class="job-company">${job.company}</div>
+                                <div class="job-location"><i class="fas fa-map-marker-alt"></i> ${job.location}</div>
+                            </div>
+                            <div class="job-actions">
+                                <button class="btn btn-outline" onclick="event.stopPropagation(); saveJob('${job.job_id}')">
+                                    <i class="fas fa-bookmark"></i> Save
+                                </button>
+                                <button class="btn btn-primary" onclick="event.stopPropagation(); applyToJob('${job.job_id}')">
+                                    <i class="fas fa-paper-plane"></i> Apply
+                                </button>
+                            </div>
+                        </div>
+                        <div class="job-details">
+                            <div class="job-detail">
+                                <i class="fas fa-briefcase"></i>
+                                ${job.type}
+                            </div>
+                            <div class="job-detail">
+                                <i class="fas fa-rupee-sign"></i>
+                                ₹${job.salary_min.toLocaleString()} - ₹${job.salary_max.toLocaleString()}/month
+                            </div>
+                            <div class="job-detail">
+                                <i class="fas fa-clock"></i>
+                                ${job.experience}
+                            </div>
+                            <div class="job-detail">
+                                <i class="fas fa-calendar"></i>
+                                Posted ${postedDate}
+                            </div>
+                        </div>
+                        <div class="job-description">${job.description}</div>
+                        <div class="job-tags">
+                            ${job.skills.map(skill => `<span class="job-tag">${skill}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            renderPagination();
+        }
+
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
+            const pagination = document.getElementById('pagination');
+
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+            
+            // Previous button
+            if (currentPage > 1) {
+                paginationHTML += `<button onclick="changePage(${currentPage - 1})">Previous</button>`;
+            }
+
+            // Page numbers
+            for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+                paginationHTML += `<button onclick="changePage(${i})" ${i === currentPage ? 'class="active"' : ''}>${i}</button>`;
+            }
+
+            // Next button
+            if (currentPage < totalPages) {
+                paginationHTML += `<button onclick="changePage(${currentPage + 1})">Next</button>`;
+            }
+
+            pagination.innerHTML = paginationHTML;
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            renderJobs();
+            document.querySelector('.results-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function searchJobs() {
+            const title = document.getElementById('jobTitle').value.toLowerCase();
+            const location = document.getElementById('location').value.toLowerCase();
+            const category = document.getElementById('category').value.toLowerCase();
+
+            // Track search
+            if (typeof trackEvent === 'function') {
+                trackEvent('Job Search Performed', {
+                    search_title: title,
+                    search_location: location,
+                    search_category: category
+                });
+            }
+
+            filteredJobs = allJobs.filter(job => {
+                const matchesTitle = !title || job.title.toLowerCase().includes(title) || 
+                                   job.description.toLowerCase().includes(title);
+                const matchesLocation = !location || job.location.toLowerCase().includes(location);
+                const matchesCategory = !category || job.category === category;
+
+                return matchesTitle && matchesLocation && matchesCategory;
+            });
+
+            currentPage = 1;
+            renderJobs();
+        }
+
+        function applyFilters() {
+            // Get filter values
+            const jobTypes = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+                               .map(cb => cb.value);
+            
+            const salaryMin = parseInt(document.getElementById('salaryMin').value) || 0;
+            const salaryMax = parseInt(document.getElementById('salaryMax').value) || Infinity;
+
+            // Apply filters
+            searchJobs(); // Apply search first
+            
+            filteredJobs = filteredJobs.filter(job => {
+                const matchesSalary = job.salary_min >= salaryMin && job.salary_max <= salaryMax;
+                // Add more filter logic as needed
+                
+                return matchesSalary;
+            });
+
+            currentPage = 1;
+            renderJobs();
+
+            // Track filter usage
+            if (typeof trackEvent === 'function') {
+                trackEvent('Job Filters Applied', {
+                    filters_count: jobTypes.length,
+                    salary_range: `${salaryMin}-${salaryMax}`
+                });
+            }
+        }
+
+        function sortJobs(sortBy) {
+            switch (sortBy) {
+                case 'date':
+                    filteredJobs.sort((a, b) => new Date(b.posted_date) - new Date(a.posted_date));
+                    break;
+                case 'salary_high':
+                    filteredJobs.sort((a, b) => b.salary_max - a.salary_max);
+                    break;
+                case 'salary_low':
+                    filteredJobs.sort((a, b) => a.salary_min - b.salary_min);
+                    break;
+                case 'company':
+                    filteredJobs.sort((a, b) => a.company.localeCompare(b.company));
+                    break;
+                default:
+                    // relevance - keep original order
+                    break;
+            }
+
+            currentPage = 1;
+            renderJobs();
+
+            // Track sorting
+            if (typeof trackEvent === 'function') {
+                trackEvent('Job Results Sorted', {
+                    sort_type: sortBy
+                });
+            }
+        }
+
+        function viewJob(jobId) {
+            // Track job view
+            if (typeof trackEvent === 'function') {
+                trackEvent('Job Details Clicked', {
+                    job_id: jobId,
+                    source: 'job_search'
+                });
+            }
+            
+            window.location.href = `detail.html?id=${jobId}`;
+        }
+
+        function saveJob(jobId) {
+            // Track save action
+            if (typeof trackEvent === 'function') {
+                trackEvent('Job Saved', {
+                    job_id: jobId,
+                    source: 'job_search'
+                });
+            }
+
+            alert('Job saved to your saved jobs list!');
+        }
+
+        function applyToJob(jobId) {
+            // Track apply action
+            if (typeof trackEvent === 'function') {
+                trackEvent('Job Application Started', {
+                    job_id: jobId,
+                    source: 'job_search'
+                });
+            }
+
+            window.location.href = `apply.html?id=${jobId}`;
+        }
+    </script>
+</body>
+</html>

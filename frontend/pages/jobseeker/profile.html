@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - Punjab Rozgar Portal</title>
+    
+    <!-- Punjab Rozgar Authentication -->
+    <script src="../../js/auth.js" onerror="console.log('Auth.js failed to load')"></script>
+    <!-- Punjab Rozgar Analytics -->
+    <script src="../../js/punjab-analytics.js" onerror="console.log('Analytics.js failed to load')"></script>
+    
+    <!-- Fallback analytics if main fails -->
+    <script>
+        if (typeof PunjabRozgarAnalytics === 'undefined') {
+            console.log('Creating fallback analytics');
+            window.trackEvent = function(name, props) { console.log('Track:', name, props); };
+            window.punjabAnalytics = { track: window.trackEvent };
+        }
+    </script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+        }
+
+        .sidebar-header {
+            padding: 0 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-header p {
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 2rem;
+            color: white;
+            text-decoration: none;
+            transition: background 0.3s ease;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .logout-btn {
+            position: absolute;
+            bottom: 2rem;
+            left: 2rem;
+            right: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+        }
+
+        .page-header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            animation: slideInDown 0.6s ease;
+        }
+
+        .page-header:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-header p {
+            color: #666;
+        }
+
+        .edit-btn {
+            background: #667eea;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background 0.3s ease;
+        }
+
+        .edit-btn:hover {
+            background: #5a6fd8;
+        }
+
+        /* Profile Grid */
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .profile-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .profile-main {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .profile-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-avatar {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .profile-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-title {
+            color: #667eea;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-location {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .info-item {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .info-label {
+            font-size: 0.875rem;
+            color: #666;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .skills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .skill-tag {
+            background: #667eea;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.875rem;
+        }
+
+        .experience-item {
+            border-left: 3px solid #667eea;
+            padding: 1rem 0 1rem 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .experience-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .experience-company {
+            color: #667eea;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .experience-duration {
+            color: #666;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .experience-description {
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                position: relative;
+            }
+
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animation Keyframes */
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Section Animations */
+        .profile-section {
+            animation: slideInLeft 0.6s ease;
+            transition: all 0.3s ease;
+        }
+
+        .profile-section:nth-child(even) {
+            animation: slideInRight 0.6s ease;
+        }
+
+        .profile-section:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Experience Item Animations */
+        .experience-item {
+            transition: all 0.3s ease;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .experience-item:nth-child(2) { animation-delay: 0.2s; }
+        .experience-item:nth-child(3) { animation-delay: 0.4s; }
+
+        .experience-item:hover {
+            transform: translateX(10px);
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+        }
+
+        /* Skill Tags Animation */
+        .skill-tag {
+            transition: all 0.3s ease;
+        }
+
+        .skill-tag:hover {
+            transform: scale(1.1) rotate(2deg);
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // Initialize page authentication
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('Profile page loaded, skipping auth check for testing');
+        });
+    </script>
+    
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Job Seeker Panel</h2>
+                <p>Punjab Rozgar Portal</p>
+            </div>
+            
+            <nav>
+                <ul class="sidebar-nav">
+                    <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="../jobs/browse.html"><i class="fas fa-search"></i> Browse Jobs</a></li>
+                    <li><a href="applications.html"><i class="fas fa-file-alt"></i> My Applications</a></li>
+                    <li><a href="saved-jobs.html"><i class="fas fa-bookmark"></i> Saved Jobs</a></li>
+                    <li><a href="profile.html" class="active"><i class="fas fa-user"></i> My Profile</a></li>
+                    <li><a href="resume.html"><i class="fas fa-file-pdf"></i> Resume</a></li>
+                    <li><a href="job-alerts.html"><i class="fas fa-bell"></i> Job Alerts</a></li>
+                    <li><a href="../../index.html"><i class="fas fa-home"></i> Back to Portal</a></li>
+                </ul>
+            </nav>
+            
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Quick Access for Testing -->
+            <div style="background: #fff3cd; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #ffc107;">
+                <strong>Quick Access:</strong> 
+                <button onclick="setTestJobSeeker(); location.reload();" 
+                        style="background: #ffc107; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; margin-left: 0.5rem;">
+                    Set JobSeeker Access
+                </button>
+                <span style="font-size: 0.85rem; color: #856404; margin-left: 1rem;">
+                    (Testing only - remove in production)
+                </span>
+            </div>
+        
+            <!-- Page Header -->
+            <div class="page-header">
+                <div>
+                    <h1>My Profile</h1>
+                    <p>Manage your professional profile and showcase your skills</p>
+                </div>
+                <a href="../profile/edit.html" class="edit-btn">
+                    <i class="fas fa-edit"></i> Edit Profile
+                </a>
+            </div>
+
+            <!-- Profile Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="profileViews">42</div>
+                    <div class="stat-label">Profile Views</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="applicationsSent">8</div>
+                    <div class="stat-label">Applications Sent</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="savedJobs">15</div>
+                    <div class="stat-label">Saved Jobs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="completionRate">85%</div>
+                    <div class="stat-label">Profile Complete</div>
+                </div>
+            </div>
+
+            <!-- Profile Grid -->
+            <div class="profile-grid">
+                <!-- Profile Sidebar -->
+                <div class="profile-sidebar">
+                    <!-- Basic Info -->
+                    <div class="profile-card">
+                        <div class="profile-avatar">
+                            <div class="avatar" id="userAvatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="profile-name" id="userName">Loading...</div>
+                            <div class="profile-title" id="userTitle">Job Seeker</div>
+                            <div class="profile-location" id="userLocation">Punjab, India</div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Info -->
+                    <div class="profile-card">
+                        <h3 class="section-title">Contact Information</h3>
+                        <div class="info-item">
+                            <div class="info-label">Email</div>
+                            <div class="info-value" id="userEmail">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Phone</div>
+                            <div class="info-value" id="userPhone">+91 98765-43210</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">LinkedIn</div>
+                            <div class="info-value" id="userLinkedin">linkedin.com/in/jobseeker</div>
+                        </div>
+                    </div>
+
+                    <!-- Skills -->
+                    <div class="profile-card">
+                        <h3 class="section-title">Skills</h3>
+                        <div class="skills-container" id="userSkills">
+                            <!-- Skills will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Main -->
+                <div class="profile-main">
+                    <!-- Professional Summary -->
+                    <div class="profile-card">
+                        <h3 class="section-title">Professional Summary</h3>
+                        <p id="userSummary">
+                            Experienced software developer with a strong background in full-stack development. 
+                            Passionate about creating innovative solutions and working with cutting-edge technologies. 
+                            Seeking opportunities to contribute to dynamic teams and grow professionally.
+                        </p>
+                    </div>
+
+                    <!-- Experience -->
+                    <div class="profile-card">
+                        <h3 class="section-title">Work Experience</h3>
+                        <div id="userExperience">
+                            <!-- Experience will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Education -->
+                    <div class="profile-card">
+                        <h3 class="section-title">Education</h3>
+                        <div id="userEducation">
+                            <!-- Education will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Certifications -->
+                    <div class="profile-card">
+                        <h3 class="section-title">Certifications</h3>
+                        <div id="userCertifications">
+                            <!-- Certifications will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Helper functions
+        function setTestJobSeeker() {
+            if (typeof authManager !== 'undefined' && authManager.setTestAdminUser) {
+                const testJobSeeker = {
+                    id: 3,
+                    user_id: 'jobseeker_test_user',
+                    email: 'jobseeker@example.com',
+                    name: 'Rajesh Kumar',
+                    role: 'job_seeker',
+                    profile: { 
+                        title: 'Senior Full Stack Developer',
+                        skills: ['JavaScript', 'React.js', 'Node.js', 'Python', 'MongoDB', 'Express.js', 'PostgreSQL', 'Docker', 'AWS', 'Git/GitHub', 'REST APIs', 'GraphQL', 'TypeScript', 'Redux', 'Material-UI', 'Bootstrap', 'Jest', 'Cypress', 'CI/CD', 'Linux', 'Redis', 'Kubernetes', 'Jenkins', 'Webpack'],
+                        experience_years: 4,
+                        location: 'Chandigarh, Punjab',
+                        education: 'B.Tech Computer Science Engineering',
+                        phone: '+91-98765-43210',
+                        email: 'rajesh.kumar@punjabrozgar.com',
+                        linkedin: 'linkedin.com/in/rajesh-kumar-punjab',
+                        github: 'github.com/rajesh-kumar-dev',
+                        portfolio: 'rajeshkumar-portfolio.com'
+                    }
+                };
+                authManager.setCurrentUser(testJobSeeker, false);
+            } else {
+                console.log('Setting test job seeker access');
+                localStorage.setItem('testJobSeeker', 'true');
+            }
+        }
+
+        function logout() {
+            if (typeof authManager !== 'undefined' && authManager.logout) {
+                authManager.logout();
+            } else {
+                localStorage.removeItem('testJobSeeker');
+                window.location.href = '../../index.html';
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                if (typeof authManager === 'undefined') {
+                    console.log('authManager not found, creating fallback');
+                    window.authManager = {
+                        isLoggedIn: () => true,
+                        isJobSeeker: () => true,
+                        getCurrentUser: () => ({ 
+                            name: 'Rajesh Kumar', 
+                            email: 'rajesh.kumar@example.com',
+                            profile: {
+                                title: 'Full Stack Developer',
+                                skills: ['JavaScript', 'React', 'Node.js', 'Python', 'MongoDB'],
+                                location: 'Chandigarh, Punjab'
+                            }
+                        }),
+                        setTestAdminUser: setTestJobSeeker,
+                        apiBaseUrl: 'http://192.168.1.16:8000/api/v1',
+                        getAuthHeaders: () => ({ 'Content-Type': 'application/json' }),
+                        logout: logout
+                    };
+                }
+                initializeProfile();
+            }, 500);
+        });
+
+        function initializeProfile() {
+            // Track page view
+            if (typeof trackEvent === 'function') {
+                trackEvent('Profile Page Viewed', {
+                    page_type: 'jobseeker_profile'
+                });
+            }
+
+            loadUserProfile();
+            loadProfileStats();
+        }
+
+        function loadUserProfile() {
+            try {
+                const user = authManager.getCurrentUser();
+                
+                // Update basic info
+                if (user && user.name) {
+                    document.getElementById('userName').textContent = user.name;
+                    
+                    // Set avatar initials
+                    const avatar = document.getElementById('userAvatar');
+                    const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                    avatar.textContent = initials;
+                }
+
+                if (user && user.email) {
+                    document.getElementById('userEmail').textContent = user.email;
+                }
+
+                if (user && user.profile) {
+                    if (user.profile.title) {
+                        document.getElementById('userTitle').textContent = user.profile.title;
+                    }
+                    if (user.profile.location) {
+                        document.getElementById('userLocation').textContent = user.profile.location;
+                    }
+                    if (user.profile.skills) {
+                        const skillsContainer = document.getElementById('userSkills');
+                        skillsContainer.innerHTML = user.profile.skills.map(skill => 
+                            `<span class="skill-tag">${skill}</span>`
+                        ).join('');
+                    }
+                }
+
+                loadMockProfileData();
+
+            } catch (error) {
+                console.error('Error loading user profile:', error);
+                loadMockProfileData();
+            }
+        }
+
+        function loadMockProfileData() {
+            // Load mock experience
+            const experienceContainer = document.getElementById('userExperience');
+            const mockExperience = [
+                {
+                    title: 'Senior Full Stack Developer',
+                    company: 'TechCorp Solutions Chandigarh',
+                    duration: 'Jan 2022 - Present (2+ years)',
+                    description: 'Led development of enterprise web applications using React, Node.js, and MongoDB. Managed team of 5 developers, implemented CI/CD pipelines, and improved system performance by 40%.'
+                },
+                {
+                    title: 'Software Developer',
+                    company: 'Digital Innovations Mohali',
+                    duration: 'Jun 2020 - Dec 2021 (1.5 years)',
+                    description: 'Developed responsive web applications and REST APIs. Collaborated with UI/UX teams to create user-friendly interfaces. Reduced application load time by 30% through optimization.'
+                },
+                {
+                    title: 'Junior Developer',
+                    company: 'StartupHub Ludhiana',
+                    duration: 'Jan 2020 - May 2020 (5 months)',
+                    description: 'Built features for e-commerce platform using JavaScript and Python. Participated in agile development processes and code reviews.'
+                }
+            ];
+
+            experienceContainer.innerHTML = mockExperience.map(exp => `
+                <div class="experience-item">
+                    <div class="experience-title">${exp.title}</div>
+                    <div class="experience-company">${exp.company}</div>
+                    <div class="experience-duration">${exp.duration}</div>
+                    <div class="experience-description">${exp.description}</div>
+                </div>
+            `).join('');
+
+            // Load mock education
+            const educationContainer = document.getElementById('userEducation');
+            const mockEducation = [
+                {
+                    degree: 'Bachelor of Technology in Computer Science',
+                    institution: 'Punjab Engineering College',
+                    duration: '2016 - 2020',
+                    grade: 'CGPA: 8.5/10'
+                }
+            ];
+
+            educationContainer.innerHTML = mockEducation.map(edu => `
+                <div class="experience-item">
+                    <div class="experience-title">${edu.degree}</div>
+                    <div class="experience-company">${edu.institution}</div>
+                    <div class="experience-duration">${edu.duration}</div>
+                    <div class="experience-description">${edu.grade}</div>
+                </div>
+            `).join('');
+
+            // Load mock certifications
+            const certificationsContainer = document.getElementById('userCertifications');
+            const mockCertifications = [
+                'AWS Certified Developer',
+                'React Developer Certification',
+                'MongoDB Certified Developer',
+                'Google Analytics Certified'
+            ];
+
+            certificationsContainer.innerHTML = mockCertifications.map(cert => `
+                <div class="info-item">
+                    <div class="info-value"><i class="fas fa-certificate" style="color: #667eea; margin-right: 0.5rem;"></i>${cert}</div>
+                </div>
+            `).join('');
+        }
+
+        function loadProfileStats() {
+            // Mock profile statistics
+            const stats = {
+                profileViews: Math.floor(Math.random() * 50) + 20,
+                applicationsSent: Math.floor(Math.random() * 15) + 5,
+                savedJobs: Math.floor(Math.random() * 25) + 10,
+                completionRate: Math.floor(Math.random() * 20) + 80
+            };
+
+            document.getElementById('profileViews').textContent = stats.profileViews;
+            document.getElementById('applicationsSent').textContent = stats.applicationsSent;
+            document.getElementById('savedJobs').textContent = stats.savedJobs;
+            document.getElementById('completionRate').textContent = stats.completionRate + '%';
+        }
+    </script>
+</body>
+</html>

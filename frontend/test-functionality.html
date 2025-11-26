@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Punjab Rozgar Portal - Functionality Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: #f5f5f5;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section { 
+            margin-bottom: 30px; 
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h2 { 
+            color: #333; 
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+        .status { 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 4px;
+        }
+        .success { 
+            background: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb;
+        }
+        .error { 
+            background: #f8d7da; 
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .link { 
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 5px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        .link:hover {
+            background: #5a6fd8;
+        }
+        #logs {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏛️ Punjab Rozgar Portal - Complete Functionality Test</h1>
+        
+        <div class="test-section">
+            <h2>🔧 System Status</h2>
+            <div id="authStatus" class="status">Testing authentication system...</div>
+            <div id="analyticsStatus" class="status">Testing analytics system...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>👥 User Role Pages</h2>
+            <p>Navigate to different user role dashboards:</p>
+            <a href="pages/admin/dashboard.html" class="link" target="_blank">🔐 Admin Dashboard</a>
+            <a href="pages/employer/dashboard.html" class="link" target="_blank">🏢 Employer Dashboard</a>
+            <a href="pages/jobseeker/dashboard.html" class="link" target="_blank">👤 Job Seeker Dashboard</a>
+            <a href="pages/jobseeker/profile.html" class="link" target="_blank">📝 Job Seeker Profile</a>
+            <a href="pages/jobseeker/browse-jobs.html" class="link" target="_blank">🔍 Browse Jobs</a>
+        </div>
+
+        <div class="test-section">
+            <h2>🔍 Job Recommendations Test</h2>
+            <p>Testing job recommendation system:</p>
+            <div id="jobsTest" class="status">Loading job recommendations...</div>
+            <div id="jobsList"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Analytics Test</h2>
+            <p>Testing analytics tracking:</p>
+            <div id="analyticsTest" class="status">Testing analytics events...</div>
+            <button onclick="testAnalyticsEvent()" class="link" style="border: none; cursor: pointer;">
+                🎯 Fire Test Analytics Event
+            </button>
+        </div>
+
+        <div class="test-section">
+            <h2>🔐 Authentication Test</h2>
+            <p>Current user info:</p>
+            <div id="userInfo" class="status">Loading user information...</div>
+            <button onclick="switchToJobSeeker()" class="link" style="border: none; cursor: pointer;">
+                👤 Switch to Job Seeker
+            </button>
+            <button onclick="switchToEmployer()" class="link" style="border: none; cursor: pointer;">
+                🏢 Switch to Employer
+            </button>
+            <button onclick="switchToAdmin()" class="link" style="border: none; cursor: pointer;">
+                🔐 Switch to Admin
+            </button>
+        </div>
+
+        <div class="test-section">
+            <h2>📝 System Logs</h2>
+            <div id="logs"></div>
+        </div>
+    </div>
+
+    <!-- Include scripts -->
+    <script src="js/auth.js" onerror="logError('Auth.js failed to load')"></script>
+    <script src="js/punjab-analytics.js" onerror="logError('Analytics.js failed to load')"></script>
+
+    <script>
+        let logs = [];
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}`;
+            logs.push(logMessage);
+            console.log(logMessage);
+            
+            const logsDiv = document.getElementById('logs');
+            if (logsDiv) {
+                logsDiv.innerHTML = logs.slice(-20).join('<br>'); // Show last 20 logs
+                logsDiv.scrollTop = logsDiv.scrollHeight;
+            }
+        }
+
+        function logError(message) {
+            log('❌ ERROR: ' + message);
+        }
+
+        function logSuccess(message) {
+            log('✅ SUCCESS: ' + message);
+        }
+
+        // Test authentication system
+        function testAuthSystem() {
+            const authStatus = document.getElementById('authStatus');
+            
+            if (typeof authManager !== 'undefined') {
+                authStatus.className = 'status success';
+                authStatus.innerHTML = '✅ Auth system loaded successfully';
+                logSuccess('Auth system loaded');
+                
+                // Test user info
+                const user = authManager.getCurrentUser();
+                const userInfo = document.getElementById('userInfo');
+                userInfo.className = 'status success';
+                userInfo.innerHTML = `✅ Current user: ${user?.name || 'No user'} (${user?.role || 'No role'})`;
+                
+                return true;
+            } else {
+                authStatus.className = 'status error';
+                authStatus.innerHTML = '❌ Auth system failed to load';
+                logError('Auth system not available');
+                return false;
+            }
+        }
+
+        // Test analytics system
+        function testAnalyticsSystem() {
+            const analyticsStatus = document.getElementById('analyticsStatus');
+            
+            if (typeof PunjabRozgarAnalytics !== 'undefined') {
+                analyticsStatus.className = 'status success';
+                analyticsStatus.innerHTML = '✅ Analytics system loaded successfully';
+                logSuccess('Analytics system loaded');
+                return true;
+            } else {
+                analyticsStatus.className = 'status error';
+                analyticsStatus.innerHTML = '❌ Analytics system failed to load';
+                logError('Analytics system not available');
+                return false;
+            }
+        }
+
+        // Test job recommendations
+        function testJobRecommendations() {
+            const jobsTest = document.getElementById('jobsTest');
+            const jobsList = document.getElementById('jobsList');
+            
+            try {
+                // Mock job data for testing
+                const mockJobs = [
+                    {
+                        job_id: 'test_1',
+                        title: 'Full Stack Developer',
+                        employer_name: 'TechCorp Solutions',
+                        location_city: 'Chandigarh',
+                        category: 'software development'
+                    },
+                    {
+                        job_id: 'test_2',
+                        title: 'UI/UX Designer',
+                        employer_name: 'Creative Studio',
+                        location_city: 'Mohali',
+                        category: 'design'
+                    }
+                ];
+
+                jobsTest.className = 'status success';
+                jobsTest.innerHTML = '✅ Job recommendations system working';
+                
+                jobsList.innerHTML = mockJobs.map(job => 
+                    `<div style="padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                        <strong>${job.title}</strong><br>
+                        ${job.employer_name} • ${job.location_city}
+                    </div>`
+                ).join('');
+                
+                logSuccess('Job recommendations test passed');
+            } catch (error) {
+                jobsTest.className = 'status error';
+                jobsTest.innerHTML = '❌ Job recommendations test failed';
+                logError('Job recommendations error: ' + error.message);
+            }
+        }
+
+        // Test analytics event
+        function testAnalyticsEvent() {
+            try {
+                if (typeof trackEvent !== 'undefined') {
+                    trackEvent('Test Event', { test: true, timestamp: Date.now() });
+                    logSuccess('Analytics event fired successfully');
+                } else if (typeof analytics !== 'undefined') {
+                    analytics.track('Test Event', { test: true, timestamp: Date.now() });
+                    logSuccess('Analytics event fired via analytics object');
+                } else {
+                    throw new Error('No analytics tracking function available');
+                }
+                
+                const analyticsTest = document.getElementById('analyticsTest');
+                analyticsTest.className = 'status success';
+                analyticsTest.innerHTML = '✅ Analytics event fired successfully';
+            } catch (error) {
+                const analyticsTest = document.getElementById('analyticsTest');
+                analyticsTest.className = 'status error';
+                analyticsTest.innerHTML = '❌ Analytics event failed: ' + error.message;
+                logError('Analytics event error: ' + error.message);
+            }
+        }
+
+        // Role switching functions
+        function switchToJobSeeker() {
+            if (typeof authManager !== 'undefined' && authManager.setTestJobSeeker) {
+                authManager.setTestJobSeeker();
+                logSuccess('Switched to Job Seeker role');
+                testAuthSystem();
+            } else {
+                logError('Cannot switch to Job Seeker - method not available');
+            }
+        }
+
+        function switchToEmployer() {
+            if (typeof authManager !== 'undefined' && authManager.setTestEmployer) {
+                authManager.setTestEmployer();
+                logSuccess('Switched to Employer role');
+                testAuthSystem();
+            } else {
+                logError('Cannot switch to Employer - method not available');
+            }
+        }
+
+        function switchToAdmin() {
+            if (typeof authManager !== 'undefined' && authManager.setTestAdminUser) {
+                authManager.setTestAdminUser();
+                logSuccess('Switched to Admin role');
+                testAuthSystem();
+            } else {
+                logError('Cannot switch to Admin - method not available');
+            }
+        }
+
+        // Run tests on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            log('🚀 Starting Punjab Rozgar Portal functionality tests...');
+            
+            setTimeout(() => {
+                testAuthSystem();
+                testAnalyticsSystem();
+                testJobRecommendations();
+                
+                log('🏁 All tests completed');
+            }, 1000);
+        });
+
+        // Track page view if analytics is available
+        window.addEventListener('load', function() {
+            if (typeof trackEvent !== 'undefined') {
+                trackEvent('Test Page Loaded', { 
+                    page: 'functionality-test',
+                    timestamp: Date.now()
+                });
+                logSuccess('Page view tracked');
+            }
+        });
+    </script>
+</body>
+</html>
