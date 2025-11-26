@@ -344,6 +344,98 @@ async def list_users_for_admin(
     
     return user_responses
 
+# Special endpoint for initial admin setup (no auth required for first admin)
+@router.post("/initial-admin-setup")
+async def initial_admin_setup(
+    email: str,
+    session: AsyncSession = Depends(get_database)
+):
+    """
+    Promote first user to admin (for initial setup only)
+    This endpoint works only if no admin users exist
+    """
+    # Check if any admin users already exist
+    existing_admin_result = await session.execute(
+        select(User).where(User.role == UserRole.ADMIN)
+    )
+    existing_admin = existing_admin_result.scalar_one_or_none()
+    
+    if existing_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin users already exist. Use regular promotion endpoint."
+        )
+    
+    # Find user by email
+    user_result = await session.execute(select(User).where(User.email == email))
+    user = user_result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User not found: {email}"
+        )
+    
+    # Promote to admin
+    user.role = UserRole.ADMIN
+    user.updated_at = datetime.utcnow()
+    await session.commit()
+    
+    return {
+        "success": True,
+        "message": f"User {email} promoted to admin",
+        "user_id": user.user_id,
+        "role": user.role.value
+    }
+
+@router.post("/users/{user_id}/promote")
+async def promote_user_to_admin(
+    user_id: str,
+    session: AsyncSession = Depends(get_database),
+    current_admin: User = Depends(get_current_admin)
+):
+    """Promote a user to admin role (requires admin auth)"""
+    
+    # Find user
+    user_result = await session.execute(select(User).where(User.user_id == user_id))
+    user = user_result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    if user.role == UserRole.ADMIN:
+        return {
+            "success": True,
+            "message": f"User is already an admin",
+            "user_id": user.user_id,
+            "role": user.role.value
+        }
+    
+    # Promote to admin
+    user.role = UserRole.ADMIN
+    user.updated_at = datetime.utcnow()
+    await session.commit()
+    
+    # Log admin action
+    await log_admin_action(
+        session=session,
+        admin_id=current_admin.user_id,
+        action_type="PROMOTE_USER",
+        target_type="user",
+        target_id=user.user_id,
+        description=f"Promoted {user.email} to admin role"
+    )
+    
+    return {
+        "success": True,
+        "message": f"User {user.email} promoted to admin",
+        "user_id": user.user_id,
+        "role": user.role.value
+    }
+
 @router.put("/users/{user_id}/status")
 async def update_user_status(
     user_id: str,
@@ -392,6 +484,106 @@ async def update_user_status(
     )
     
     return {"message": "User status updated successfully"}
+
+@router.put("/users/{user_id}/promote-admin")
+async def promote_user_to_admin(
+    user_id: str,
+    session: AsyncSession = Depends(get_database),
+    current_admin: User = Depends(get_current_admin)
+):
+    """Promote a user to admin role (requires admin access)"""
+    analytics = get_analytics_tracker()
+    
+    # Get target user
+    user_result = await session.execute(select(User).where(User.user_id == user_id))
+    user = user_result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user.role == UserRole.ADMIN:
+        return {"message": "User is already an admin", "user_id": user_id, "role": "admin"}
+    
+    # Update user role to admin
+    previous_role = user.role.value
+    user.role = UserRole.ADMIN
+    user.updated_at = datetime.utcnow()
+    await session.commit()
+    
+    # Log admin action
+    await log_admin_action(
+        session=session,
+        admin_id=current_admin.user_id,
+        action_type="user_promote",
+        target_type="user",
+        target_id=user_id,
+        description=f"Promoted user from {previous_role} to admin"
+    )
+    
+    # Track analytics
+    await analytics.track_event(
+        user_id=current_admin.id,
+        event_name="admin_user_promoted",
+        properties={
+            "target_user_id": user_id,
+            "previous_role": previous_role,
+            "new_role": "admin"
+        }
+    )
+    
+    return {
+        "message": f"User promoted to admin successfully",
+        "user_id": user_id,
+        "previous_role": previous_role,
+        "new_role": "admin"
+    }
+
+@router.post("/setup/initial-admin")
+async def create_initial_admin(
+    session: AsyncSession = Depends(get_database)
+):
+    """Special endpoint to promote the first admin - no auth required for initial setup"""
+    
+    # Check if any admin exists
+    admin_result = await session.execute(
+        select(User).where(User.role == UserRole.ADMIN)
+    )
+    existing_admin = admin_result.scalar_one_or_none()
+    
+    if existing_admin:
+        raise HTTPException(
+            status_code=400, 
+            detail="Admin already exists. Use the regular promotion endpoint."
+        )
+    
+    # Find the admin@punjabrozgar.gov.pk user
+    user_result = await session.execute(
+        select(User).where(User.email == "admin@punjabrozgar.gov.pk")
+    )
+    user = user_result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(
+            status_code=404, 
+            detail="Admin user admin@punjabrozgar.gov.pk not found"
+        )
+    
+    if user.role == UserRole.ADMIN:
+        return {"message": "User is already an admin", "email": user.email, "role": "admin"}
+    
+    # Update user role to admin
+    previous_role = user.role.value
+    user.role = UserRole.ADMIN
+    user.updated_at = datetime.utcnow()
+    await session.commit()
+    
+    return {
+        "message": f"Initial admin promoted successfully",
+        "email": user.email,
+        "user_id": user.user_id,
+        "previous_role": previous_role,
+        "new_role": "admin"
+    }
 
 @router.get("/jobs", response_model=List[JobManagementResponse])
 async def list_jobs_for_admin(
