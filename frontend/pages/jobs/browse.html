@@ -431,6 +431,32 @@
 
         // Initialize jobs on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Restrict access to job seekers only
+            if (typeof authManager !== 'undefined') {
+                if (!authManager.isLoggedIn()) {
+                    alert('Please login to browse jobs');
+                    window.location.href = '/pages/auth/login.html';
+                    return;
+                }
+                
+                const user = authManager.getCurrentUser();
+                if (user && user.role !== 'job_seeker') {
+                    alert('Job browsing is only available for job seekers');
+                    // Redirect to appropriate dashboard based on role
+                    switch(user.role) {
+                        case 'admin':
+                            window.location.href = '/pages/admin/dashboard.html';
+                            break;
+                        case 'employer':
+                            window.location.href = '/pages/employer/dashboard.html';
+                            break;
+                        default:
+                            window.location.href = '/index.html';
+                    }
+                    return;
+                }
+            }
+            
             loadJobsFromApi();
         });
 

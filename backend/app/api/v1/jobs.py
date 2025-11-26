@@ -190,6 +190,65 @@ async def create_job_alias(
 ):
     return await create_job(job_data, session, current_user, analytics)
 
+@router.put("/{job_id}/publish")
+async def publish_job(
+    job_id: str,
+    session: AsyncSession = Depends(get_database),
+    current_user: User = Depends(get_current_user),
+    analytics = Depends(get_analytics_tracker)
+):
+    """
+    Publish a draft job for admin approval
+    Employers use this to submit jobs for review
+    """
+    # Verify user can access this job
+    job_result = await session.execute(
+        select(Job).where(
+            and_(
+                Job.job_id == job_id,
+                Job.employer_id == current_user.id
+            )
+        )
+    )
+    job = job_result.scalar_one_or_none()
+    
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found or you don't have permission to modify it"
+        )
+    
+    if job.status != JobStatus.DRAFT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Job must be in draft status to publish. Current status: {job.status.value}"
+        )
+    
+    # Set to pending approval instead of active
+    job.status = JobStatus.PENDING_APPROVAL
+    job.updated_at = datetime.utcnow()
+    # Don't set published_at yet - that happens when admin approves
+    
+    await session.commit()
+    
+    # Track analytics
+    await analytics.track_event(
+        user_id=current_user.user_id,
+        event_name="job_submitted_for_approval",
+        properties={
+            "job_id": job.job_id,
+            "job_title": job.title,
+            "category": job.category
+        }
+    )
+    
+    return {
+        "success": True,
+        "message": "Job submitted for admin approval",
+        "job_id": job.job_id,
+        "status": "pending_approval"
+    }
+
 @router.get("/", response_model=List[JobPublicResponse])
 async def list_jobs(
     skip: int = Query(0, ge=0),

@@ -715,6 +715,181 @@ async def update_job_status(
 
     return {"message": "Job status updated successfully", "job_id": job.job_id, "status": new_status.value}
 
+@router.post("/jobs/{job_id}/approve")
+async def approve_job(
+    job_id: str,
+    session: AsyncSession = Depends(get_database),
+    current_admin: User = Depends(get_current_admin),
+    analytics = Depends(get_analytics_tracker)
+):
+    """Approve a pending job and make it active"""
+    
+    # Get job by public job_id
+    job_result = await session.execute(select(Job).where(Job.job_id == job_id))
+    job = job_result.scalar_one_or_none()
+
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    if job.status == JobStatus.ACTIVE:
+        return {"message": "Job is already approved and active", "job_id": job.job_id, "status": "active"}
+
+    # Update job to active status
+    job.status = JobStatus.ACTIVE
+    if not job.published_at:
+        job.published_at = datetime.utcnow()
+    job.updated_at = datetime.utcnow()
+
+    await session.commit()
+
+    # Log admin action
+    await log_admin_action(
+        session=session,
+        admin_id=current_admin.user_id,
+        action_type="JOB_APPROVED",
+        target_type="job",
+        target_id=job.job_id,
+        description=f"Approved job: {job.title}"
+    )
+
+    # Track analytics
+    await analytics.track_event(
+        user_id=current_admin.id,
+        event_name="admin_job_approved",
+        properties={
+            "job_id": job.job_id,
+            "job_title": job.title,
+            "employer_id": job.employer_id
+        }
+    )
+
+    return {
+        "success": True,
+        "message": "Job approved successfully",
+        "job_id": job.job_id,
+        "status": "active"
+    }
+
+@router.post("/jobs/{job_id}/reject")
+async def reject_job(
+    job_id: str,
+    reason: str = "Does not meet platform guidelines",
+    session: AsyncSession = Depends(get_database),
+    current_admin: User = Depends(get_current_admin),
+    analytics = Depends(get_analytics_tracker)
+):
+    """Reject a pending job and set to draft status"""
+    
+    # Get job by public job_id
+    job_result = await session.execute(select(Job).where(Job.job_id == job_id))
+    job = job_result.scalar_one_or_none()
+
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    if job.status == JobStatus.DRAFT:
+        return {"message": "Job is already in draft status", "job_id": job.job_id, "status": "draft"}
+
+    # Update job to draft status (rejected)
+    job.status = JobStatus.DRAFT
+    job.updated_at = datetime.utcnow()
+    
+    # Add rejection reason to job metadata if it exists
+    if hasattr(job, 'admin_notes') or 'admin_notes' in job.__dict__:
+        job.admin_notes = reason
+
+    await session.commit()
+
+    # Log admin action
+    await log_admin_action(
+        session=session,
+        admin_id=current_admin.user_id,
+        action_type="JOB_REJECTED",
+        target_type="job",
+        target_id=job.job_id,
+        description=f"Rejected job: {job.title}. Reason: {reason}"
+    )
+
+    # Track analytics
+    await analytics.track_event(
+        user_id=current_admin.id,
+        event_name="admin_job_rejected",
+        properties={
+            "job_id": job.job_id,
+            "job_title": job.title,
+            "rejection_reason": reason,
+            "employer_id": job.employer_id
+        }
+    )
+
+    return {
+        "success": True,
+        "message": "Job rejected successfully",
+        "job_id": job.job_id,
+        "status": "draft",
+        "reason": reason
+    }
+
+@router.get("/jobs/pending-approval")
+async def get_pending_jobs(
+    session: AsyncSession = Depends(get_database),
+    current_admin: User = Depends(get_current_admin),
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0)
+):
+    """Get all jobs pending admin approval"""
+    
+    # Get jobs with pending approval status
+    jobs_result = await session.execute(
+        select(Job)
+        .where(Job.status == JobStatus.PENDING_APPROVAL)
+        .order_by(desc(Job.created_at))
+        .limit(limit)
+        .offset(offset)
+    )
+    jobs = jobs_result.scalars().all()
+    
+    # Get total count
+    count_result = await session.execute(
+        select(func.count(Job.id))
+        .where(Job.status == JobStatus.PENDING_APPROVAL)
+    )
+    total_count = count_result.scalar() or 0
+    
+    job_list = []
+    for job in jobs:
+        # Get employer info
+        employer_result = await session.execute(
+            select(User).where(User.id == job.employer_id)
+        )
+        employer = employer_result.scalar_one_or_none()
+        
+        job_data = {
+            "job_id": job.job_id,
+            "title": job.title,
+            "description": job.description[:200] + "..." if len(job.description) > 200 else job.description,
+            "location": job.location,
+            "salary_min": job.salary_min,
+            "salary_max": job.salary_max,
+            "job_type": job.job_type.value if job.job_type else None,
+            "experience_level": job.experience_level,
+            "created_at": job.created_at.isoformat(),
+            "employer": {
+                "name": f"{employer.first_name} {employer.last_name}" if employer else "Unknown",
+                "email": employer.email if employer else None,
+                "company": employer.company_name if employer and hasattr(employer, 'company_name') else None
+            }
+        }
+        job_list.append(job_data)
+    
+    return {
+        "jobs": job_list,
+        "total_count": total_count,
+        "showing": len(job_list),
+        "offset": offset,
+        "limit": limit
+    }
+
 @router.delete("/jobs/{job_id}")
 async def delete_job_admin(
     job_id: str,

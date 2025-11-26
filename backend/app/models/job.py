@@ -26,6 +26,7 @@ class JobType(Enum):
 class JobStatus(Enum):
     """Job posting status"""
     DRAFT = "draft"
+    PENDING_APPROVAL = "pending_approval"  # New status for admin approval
     ACTIVE = "active"
     PAUSED = "paused"
     CLOSED = "closed"
