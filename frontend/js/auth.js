@@ -506,7 +506,7 @@ class AuthManager {
         const testJobSeeker = {
             id: 3,
             user_id: 'jobseeker_test_user', 
-            email: 'jobseeker@example.com',
+            email: 'seeker@test.com',
             name: 'Test Job Seeker',
             role: 'job_seeker',
             profile: {
@@ -523,7 +523,7 @@ class AuthManager {
         const testEmployer = {
             id: 2,
             user_id: 'employer_test_user',
-            email: 'employer@example.com', 
+            email: 'employer@test.com', 
             name: 'Test Employer',
             role: 'employer',
             profile: {}
