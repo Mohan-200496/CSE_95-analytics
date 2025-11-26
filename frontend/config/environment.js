@@ -10,17 +10,38 @@ class EnvironmentConfig {
     detectEnvironment() {
         const hostname = window.location.hostname;
         
+        console.log('🔍 Detecting environment for hostname:', hostname);
+        
         // Production detection patterns
-        if (hostname.includes('.herokuapp.com')) return 'heroku';
-        if (hostname.includes('.vercel.app')) return 'vercel';
-        if (hostname.includes('.onrender.com')) return 'render';
-        if (hostname.includes('.railway.app')) return 'railway';
-        if (hostname.includes('.netlify.app')) return 'netlify';
+        if (hostname.includes('.herokuapp.com')) {
+            console.log('📍 Environment detected: heroku');
+            return 'heroku';
+        }
+        if (hostname.includes('.vercel.app')) {
+            console.log('📍 Environment detected: vercel');
+            return 'vercel';
+        }
+        if (hostname.includes('.onrender.com')) {
+            console.log('📍 Environment detected: render');
+            return 'render';
+        }
+        if (hostname.includes('.railway.app')) {
+            console.log('📍 Environment detected: railway');
+            return 'railway';
+        }
+        if (hostname.includes('.netlify.app')) {
+            console.log('📍 Environment detected: netlify');
+            return 'netlify';
+        }
         
         // Local development
-        if (hostname === 'localhost' || hostname === '127.0.0.1') return 'development';
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            console.log('📍 Environment detected: development');
+            return 'development';
+        }
         
         // Custom domain (production)
+        console.log('📍 Environment detected: production (fallback)');
         return 'production';
     }
 
@@ -91,22 +112,24 @@ class EnvironmentConfig {
 
     // Log configuration for debugging
     logConfig() {
-        if (this.isDebug) {
-            console.log('🔧 Environment Configuration:', {
-                environment: this.environment,
-                apiUrl: this.apiUrl,
-                config: this.config
-            });
-        }
+        console.log('🔧 Environment Configuration:', {
+            environment: this.environment,
+            hostname: window.location.hostname,
+            apiUrl: this.apiUrl,
+            config: this.config
+        });
     }
 }
 
 // Create global instance
 window.ENV_CONFIG = new EnvironmentConfig();
 
+// Always log configuration for debugging deployment issues
+window.ENV_CONFIG.logConfig();
+
 // Auto-log configuration in development
 if (window.ENV_CONFIG.isDevelopment) {
-    window.ENV_CONFIG.logConfig();
+    console.log('🔧 Development mode detected');
 }
 
 // Export for module systems
