@@ -83,7 +83,7 @@ class PunjabRozgarAnalytics {
                 screen_resolution: `${screen.width}x${screen.height}`,
                 viewport_size: `${window.innerWidth}x${window.innerHeight}`,
                 language: navigator.language,
-                platform: navigator.platform,
+                platform: navigator.platform || navigator.userAgentData?.platform || 'Unknown',
                 url: window.location.href,
                 path: window.location.pathname,
                 search: window.location.search,
