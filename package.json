@@ -1,0 +1,34 @@
+{
+  "name": "punjab-rozgar-portal",
+  "version": "1.0.0",
+  "description": "Punjab Rozgar Employment Portal - Professional Analytics Platform",
+  "main": "frontend/api/server.js",
+  "scripts": {
+    "start": "node frontend/api/server.js",
+    "dev": "nodemon frontend/api/server.js",
+    "build": "echo 'No build step required for static frontend'",
+    "deploy": "npm run start",
+    "serve": "python -m http.server 8080"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.0",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0",
+    "compression": "^1.7.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  },
+  "keywords": [
+    "employment",
+    "jobs",
+    "punjab",
+    "analytics",
+    "portal"
+  ],
+  "author": "Punjab Rozgar Team",
+  "license": "MIT"
+}

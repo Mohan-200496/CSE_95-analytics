@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Punjab Rozgar Portal - Space Mission Employment Hub</title>
+    <meta name="description" content="Embark on your career journey in Punjab's cosmic employment portal. Find government and private job opportunities across the galaxy.">
+    <link rel="icon" href="data:,">
+    
+    <!-- Punjab Rozgar Authentication -->
+    <script src="js/auth.js"></script>
+    <!-- Punjab Rozgar Analytics -->
+    <script src="js/punjab-analytics.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Exo 2', 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a0d2e 25%, #2d1b4e 50%, #0f0825 75%, #000308 100%);
+            color: #e0e6ed;
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+        }
+        
+        /* Animated Space Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.9), transparent),
+                radial-gradient(2px 2px at 40px 70px, rgba(64,224,255,0.8), transparent),
+                radial-gradient(1px 1px at 90px 40px, rgba(255,107,53,0.6), transparent),
+                radial-gradient(1px 1px at 130px 80px, rgba(138,43,226,0.4), transparent),
+                radial-gradient(2px 2px at 160px 30px, rgba(255,20,147,0.6), transparent),
+                radial-gradient(1px 1px at 200px 90px, rgba(0,255,127,0.5), transparent),
+                radial-gradient(2px 2px at 250px 50px, rgba(255,215,0,0.4), transparent);
+            background-repeat: repeat;
+            background-size: 300px 200px;
+            animation: twinkle 8s infinite linear;
+            z-index: -2;
+            pointer-events: none;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.3) 100%);
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        @keyframes twinkle {
+            0% { transform: translateY(0px) rotate(0deg); opacity: 1; }
+            50% { transform: translateY(-100px) rotate(180deg); opacity: 0.8; }
+            100% { transform: translateY(-200px) rotate(360deg); opacity: 1; }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Futuristic Header */
+        .header {
+            background: linear-gradient(135deg, rgba(10,10,15,0.9) 0%, rgba(26,13,46,0.9) 50%, rgba(45,27,78,0.9) 100%);
+            backdrop-filter: blur(20px);
+            border-bottom: 2px solid rgba(64, 224, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(64, 224, 255, 0.1), transparent);
+            animation: scan 4s infinite ease-in-out;
+        }
+        
+        @keyframes scan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #40e0ff;
+            text-decoration: none;
+            text-shadow: 0 0 20px rgba(64, 224, 255, 0.6), 0 0 40px rgba(64, 224, 255, 0.3);
+            transition: all 0.4s ease;
+            transform-style: preserve-3d;
+            gap: 0.8rem;
+        }
+        
+        .logo:hover {
+            transform: perspective(1000px) rotateX(10deg) rotateY(-10deg) scale(1.1);
+            text-shadow: 0 0 30px rgba(64, 224, 255, 1), 0 0 60px rgba(64, 224, 255, 0.5);
+        }
+
+        .logo i {
+            font-size: 2.2rem;
+            color: #ff6b35;
+            filter: drop-shadow(0 0 15px rgba(255, 107, 53, 0.8));
+            animation: float 4s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { 
+                transform: translateY(0px) rotate(0deg) scale(1); 
+                filter: drop-shadow(0 0 15px rgba(255, 107, 53, 0.8));
+            }
+            33% { 
+                transform: translateY(-8px) rotate(120deg) scale(1.1); 
+                filter: drop-shadow(0 0 25px rgba(64, 224, 255, 0.8));
+            }
+            66% { 
+                transform: translateY(-4px) rotate(240deg) scale(0.9); 
+                filter: drop-shadow(0 0 20px rgba(138, 43, 226, 0.8));
+            }
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2.5rem;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-links a {
+            color: #b8c6db;
+            text-decoration: none;
+            font-weight: 500;
+            font-family: 'Orbitron', sans-serif;
+            transition: all 0.4s ease;
+            position: relative;
+            padding: 0.8rem 1.5rem;
+            border: 1px solid rgba(64, 224, 255, 0.2);
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            transform-style: preserve-3d;
+        }
+        
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 30px;
+            background: linear-gradient(45deg, rgba(64, 224, 255, 0.3), rgba(255, 107, 53, 0.3), rgba(138, 43, 226, 0.3));
+            opacity: 0;
+            transition: all 0.4s ease;
+            z-index: -1;
+        }
+
+        .nav-links a:hover {
+            color: #40e0ff;
+            text-shadow: 0 0 15px rgba(64, 224, 255, 0.8);
+            transform: translateY(-3px) perspective(1000px) rotateX(10deg);
+            border-color: rgba(64, 224, 255, 0.6);
+            box-shadow: 0 10px 25px rgba(64, 224, 255, 0.3), 0 0 50px rgba(64, 224, 255, 0.1);
+        }
+        
+        .nav-links a:hover::before {
+            opacity: 1;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-family: 'Orbitron', sans-serif;
+            text-decoration: none;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            font-size: 0.9rem;
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s ease;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 50%, #ffa726 100%);
+            color: white;
+            border: 2px solid rgba(255, 107, 53, 0.3);
+            box-shadow: 0 0 20px rgba(255, 107, 53, 0.4);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #ff5722 0%, #ff7043 50%, #ff9800 100%);
+            transform: translateY(-3px) perspective(1000px) rotateX(10deg);
+            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.6), 0 0 50px rgba(255, 107, 53, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, rgba(64, 224, 255, 0.1) 0%, rgba(138, 43, 226, 0.1) 100%);
+            color: #40e0ff;
+            border: 2px solid rgba(64, 224, 255, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, rgba(64, 224, 255, 0.2) 0%, rgba(138, 43, 226, 0.2) 100%);
+            color: #ffffff;
+            border-color: rgba(64, 224, 255, 0.8);
+            transform: translateY(-3px) perspective(1000px) rotateX(10deg);
+            box-shadow: 0 10px 30px rgba(64, 224, 255, 0.4);
+        }
+
+        /* Hero Section - 3D Space Design */
+        .hero {
+            background: linear-gradient(135deg, rgba(10,10,15,0.8) 0%, rgba(26,13,46,0.9) 50%, rgba(45,27,78,0.8) 100%);
+            color: #e0e6ed;
+            text-align: center;
+            padding: 12rem 0 8rem;
+            position: relative;
+            overflow: hidden;
+            perspective: 1000px;
+            margin-top: 80px;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(64, 224, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 107, 53, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 60%, rgba(138, 43, 226, 0.1) 0%, transparent 50%);
+            animation: cosmicPulse 6s ease-in-out infinite;
+        }
+        
+        @keyframes cosmicPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.1); }
+        }
+
+        .hero h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 5rem;
+            margin-bottom: 2rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, #40e0ff 0%, #ff6b35 25%, #8a2be2 50%, #00ff7f 75%, #ff1493 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            background-size: 200% 200%;
+            animation: gradientShift 4s ease-in-out infinite, hologramGlow 3s ease-in-out infinite;
+            transform-style: preserve-3d;
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 0 50px rgba(64, 224, 255, 0.3);
+        }
+        
+        .hero h1:hover {
+            transform: perspective(1000px) rotateX(10deg) rotateY(5deg) scale(1.05);
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        @keyframes hologramGlow {
+            0%, 100% { 
+                text-shadow: 
+                    0 0 30px rgba(64, 224, 255, 0.5),
+                    0 0 60px rgba(64, 224, 255, 0.3),
+                    0 0 90px rgba(64, 224, 255, 0.1);
+            }
+            50% { 
+                text-shadow: 
+                    0 0 40px rgba(255, 107, 53, 0.6),
+                    0 0 80px rgba(255, 107, 53, 0.4),
+                    0 0 120px rgba(255, 107, 53, 0.2);
+            }
+        }
+
+        .hero p {
+            font-size: 1.4rem;
+            margin-bottom: 3rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            color: #b8c6db;
+            text-shadow: 0 0 10px rgba(184, 198, 219, 0.3);
+            position: relative;
+            z-index: 2;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 2;
+        }
+
+        .btn-large {
+            padding: 1.2rem 3rem;
+            font-size: 1.1rem;
+            border-radius: 40px;
+            transform-style: preserve-3d;
+        }
+
+        .btn-large:hover {
+            transform: translateY(-5px) perspective(1000px) rotateX(15deg);
+        }
+
+        /* Stats Section - Floating Panels */
+        .stats {
+            background: linear-gradient(135deg, rgba(10,10,15,0.7) 0%, rgba(26,13,46,0.8) 100%);
+            padding: 4rem 0;
+            margin: -4rem 2rem 4rem;
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(64, 224, 255, 0.2);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 10;
+        }
+        
+        .stats::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 20px;
+            background: linear-gradient(45deg, rgba(64, 224, 255, 0.05), rgba(255, 107, 53, 0.05), rgba(138, 43, 226, 0.05));
+            animation: statsPulse 4s ease-in-out infinite;
+        }
+        
+        @keyframes statsPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+            border-radius: 15px;
+            border: 1px solid rgba(64, 224, 255, 0.2);
+            backdrop-filter: blur(15px);
+            transition: all 0.4s ease;
+            transform-style: preserve-3d;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-item::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(64, 224, 255, 0.1), transparent, rgba(255, 107, 53, 0.1), transparent);
+            animation: rotate 6s linear infinite;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .stat-item:hover::before {
+            opacity: 1;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .stat-item:hover {
+            transform: perspective(1000px) rotateX(10deg) translateY(-10px);
+            border-color: rgba(64, 224, 255, 0.6);
+            box-shadow: 0 20px 40px rgba(64, 224, 255, 0.2), 0 0 50px rgba(64, 224, 255, 0.1);
+        }
+
+        .stat-number {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #40e0ff;
+            text-shadow: 0 0 20px rgba(64, 224, 255, 0.6);
+            display: block;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .stat-label {
+            color: #b8c6db;
+            font-weight: 500;
+            font-size: 1.1rem;
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* Job Categories Grid - 3D Cards */
+        .job-categories {
+            padding: 6rem 0;
+            background: linear-gradient(135deg, rgba(10,10,15,0.9) 0%, rgba(26,13,46,0.95) 100%);
+        }
+        
+        .job-categories h2 {
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 4rem;
+            color: #40e0ff;
+            text-shadow: 0 0 30px rgba(64, 224, 255, 0.5);
+            position: relative;
+        }
+        
+        .job-categories h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, #ff6b35, #40e0ff, #8a2be2);
+            border-radius: 2px;
+        }
+        
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 3rem;
+            margin-bottom: 4rem;
+        }
+        
+        .category-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+            border: 1px solid rgba(64, 224, 255, 0.2);
+            border-radius: 20px;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: all 0.5s ease;
+            backdrop-filter: blur(20px);
+            transform-style: preserve-3d;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .category-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(64, 224, 255, 0.1), transparent);
+            transition: left 0.8s ease;
+        }
+        
+        .category-card:hover::before {
+            left: 100%;
+        }
+        
+        .category-card:hover {
+            transform: perspective(1000px) rotateX(5deg) rotateY(5deg) translateY(-15px);
+            border-color: rgba(64, 224, 255, 0.6);
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.3),
+                0 0 50px rgba(64, 224, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        .category-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            filter: drop-shadow(0 0 20px currentColor);
+            animation: iconFloat 3s ease-in-out infinite;
+        }
+        
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+        
+        .category-card h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: #e0e6ed;
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+        }
+        
+        .category-count {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 15px currentColor;
+        }
+        
+        .category-desc {
+            color: #b8c6db;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+        
+        .category-link {
+            display: inline-block;
+            padding: 0.8rem 2rem;
+            background: linear-gradient(45deg, rgba(64, 224, 255, 0.2), rgba(255, 107, 53, 0.2));
+            color: #40e0ff;
+            text-decoration: none;
+            border-radius: 25px;
+            border: 1px solid rgba(64, 224, 255, 0.3);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .category-link:hover {
+            background: linear-gradient(45deg, rgba(64, 224, 255, 0.3), rgba(255, 107, 53, 0.3));
+            color: #ffffff;
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 10px 25px rgba(64, 224, 255, 0.3);
+        }
+        
+        .explore-all {
+            text-align: center;
+        }
+        
+        .explore-all .btn {
+            font-size: 1.2rem;
+            padding: 1.2rem 3rem;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 3rem;
+            }
+            
+            .nav-links {
+                gap: 1rem;
+            }
+            
+            .nav-links a {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .categories-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <nav class="navbar">
+                <a href="index.html" class="logo">
+                    <i class="fas fa-rocket"></i>
+                    <span>Punjab Rozgar</span>
+                </a>
+                <ul class="nav-links">
+                    <li><a href="index.html"><i class="fas fa-home"></i> Mission Control</a></li>
+                    <li><a href="pages/jobs/browse.html"><i class="fas fa-satellite"></i> Opportunities</a></li>
+                    <li><a href="pages/companies/list.html"><i class="fas fa-space-shuttle"></i> Organizations</a></li>
+                    <li><a href="#about"><i class="fas fa-user-astronaut"></i> About</a></li>
+                    <li><a href="#contact"><i class="fas fa-radio"></i> Contact</a></li>
+                </ul>
+                <div class="auth-buttons" data-auth="guest">
+                    <a href="pages/auth/login.html" class="btn btn-secondary">Launch Login</a>
+                    <a href="pages/auth/register.html" class="btn btn-primary">Join Mission</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="container">
+            <h1>Navigate Your Career Galaxy</h1>
+            <p>Embark on an interstellar journey through Punjab's premier employment portal. Discover thousands of opportunities across government and private sectors in the cosmic expanse of career possibilities.</p>
+            <div class="hero-buttons">
+                <a href="pages/jobseeker/browse-jobs.html" class="btn btn-primary btn-large">
+                    <i class="fas fa-rocket"></i> Explore Galaxy
+                </a>
+                <a href="pages/auth/register.html" class="btn btn-secondary btn-large">
+                    <i class="fas fa-user-plus"></i> Join Fleet
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number" id="totalJobs">1,200+</span>
+                    <span class="stat-label">Active Missions</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="totalUsers">5,000+</span>
+                    <span class="stat-label">Space Travelers</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="totalApplications">8,500+</span>
+                    <span class="stat-label">Mission Applications</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="totalCompanies">300+</span>
+                    <span class="stat-label">Space Stations</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Job Categories Section -->
+    <section class="job-categories">
+        <div class="container">
+            <h2>Cosmic Career Sectors</h2>
+            <div class="categories-grid">
+                
+                <div class="category-card">
+                    <div class="category-icon" style="color: #ff6b35;">
+                        <i class="fas fa-satellite"></i>
+                    </div>
+                    <h3>Government Missions</h3>
+                    <p class="category-count" style="color: #ff6b35;">150+</p>
+                    <p class="category-desc">Command positions in Punjab's administrative fleet<br>Revenue • Engineering • Security • Education</p>
+                    <a href="pages/jobseeker/browse-jobs.html?category=government" class="category-link">Launch Mission</a>
+                </div>
+
+                <div class="category-card">
+                    <div class="category-icon" style="color: #40e0ff;">
+                        <i class="fas fa-space-shuttle"></i>
+                    </div>
+                    <h3>Private Sector</h3>
+                    <p class="category-count" style="color: #40e0ff;">300+</p>
+                    <p class="category-desc">Commercial space ventures and enterprises<br>Technology • Marketing • Innovation • Growth</p>
+                    <a href="pages/jobseeker/browse-jobs.html?category=technology" class="category-link">Join Fleet</a>
+                </div>
+
+                <div class="category-card">
+                    <div class="category-icon" style="color: #00ff7f;">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <h3>Banking Nebula</h3>
+                    <p class="category-count" style="color: #00ff7f;">80+</p>
+                    <p class="category-desc">Financial command centers across the galaxy<br>Banking • Investment • Advisory • Analytics</p>
+                    <a href="pages/jobseeker/browse-jobs.html?category=banking" class="category-link">Navigate</a>
+                </div>
+
+                <div class="category-card">
+                    <div class="category-icon" style="color: #ff1493;">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <h3>Medical Stations</h3>
+                    <p class="category-count" style="color: #ff1493;">120+</p>
+                    <p class="category-desc">Healthcare facilities across star systems<br>Doctors • Nurses • Research • Emergency</p>
+                    <a href="pages/jobseeker/browse-jobs.html?category=healthcare" class="category-link">Heal Galaxy</a>
+                </div>
+
+                <div class="category-card">
+                    <div class="category-icon" style="color: #8a2be2;">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h3>Knowledge Academy</h3>
+                    <p class="category-count" style="color: #8a2be2;">90+</p>
+                    <p class="category-desc">Educational institutions across Punjab space<br>Teaching • Research • Training • Development</p>
+                    <a href="pages/jobseeker/browse-jobs.html?category=education" class="category-link">Educate</a>
+                </div>
+
+                <div class="category-card">
+                    <div class="category-icon" style="color: #ffd700;">
+                        <i class="fas fa-laptop-code"></i>
+                    </div>
+                    <h3>Tech Universe</h3>
+                    <p class="category-count" style="color: #ffd700;">200+</p>
+                    <p class="category-desc">Advanced technology development centers<br>Development • AI • Cloud • Innovation</p>
+                    <a href="pages/jobseeker/browse-jobs.html?category=technology" class="category-link">Code Stars</a>
+                </div>
+
+                <div class="category-card">
+                    <div class="category-icon" style="color: #20b2aa;">
+                        <i class="fas fa-industry"></i>
+                    </div>
+                    <h3>Industrial Colonies</h3>
+                    <p class="category-count" style="color: #20b2aa;">110+</p>
+                    <p class="category-desc">Manufacturing and production facilities<br>Operations • Quality • Engineering • Management</p>
+                    <a href="pages/jobseeker/browse-jobs.html?category=manufacturing" class="category-link">Build Future</a>
+                </div>
+
+                <div class="category-card">
+                    <div class="category-icon" style="color: #ff69b4;">
+                        <i class="fas fa-store"></i>
+                    </div>
+                    <h3>Commerce Hubs</h3>
+                    <p class="category-count" style="color: #ff69b4;">75+</p>
+                    <p class="category-desc">Retail and customer experience centers<br>Sales • Service • Management • Operations</p>
+                    <a href="pages/jobseeker/browse-jobs.html?category=retail" class="category-link">Trade Worlds</a>
+                </div>
+
+            </div>
+            
+            <div class="explore-all">
+                <a href="pages/jobseeker/browse-jobs.html" class="btn btn-primary btn-large">
+                    <i class="fas fa-telescope"></i>
+                    Explore All Galaxies
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Enhanced space-themed animations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate stats on scroll
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animation = 'none';
+                        entry.target.offsetHeight; // Trigger reflow
+                        entry.target.style.animation = 'statsPulse 2s ease-in-out';
+                    }
+                });
+            });
+
+            document.querySelectorAll('.stat-item').forEach(item => {
+                observer.observe(item);
+            });
+
+            // Category cards entrance animation
+            const categoryObserver = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => {
+                            entry.target.style.transform = 'perspective(1000px) rotateX(0deg) translateY(0px)';
+                            entry.target.style.opacity = '1';
+                        }, index * 100);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.category-card').forEach((card, index) => {
+                card.style.transform = 'perspective(1000px) rotateX(20deg) translateY(50px)';
+                card.style.opacity = '0';
+                card.style.transition = 'all 0.8s ease';
+                categoryObserver.observe(card);
+            });
+
+            // Enhanced parallax effect for background
+            window.addEventListener('scroll', () => {
+                const scrolled = window.pageYOffset;
+                const rate = scrolled * -0.5;
+                document.body.style.backgroundPositionY = rate + 'px';
+            });
+
+            // Track space-themed analytics
+            setTimeout(() => {
+                if (typeof trackEvent !== 'undefined') {
+                    trackEvent('Space Portal Visited', {
+                        theme: '3D_Space',
+                        page_type: 'cosmic_landing',
+                        user_intent: 'career_exploration',
+                        visual_style: 'holographic'
+                    });
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

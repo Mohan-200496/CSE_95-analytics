@@ -30,17 +30,31 @@
             box-sizing: border-box;
         }
 
+        /* Monochromatic Theme Variables */
+        :root {
+            --primary-black: #000000;
+            --secondary-black: #1a1a1a;
+            --dark-gray: #2d2d2d;
+            --medium-gray: #4a4a4a;
+            --light-gray: #6b6b6b;
+            --lighter-gray: #8a8a8a;
+            --very-light-gray: #d1d1d1;
+            --off-white: #f5f5f5;
+            --pure-white: #ffffff;
+            --accent-gray: #404040;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background: #f5f7fa;
-            color: #333;
+            background: linear-gradient(135deg, var(--off-white) 0%, var(--very-light-gray) 100%);
+            color: var(--secondary-black);
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-black) 0%, var(--secondary-black) 100%);
             color: white;
             padding: 1.5rem 0;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
         .header .container {
@@ -82,20 +96,22 @@
         }
 
         .page-header {
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
             padding: 2rem;
             border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--very-light-gray);
             margin-bottom: 2rem;
         }
 
         .page-header h1 {
             font-size: 2.5rem;
             margin-bottom: 1rem;
+            color: var(--primary-black);
         }
 
         .page-header p {
-            color: #666;
+            color: var(--light-gray);
             font-size: 1.1rem;
         }
 
@@ -107,10 +123,11 @@
         }
 
         .stat-card {
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
             padding: 1.5rem;
             border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--very-light-gray);
             text-align: center;
         }
 
@@ -120,43 +137,45 @@
         }
 
         .stat-card.total .stat-icon {
-            color: #667eea;
+            color: var(--primary-black);
         }
 
         .stat-card.pending .stat-icon {
-            color: #ffc107;
+            color: var(--dark-gray);
         }
 
         .stat-card.interview .stat-icon {
-            color: #28a745;
+            color: var(--medium-gray);
         }
 
         .stat-card.rejected .stat-icon {
-            color: #dc3545;
+            color: var(--accent-gray);
         }
 
         .stat-card .stat-number {
             font-size: 2rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
+            color: var(--secondary-black);
         }
 
         .stat-card .stat-label {
-            color: #666;
+            color: var(--light-gray);
             font-size: 0.9rem;
         }
 
         .applications-container {
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--very-light-gray);
             overflow: hidden;
         }
 
         .applications-header {
-            background: #f8f9fa;
+            background: var(--off-white);
             padding: 1.5rem;
-            border-bottom: 1px solid #e1e5e9;
+            border-bottom: 1px solid var(--very-light-gray);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -164,6 +183,7 @@
 
         .applications-header h3 {
             font-size: 1.3rem;
+            color: var(--secondary-black);
         }
 
         .filter-tabs {
@@ -179,6 +199,7 @@
             cursor: pointer;
             font-size: 0.9rem;
             transition: background 0.3s ease;
+            color: var(--medium-gray);
         }
 
         .filter-tab.active {

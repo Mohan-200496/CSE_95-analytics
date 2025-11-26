@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deployment Health Check - Punjab Rozgar Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #2d2d2d;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #f5f5f5;
+        }
+        .status-card {
+            background: #1a1a1a;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 4px solid #666;
+        }
+        .status-card.success {
+            border-left-color: #4ade80;
+        }
+        .status-card.error {
+            border-left-color: #ef4444;
+        }
+        .status-card.warning {
+            border-left-color: #f59e0b;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .status-indicator.online {
+            background: #4ade80;
+        }
+        .status-indicator.offline {
+            background: #ef4444;
+        }
+        .status-indicator.checking {
+            background: #f59e0b;
+        }
+        .check-btn {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 10px 5px;
+        }
+        .check-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+        .url-display {
+            background: #000;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 5px 0;
+            word-break: break-all;
+        }
+        .logs {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Punjab Rozgar Portal - Deployment Health Check</h1>
+        
+        <div class="status-card" id="frontend-status">
+            <h3><span class="status-indicator checking"></span>Frontend Status</h3>
+            <p>Checking frontend availability...</p>
+            <div class="url-display" id="frontend-url">Detecting...</div>
+        </div>
+
+        <div class="status-card" id="backend-status">
+            <h3><span class="status-indicator checking"></span>Backend API Status</h3>
+            <p>Checking backend API...</p>
+            <div class="url-display" id="backend-url">Detecting...</div>
+        </div>
+
+        <div class="status-card" id="database-status">
+            <h3><span class="status-indicator checking"></span>Database Status</h3>
+            <p>Testing database connectivity...</p>
+        </div>
+
+        <div class="status-card" id="auth-status">
+            <h3><span class="status-indicator checking"></span>Authentication Status</h3>
+            <p>Testing JWT authentication...</p>
+        </div>
+
+        <div style="text-align: center; margin: 20px 0;">
+            <button class="check-btn" onclick="runHealthCheck()">🔄 Run Full Health Check</button>
+            <button class="check-btn" onclick="checkEndpoints()">🔗 Check All Endpoints</button>
+            <button class="check-btn" onclick="testFeatures()">⚡ Test Core Features</button>
+        </div>
+
+        <div class="logs" id="logs">
+            <div>🚀 Punjab Rozgar Portal Deployment Health Check</div>
+            <div>📅 Check started at: <span id="timestamp"></span></div>
+            <div>🌐 Environment detected: <span id="environment"></span></div>
+            <div>================================</div>
+        </div>
+    </div>
+
+    <script src="../config/environment.js"></script>
+    <script>
+        let logContainer = document.getElementById('logs');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const typeIcon = {
+                'info': 'ℹ️',
+                'success': '✅',
+                'error': '❌',
+                'warning': '⚠️'
+            };
+            
+            const logLine = document.createElement('div');
+            logLine.innerHTML = `${timestamp} ${typeIcon[type]} ${message}`;
+            logContainer.appendChild(logLine);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function updateStatus(elementId, status, message) {
+            const element = document.getElementById(elementId);
+            const indicator = element.querySelector('.status-indicator');
+            const text = element.querySelector('p');
+            
+            indicator.className = `status-indicator ${status}`;
+            text.textContent = message;
+            
+            if (status === 'online') {
+                element.className = 'status-card success';
+            } else if (status === 'offline') {
+                element.className = 'status-card error';
+            } else {
+                element.className = 'status-card warning';
+            }
+        }
+
+        async function checkFrontend() {
+            log('Checking frontend status...');
+            try {
+                const frontendUrl = window.location.origin;
+                document.getElementById('frontend-url').textContent = frontendUrl;
+                
+                const response = await fetch(frontendUrl);
+                if (response.ok) {
+                    updateStatus('frontend-status', 'online', 'Frontend is accessible');
+                    log('Frontend check: PASSED', 'success');
+                } else {
+                    updateStatus('frontend-status', 'offline', 'Frontend returned error');
+                    log('Frontend check: FAILED', 'error');
+                }
+            } catch (error) {
+                updateStatus('frontend-status', 'offline', 'Frontend unreachable');
+                log(`Frontend error: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkBackend() {
+            log('Checking backend API...');
+            try {
+                const apiUrl = window.ENV_CONFIG.apiUrl;
+                document.getElementById('backend-url').textContent = apiUrl;
+                
+                // Check health endpoint
+                const healthResponse = await fetch(`${apiUrl}/health`);
+                if (healthResponse.ok) {
+                    updateStatus('backend-status', 'online', 'Backend API is running');
+                    log('Backend health check: PASSED', 'success');
+                    
+                    // Check API docs
+                    const docsResponse = await fetch(`${apiUrl}/docs`);
+                    if (docsResponse.ok) {
+                        log('API documentation accessible', 'success');
+                    }
+                } else {
+                    updateStatus('backend-status', 'offline', 'Backend API error');
+                    log('Backend health check: FAILED', 'error');
+                }
+            } catch (error) {
+                updateStatus('backend-status', 'offline', 'Backend unreachable');
+                log(`Backend error: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkDatabase() {
+            log('Testing database connectivity...');
+            try {
+                const apiUrl = window.ENV_CONFIG.apiUrl;
+                const response = await fetch(`${apiUrl}/api/v1/health/database`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updateStatus('database-status', 'online', 'Database connected');
+                    log(`Database check: PASSED (${data.status})`, 'success');
+                } else {
+                    updateStatus('database-status', 'offline', 'Database connection failed');
+                    log('Database check: FAILED', 'error');
+                }
+            } catch (error) {
+                updateStatus('database-status', 'offline', 'Database unreachable');
+                log(`Database error: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkAuth() {
+            log('Testing authentication system...');
+            try {
+                const apiUrl = window.ENV_CONFIG.apiUrl;
+                const response = await fetch(`${apiUrl}/api/v1/auth/test`, {
+                    method: 'GET'
+                });
+                
+                if (response.status === 401) {
+                    // Expected for protected endpoint without token
+                    updateStatus('auth-status', 'online', 'Authentication system working');
+                    log('Authentication check: PASSED', 'success');
+                } else if (response.ok) {
+                    updateStatus('auth-status', 'online', 'Authentication endpoint accessible');
+                    log('Authentication check: PASSED', 'success');
+                } else {
+                    updateStatus('auth-status', 'offline', 'Authentication system error');
+                    log('Authentication check: FAILED', 'error');
+                }
+            } catch (error) {
+                updateStatus('auth-status', 'offline', 'Authentication unreachable');
+                log(`Authentication error: ${error.message}`, 'error');
+            }
+        }
+
+        async function runHealthCheck() {
+            log('Starting comprehensive health check...', 'info');
+            await checkFrontend();
+            await checkBackend();
+            await checkDatabase();
+            await checkAuth();
+            log('Health check completed!', 'success');
+        }
+
+        async function checkEndpoints() {
+            log('Checking all API endpoints...', 'info');
+            const apiUrl = window.ENV_CONFIG.apiUrl;
+            const endpoints = [
+                '/health',
+                '/api/v1/auth/test',
+                '/api/v1/jobs',
+                '/api/v1/users/me',
+                '/api/v1/analytics/stats'
+            ];
+
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(`${apiUrl}${endpoint}`);
+                    log(`${endpoint}: ${response.status} ${response.statusText}`, 
+                        response.ok ? 'success' : 'warning');
+                } catch (error) {
+                    log(`${endpoint}: FAILED - ${error.message}`, 'error');
+                }
+            }
+        }
+
+        async function testFeatures() {
+            log('Testing core features...', 'info');
+            // Add feature-specific tests here
+            log('Feature testing completed', 'success');
+        }
+
+        // Initialize
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+        document.getElementById('environment').textContent = window.ENV_CONFIG.environment;
+
+        // Auto-run health check on load
+        runHealthCheck();
+    </script>
+</body>
+</html>

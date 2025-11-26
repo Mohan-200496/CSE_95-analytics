@@ -30,32 +30,38 @@
             box-sizing: border-box;
         }
 
-        /* Monochromatic Theme Variables */
+        /* Professional Theme Variables */
         :root {
-            --primary-black: #000000;
-            --secondary-black: #1a1a1a;
-            --dark-gray: #2d2d2d;
-            --medium-gray: #4a4a4a;
-            --light-gray: #6b6b6b;
-            --lighter-gray: #8a8a8a;
-            --very-light-gray: #d1d1d1;
-            --off-white: #f5f5f5;
-            --pure-white: #ffffff;
-            --accent-gray: #404040;
+            --primary-blue: #1e40af;
+            --secondary-blue: #3b82f6;
+            --accent-blue: #60a5fa;
+            --success-green: #059669;
+            --warning-orange: #d97706;
+            --danger-red: #dc2626;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
             
-            /* Category Colors - Monochromatic */
-            --tech-primary: #000000;
-            --health-primary: #2d2d2d;
-            --finance-primary: #4a4a4a;
-            --education-primary: #1a1a1a;
-            --govt-primary: #404040;
-            --engineering-primary: #6b6b6b;
+            /* Category Colors - Professional */
+            --tech-primary: #3b82f6;
+            --health-primary: #059669;
+            --finance-primary: #d97706;
+            --education-primary: #7c3aed;
+            --govt-primary: #dc2626;
+            --engineering-primary: #ea580c;
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, var(--off-white) 0%, var(--very-light-gray) 100%);
-            color: var(--secondary-black);
+            background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
+            color: var(--gray-700);
             line-height: 1.6;
             margin: 0;
             padding: 0;
@@ -70,7 +76,7 @@
             top: 0;
             width: 100%;
             z-index: 1000;
-            border-bottom: 1px solid var(--very-light-gray);
+            border-bottom: 1px solid var(--gray-200);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
@@ -132,22 +138,22 @@
 
         .btn-outline {
             background: transparent;
-            border: 2px solid var(--primary-black);
-            color: var(--primary-black);
+            border: 2px solid var(--primary-blue);
+            color: var(--primary-blue);
         }
 
         .btn-outline:hover {
-            background: var(--primary-black);
+            background: var(--primary-blue);
             color: white;
         }
 
         .btn-primary {
-            background: var(--primary-black);
+            background: var(--primary-blue);
             color: white;
         }
 
         .btn-primary:hover {
-            background: var(--secondary-black);
+            background: var(--gray-800);
         }
 
         /* Main Content */
@@ -169,13 +175,13 @@
             font-family: 'Poppins', sans-serif;
             font-size: 2.5rem;
             font-weight: 600;
-            color: var(--primary-black);
+            color: var(--gray-900);
             margin-bottom: 1rem;
         }
 
         .page-subtitle {
             font-size: 1.1rem;
-            color: var(--medium-gray);
+            color: var(--gray-600);
             max-width: 600px;
             margin: 0 auto;
         }
@@ -198,7 +204,7 @@
 
         .search-input {
             padding: 1rem 1.5rem;
-            border: 2px solid var(--very-light-gray);
+            border: 2px solid var(--gray-200);
             border-radius: 8px;
             font-size: 1rem;
             transition: border-color 0.3s ease;
@@ -206,11 +212,11 @@
 
         .search-input:focus {
             outline: none;
-            border-color: var(--primary-black);
+            border-color: var(--primary-blue);
         }
 
         .search-btn {
-            background: var(--primary-black);
+            background: var(--primary-blue);
             color: white;
             border: none;
             padding: 1rem 2rem;
@@ -221,7 +227,7 @@
         }
 
         .search-btn:hover {
-            background: var(--secondary-black);
+            background: var(--gray-800);
         }
 
         /* Filters */
@@ -233,9 +239,9 @@
         }
 
         .filter-btn {
-            background: var(--off-white);
-            border: 2px solid var(--very-light-gray);
-            color: var(--medium-gray);
+            background: var(--gray-100);
+            border: 2px solid var(--gray-200);
+            color: var(--gray-700);
             padding: 0.8rem 1.2rem;
             border-radius: 8px;
             cursor: pointer;
@@ -245,8 +251,8 @@
 
         .filter-btn:hover,
         .filter-btn.active {
-            background: var(--primary-black);
-            border-color: var(--primary-black);
+            background: var(--primary-blue);
+            border-color: var(--primary-blue);
             color: white;
         }
 
@@ -293,7 +299,7 @@
             padding: 2rem;
             border-radius: 16px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            border: 1px solid var(--very-light-gray);
+            border: 1px solid var(--gray-200);
             transition: all 0.3s ease;
             cursor: pointer;
             position: relative;
@@ -311,7 +317,7 @@
             top: 0;
             width: 4px;
             height: 100%;
-            background: var(--primary-color, var(--primary-black));
+            background: var(--primary-color, var(--primary-blue));
             border-radius: 0 4px 4px 0;
         }
 
@@ -326,18 +332,18 @@
             font-family: 'Poppins', sans-serif;
             font-size: 1.3rem;
             font-weight: 600;
-            color: var(--primary-black);
+            color: var(--gray-900);
             margin-bottom: 0.5rem;
         }
 
         .job-company {
-            color: var(--primary-black);
+            color: var(--primary-blue);
             font-weight: 600;
             margin-bottom: 0.8rem;
         }
 
         .job-location {
-            color: var(--light-gray);
+            color: var(--gray-600);
             font-size: 0.9rem;
         }
 
@@ -349,7 +355,7 @@
             gap: 0.5rem;
             opacity: 0.9;
             margin-top: 0.3rem;
-            color: var(--light-gray);
+            color: var(--gray-600);
         }
 
         .job-education i {
@@ -365,14 +371,14 @@
 
         .job-salary {
             font-weight: 600;
-            color: var(--dark-gray);
+            color: var(--success-green);
             font-size: 1.1rem;
         }
 
         .job-type {
             padding: 0.3rem 0.8rem;
-            background: var(--off-white);
-            color: var(--medium-gray);
+            background: var(--gray-100);
+            color: var(--gray-700);
             border-radius: 6px;
             font-size: 0.85rem;
             font-weight: 500;
@@ -389,16 +395,16 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            color: var(--light-gray);
+            color: var(--gray-600);
             font-size: 0.9rem;
         }
 
         .job-detail i {
-            color: var(--primary-black);
+            color: var(--primary-blue);
         }
 
         .job-description {
-            color: var(--light-gray);
+            color: var(--gray-600);
             line-height: 1.6;
             margin-bottom: 1.5rem;
         }
@@ -409,7 +415,7 @@
         }
 
         .btn-apply {
-            background: var(--primary-black);
+            background: var(--primary-blue);
             color: white;
             padding: 0.8rem 1.5rem;
             border: none;
@@ -420,14 +426,14 @@
         }
 
         .btn-apply:hover {
-            background: var(--secondary-black);
+            background: var(--gray-800);
         }
 
         .btn-save {
-            background: var(--off-white);
-            color: var(--medium-gray);
+            background: var(--gray-100);
+            color: var(--gray-700);
             padding: 0.8rem 1.5rem;
-            border: 2px solid var(--very-light-gray);
+            border: 2px solid var(--gray-200);
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
@@ -435,7 +441,7 @@
         }
 
         .btn-save:hover {
-            background: var(--very-light-gray);
+            background: var(--gray-200);
         }
 
         /* Category Theme Classes */
@@ -447,11 +453,11 @@
         .theme-engineering { --primary-color: var(--engineering-primary); }
 
         /* Education Level Badges */
-        .education-phd { color: var(--primary-black); font-weight: 600; }
-        .education-masters { color: var(--light-gray); font-weight: 600; }
-        .education-bachelors { color: var(--medium-gray); font-weight: 500; }
-        .education-diploma { color: var(--dark-gray); font-weight: 500; }
-        .education-certificate { color: var(--lighter-gray); font-weight: 500; }
+        .education-phd { color: #d97706; font-weight: 600; }
+        .education-masters { color: var(--gray-600); font-weight: 600; }
+        .education-bachelors { color: var(--primary-blue); font-weight: 500; }
+        .education-diploma { color: var(--success-green); font-weight: 500; }
+        .education-certificate { color: var(--gray-500); font-weight: 500; }
 
         /* Pagination */
         .pagination {
@@ -463,9 +469,9 @@
 
         .pagination button {
             padding: 0.8rem 1rem;
-            border: 2px solid var(--very-light-gray);
+            border: 2px solid var(--gray-200);
             background: white;
-            color: var(--medium-gray);
+            color: var(--gray-700);
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -473,8 +479,8 @@
 
         .pagination button:hover,
         .pagination button.active {
-            background: var(--primary-black);
-            border-color: var(--primary-black);
+            background: var(--primary-blue);
+            border-color: var(--primary-blue);
             color: white;
         }
 

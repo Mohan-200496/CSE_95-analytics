@@ -28,10 +28,24 @@
             box-sizing: border-box;
         }
 
+        /* Monochromatic Theme Variables */
+        :root {
+            --primary-black: #000000;
+            --secondary-black: #1a1a1a;
+            --dark-gray: #2d2d2d;
+            --medium-gray: #4a4a4a;
+            --light-gray: #6b6b6b;
+            --lighter-gray: #8a8a8a;
+            --very-light-gray: #d1d1d1;
+            --off-white: #f5f5f5;
+            --pure-white: #ffffff;
+            --accent-gray: #404040;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background: #f5f7fa;
-            color: #333;
+            background: linear-gradient(135deg, var(--off-white) 0%, var(--very-light-gray) 100%);
+            color: var(--secondary-black);
         }
 
         .dashboard-container {
@@ -42,7 +56,7 @@
         /* Sidebar */
         .sidebar {
             width: 250px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-black) 0%, var(--secondary-black) 100%);
             color: white;
             padding: 2rem 0;
         }
