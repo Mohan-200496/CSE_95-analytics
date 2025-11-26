@@ -25,6 +25,7 @@ from app.api.v1.users import router as users_router
 from app.api.v1.analytics import router as analytics_router
 from app.api.v1.admin import router as admin_router
 from app.api.v1.applications import router as applications_router
+from app.api.v1.recommendations import router as recommendations_router
 
 # Analytics and middleware
 from app.analytics.tracker import AnalyticsTracker
@@ -184,6 +185,12 @@ app.include_router(
     applications_router,
     prefix="/api/v1/applications",
     tags=["Applications"]
+)
+
+app.include_router(
+    recommendations_router,
+    prefix="/api/v1/jobs/recommendations",
+    tags=["Recommendations"]
 )
 
 # Global exception handler

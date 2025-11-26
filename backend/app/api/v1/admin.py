@@ -860,7 +860,7 @@ async def get_pending_jobs(
     for job in jobs:
         # Get employer info
         employer_result = await session.execute(
-            select(User).where(User.id == job.employer_id)
+            select(User).where(User.user_id == job.employer_id)
         )
         employer = employer_result.scalar_one_or_none()
         

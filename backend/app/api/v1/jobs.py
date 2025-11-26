@@ -353,9 +353,36 @@ async def list_jobs(
     employer_id: Optional[str] = None,  # Added: Filter by employer's user_id
     only_active: bool = True,
     session: AsyncSession = Depends(get_database),
-    analytics = Depends(get_analytics_tracker)
+    analytics = Depends(get_analytics_tracker),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
 ):
-    """List all job postings with filters"""
+    """List all job postings with filters (role-based access)"""
+    
+    # Check user role for access control
+    current_user = None
+    if credentials:
+        try:
+            user_id = verify_token(credentials.credentials)
+            user_result = await session.execute(select(User).where(User.user_id == user_id))
+            current_user = user_result.scalar_one_or_none()
+        except:
+            pass  # Allow anonymous access but with restrictions
+    
+    # Role-based access control:
+    # - Job seekers: Can browse all active jobs
+    # - Employers: Can browse jobs for competitive analysis (but discouraged)
+    # - Admins: Can browse for moderation purposes
+    # - Anonymous: Limited access to active jobs only
+    
+    if current_user and current_user.role == UserRole.ADMIN:
+        # Admins can see all jobs including pending for moderation
+        pass  # No additional restrictions
+    elif current_user and current_user.role == UserRole.EMPLOYER:
+        # Employers should generally use their own dashboard, but allow limited browsing
+        only_active = True  # Force to only show active jobs
+    else:
+        # Job seekers and anonymous users - only active jobs
+        only_active = True
 
     # Build query
     query = select(Job)
