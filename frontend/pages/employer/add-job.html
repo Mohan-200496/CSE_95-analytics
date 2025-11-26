@@ -608,7 +608,18 @@
 
         // Protect page: only employers can post jobs
         document.addEventListener('DOMContentLoaded', function() {
-            if (!authManager.requireRole('employer', '/pages/auth/login.html')) return;
+            console.log('🔍 Page Load Debug:');
+            console.log('  Auth Manager:', authManager);
+            console.log('  Is logged in:', authManager.isLoggedIn());
+            console.log('  Current user:', authManager.getCurrentUser());
+            console.log('  Access token:', authManager.accessToken ? 'Present' : 'Missing');
+            
+            if (!authManager.requireRole('employer', '/pages/auth/login.html')) {
+                console.log('❌ Role check failed - redirecting to login');
+                return;
+            }
+            
+            console.log('✅ Role check passed - user is employer');
         });
 
         // Form submission -> Backend API
@@ -636,6 +647,21 @@
             };
 
             try {
+                // Debug authentication status
+                console.log('🔍 Authentication Debug:');
+                console.log('  User logged in:', authManager.isLoggedIn());
+                console.log('  Current user:', authManager.getCurrentUser());
+                console.log('  Access token exists:', !!authManager.accessToken);
+                console.log('  Auth headers:', authManager.getAuthHeaders());
+                console.log('  API URL:', authManager.apiBaseUrl);
+                
+                // Check if user is actually logged in
+                if (!authManager.isLoggedIn() || !authManager.accessToken) {
+                    alert('You must be logged in to create a job. Please login first.');
+                    window.location.href = '../auth/login.html';
+                    return;
+                }
+
                 // Use trailing slash to avoid FastAPI 307 redirect (which drops CORS headers)
                 const res = await fetch(`${authManager.apiBaseUrl}/jobs/`, {
                     method: 'POST',
@@ -643,17 +669,26 @@
                     body: JSON.stringify(payload)
                 });
 
+                console.log('🌐 API Response:');
+                console.log('  Status:', res.status);
+                console.log('  OK:', res.ok);
+                console.log('  Headers:', Object.fromEntries(res.headers.entries()));
+
                 const data = await res.json().catch(() => ({}));
+                console.log('  Data:', data);
+                
                 if (!res.ok) {
                     const msg = data.detail || data.message || 'Failed to create job';
+                    console.error('❌ Job creation failed:', msg);
                     alert(`Error: ${msg}`);
                     return;
                 }
 
+                console.log('✅ Job created successfully:', data);
                 alert('Job submitted successfully! It will be visible after admin approval.');
                 window.location.href = 'jobs.html';
             } catch (err) {
-                console.error('Create job error', err);
+                console.error('❌ Create job error', err);
                 alert('Network error while creating job');
             }
         });

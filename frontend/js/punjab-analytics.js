@@ -79,11 +79,11 @@ class PunjabRozgarAnalytics {
             user_id: this.userId,
             timestamp: new Date().toISOString(),
             properties: {
-                user_agent: navigator.userAgent,
-                screen_resolution: `${screen.width}x${screen.height}`,
-                viewport_size: `${window.innerWidth}x${window.innerHeight}`,
-                language: navigator.language,
-                platform: navigator.platform || navigator.userAgentData?.platform || 'Unknown',
+                user_agent: navigator.userAgent || 'Unknown',
+                screen_resolution: `${screen.width || 0}x${screen.height || 0}`,
+                viewport_size: `${window.innerWidth || 0}x${window.innerHeight || 0}`,
+                language: navigator.language || 'Unknown',
+                platform: this.getPlatform(),
                 url: window.location.href,
                 path: window.location.pathname,
                 search: window.location.search,
@@ -333,6 +333,34 @@ class PunjabRozgarAnalytics {
             return 'Tablet';
         }
         return 'Desktop';
+    }
+
+    // Get platform safely
+    getPlatform() {
+        try {
+            // Try modern API first
+            if (navigator.userAgentData && navigator.userAgentData.platform) {
+                return navigator.userAgentData.platform;
+            }
+            
+            // Fallback to legacy API
+            if (navigator.platform) {
+                return navigator.platform;
+            }
+            
+            // Last resort - detect from user agent
+            const ua = navigator.userAgent.toLowerCase();
+            if (ua.includes('windows')) return 'Windows';
+            if (ua.includes('mac')) return 'macOS';
+            if (ua.includes('linux')) return 'Linux';
+            if (ua.includes('android')) return 'Android';
+            if (ua.includes('iphone') || ua.includes('ipad')) return 'iOS';
+            
+            return 'Unknown';
+        } catch (e) {
+            console.warn('Platform detection failed:', e);
+            return 'Unknown';
+        }
     }
 
     // Queue events for batch sending
