@@ -673,8 +673,12 @@
         document.querySelectorAll('.demo-account').forEach(account => {
             account.style.cursor = 'pointer';
             account.addEventListener('click', function() {
-                const text = this.textContent.trim();
-                console.log('Demo account clicked:', text);
+                // Get credentials from the .demo-credentials span specifically
+                const credentialsSpan = this.querySelector('.demo-credentials');
+                if (!credentialsSpan) return;
+                
+                const text = credentialsSpan.textContent.trim();
+                console.log('Demo credentials clicked:', text);
                 
                 // Extract email and password from text like "admin@test.com / admin123"
                 const parts = text.split('/');
@@ -685,6 +689,7 @@
                     console.log('Auto-filling:', { email, password });
                     quickLogin(email, password);
                 } else {
+                    console.warn('Could not parse credentials:', text);
                     // Fallback regex method
                     const emailMatch = text.match(/(\S+@\S+\.\S+)/);
                     const passMatch = text.match(/\/\s*(\S+)/);
