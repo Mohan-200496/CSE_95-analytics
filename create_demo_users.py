@@ -27,8 +27,8 @@ async def create_demo_users():
             # Check if users already exist
             existing_users = await session.execute(
                 select(User).where(User.email.in_([
-                    'admin@punjabrozgar.gov.pk',
-                    'employer@company.com', 
+                    'admin@test.com',
+                    'employer@test.com', 
                     'jobseeker@email.com'
                 ]))
             )
@@ -39,7 +39,7 @@ async def create_demo_users():
             # Create demo users
             demo_users = [
                 {
-                    'email': 'admin@punjabrozgar.gov.pk',
+                    'email': 'admin@test.com',
                     'password': 'admin123',
                     'first_name': 'Admin',
                     'last_name': 'User',
@@ -48,7 +48,7 @@ async def create_demo_users():
                     'is_verified': True
                 },
                 {
-                    'email': 'employer@company.com',
+                    'email': 'employer@test.com',
                     'password': 'employer123',
                     'first_name': 'Employer',
                     'last_name': 'Demo',
@@ -68,8 +68,11 @@ async def create_demo_users():
             ]
             
             for user_data in demo_users:
+                # Ensure password is within bcrypt's 72-byte limit
+                password = user_data['password'][:72]
+                
                 # Hash password
-                hashed_password = hash_password(user_data['password'])
+                hashed_password = hash_password(password)
                 
                 # Create user
                 user = User(
@@ -88,8 +91,8 @@ async def create_demo_users():
             await session.commit()
             print("🎉 Demo users created successfully!")
             print("\n📋 Demo Login Credentials:")
-            print("👨‍💼 Admin: admin@punjabrozgar.gov.pk / admin123")
-            print("🏢 Employer: employer@company.com / employer123")  
+            print("👨‍💼 Admin: admin@test.com / admin123")
+            print("🏢 Employer: employer@test.com / employer123")  
             print("👤 Job Seeker: jobseeker@email.com / jobseeker123")
             
         except Exception as e:
