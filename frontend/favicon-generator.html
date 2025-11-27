@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Punjab Rozgar Portal - Favicon Generator</title>
+    <style>
+        canvas { border: 1px solid #ccc; margin: 20px; }
+        body { font-family: Arial, sans-serif; padding: 20px; }
+    </style>
+</head>
+<body>
+    <h2>Punjab Rozgar Portal Favicon</h2>
+    <canvas id="favicon" width="32" height="32"></canvas>
+    <button onclick="downloadFavicon()">Download as ICO</button>
+    
+    <script>
+        // Create a simple favicon with "PR" text
+        const canvas = document.getElementById('favicon');
+        const ctx = canvas.getContext('2d');
+        
+        // Background
+        ctx.fillStyle = '#2563eb'; // Blue background
+        ctx.fillRect(0, 0, 32, 32);
+        
+        // Text
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('PR', 16, 16);
+        
+        function downloadFavicon() {
+            const link = document.createElement('a');
+            link.download = 'favicon.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+    </script>
+</body>
+</html>

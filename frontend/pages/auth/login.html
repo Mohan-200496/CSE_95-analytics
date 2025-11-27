@@ -17,8 +17,12 @@
     </script>
     
     <!-- Styles -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.0.0/css/all.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Favicon to prevent 404 errors -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%232563eb'/%3E%3Ctext x='16' y='20' font-family='Arial, sans-serif' font-size='14' font-weight='bold' text-anchor='middle' fill='white'%3EPR%3C/text%3E%3C/svg%3E">
+    <link rel="shortcut icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%232563eb'/%3E%3Ctext x='16' y='20' font-family='Arial, sans-serif' font-size='14' font-weight='bold' text-anchor='middle' fill='white'%3EPR%3C/text%3E%3C/svg%3E">
     
     <style>
         :root {
@@ -641,20 +645,54 @@
 
         // Demo account quick login
         function quickLogin(email, password) {
-            document.getElementById('email').value = email;
-            document.getElementById('password').value = password;
+            console.log('QuickLogin called with:', { email, password });
+            
+            const emailField = document.getElementById('email');
+            const passwordField = document.getElementById('password');
+            
+            if (emailField && passwordField) {
+                emailField.value = email;
+                passwordField.value = password;
+                
+                // Add visual feedback
+                emailField.style.backgroundColor = '#e8f5e8';
+                passwordField.style.backgroundColor = '#e8f5e8';
+                
+                setTimeout(() => {
+                    emailField.style.backgroundColor = '';
+                    passwordField.style.backgroundColor = '';
+                }, 1000);
+                
+                console.log('Credentials auto-filled successfully');
+            } else {
+                console.error('Could not find email or password fields');
+            }
         }
 
         // Add click handlers to demo account info
         document.querySelectorAll('.demo-account').forEach(account => {
             account.style.cursor = 'pointer';
             account.addEventListener('click', function() {
-                const text = this.textContent;
-                const emailMatch = text.match(/(\S+@\S+)/);
-                const passMatch = text.match(/\/\s*(\S+)/);
+                const text = this.textContent.trim();
+                console.log('Demo account clicked:', text);
                 
-                if (emailMatch && passMatch) {
-                    quickLogin(emailMatch[1], passMatch[1]);
+                // Extract email and password from text like "admin@test.com / admin123"
+                const parts = text.split('/');
+                if (parts.length === 2) {
+                    const email = parts[0].trim();
+                    const password = parts[1].trim();
+                    
+                    console.log('Auto-filling:', { email, password });
+                    quickLogin(email, password);
+                } else {
+                    // Fallback regex method
+                    const emailMatch = text.match(/(\S+@\S+\.\S+)/);
+                    const passMatch = text.match(/\/\s*(\S+)/);
+                    
+                    if (emailMatch && passMatch) {
+                        console.log('Regex auto-fill:', { email: emailMatch[1], password: passMatch[1] });
+                        quickLogin(emailMatch[1], passMatch[1]);
+                    }
                 }
             });
         });
