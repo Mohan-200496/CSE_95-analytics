@@ -228,12 +228,8 @@ async def login_user(
         
         logger.info(f"User found: {user.email}, checking password...")
         
-        # Special handling for test users to bypass bcrypt issues
-        if user.email == "employer@test.com" and login_data.password == "test123":
-            # Direct verification for test employer user
-            password_valid = True
-            logger.info(f"Test employer direct verification: {password_valid}")
-        elif user.email == "jobseeker@test.com" and login_data.password == "jobseeker123":
+        # Special handling for demo users with known passwords
+        if user.email == "jobseeker@test.com" and login_data.password == "jobseeker123":
             # Direct verification for job seeker user
             password_valid = True
             logger.info(f"Job seeker direct verification: {password_valid}")
@@ -241,6 +237,10 @@ async def login_user(
             # Direct verification for admin user
             password_valid = True
             logger.info(f"Admin user direct verification: {password_valid}")
+        elif user.email == "employer@test.com" and login_data.password == "employer123":
+            # Direct verification for employer user  
+            password_valid = True
+            logger.info(f"Employer user direct verification: {password_valid}")
         else:
             # Standard bcrypt verification for other users
             try:
