@@ -377,14 +377,31 @@ async def create_test_users_endpoint(db: AsyncSession = Depends(get_database)):
         
         # Check if users already exist
         result = await db.execute(
-            select(User).where(User.email.in_(["employer@test.com", "jobseeker@test.com"]))
+            select(User).where(User.email.in_(["admin@test.com", "employer@test.com", "jobseeker@test.com"]))
         )
         existing_users = result.scalars().all()
         
-        if len(existing_users) >= 2:
+        if len(existing_users) >= 3:
             return {"message": "Test users already exist", "users": [u.email for u in existing_users]}
         
         created_users = []
+        
+        # Create admin if not exists
+        if not any(u.email == "admin@test.com" for u in existing_users):
+            admin = User(
+                user_id=f"admin_{uuid.uuid4().hex[:12]}",
+                email="admin@test.com",
+                hashed_password=password_hash,
+                role=UserRole.ADMIN,
+                status=AccountStatus.ACTIVE,
+                first_name="Admin",
+                last_name="User",
+                email_verified=True,
+                city="Chandigarh",
+                state="Punjab"
+            )
+            db.add(admin)
+            created_users.append("admin@test.com")
         
         # Create employer if not exists
         if not any(u.email == "employer@test.com" for u in existing_users):
@@ -426,13 +443,64 @@ async def create_test_users_endpoint(db: AsyncSession = Depends(get_database)):
             "message": "Test users created successfully!",
             "created": created_users,
             "credentials": {
-                "employer": "employer@test.com / test123",
+                "admin": "admin@test.com / admin123",
+                "employer": "employer@test.com / test123", 
                 "jobseeker": "jobseeker@test.com / test123"
             }
         }
         
     except Exception as e:
         logger.error(f"Failed to create test users: {e}")
+        return {"error": str(e)}
+
+
+@router.get("/fix-user-roles")
+async def fix_user_roles(db: AsyncSession = Depends(get_database)):
+    """Fix roles for existing test users - DEVELOPMENT ONLY"""
+    try:
+        fixed_users = []
+        
+        # Fix admin role
+        admin_result = await db.execute(select(User).where(User.email == "admin@test.com"))
+        admin_user = admin_result.scalar_one_or_none()
+        if admin_user and admin_user.role != UserRole.ADMIN:
+            admin_user.role = UserRole.ADMIN
+            admin_user.first_name = "Admin"
+            admin_user.last_name = "User"
+            fixed_users.append("admin@test.com -> ADMIN")
+        
+        # Fix employer role
+        employer_result = await db.execute(select(User).where(User.email == "employer@test.com"))
+        employer_user = employer_result.scalar_one_or_none()
+        if employer_user and employer_user.role != UserRole.EMPLOYER:
+            employer_user.role = UserRole.EMPLOYER
+            employer_user.first_name = "Test"
+            employer_user.last_name = "Employer"
+            fixed_users.append("employer@test.com -> EMPLOYER")
+        
+        # Fix job seeker role (should already be correct)
+        jobseeker_result = await db.execute(select(User).where(User.email == "jobseeker@test.com"))
+        jobseeker_user = jobseeker_result.scalar_one_or_none()
+        if jobseeker_user and jobseeker_user.role != UserRole.JOB_SEEKER:
+            jobseeker_user.role = UserRole.JOB_SEEKER
+            jobseeker_user.first_name = "Test"
+            jobseeker_user.last_name = "JobSeeker"
+            fixed_users.append("jobseeker@test.com -> JOB_SEEKER")
+        
+        await db.commit()
+        
+        return {
+            "message": "User roles fixed successfully!",
+            "fixed": fixed_users,
+            "credentials": {
+                "admin": "admin@test.com / admin123 (ADMIN role)",
+                "employer": "employer@test.com / employer123 (EMPLOYER role)",
+                "jobseeker": "jobseeker@test.com / jobseeker123 (JOB_SEEKER role)"
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to fix user roles: {e}")
         return {"error": str(e)}
 
 
