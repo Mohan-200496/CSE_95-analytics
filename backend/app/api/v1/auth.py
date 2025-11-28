@@ -434,3 +434,146 @@ async def create_test_users_endpoint(db: AsyncSession = Depends(get_database)):
     except Exception as e:
         logger.error(f"Failed to create test users: {e}")
         return {"error": str(e)}
+
+
+@router.get("/create-demo-jobs")
+async def create_demo_jobs_endpoint(db: AsyncSession = Depends(get_database)):
+    """Create demo jobs for testing - only for development use"""
+    try:
+        from app.models.job import Job, JobStatus, JobType
+        from datetime import datetime, timedelta
+        import uuid
+        
+        # Check if demo jobs already exist
+        result = await db.execute(select(Job))
+        existing_jobs = result.scalars().all()
+        
+        if len(existing_jobs) >= 3:
+            return {
+                "message": "Demo jobs already exist", 
+                "jobs_count": len(existing_jobs),
+                "jobs": [{"title": j.title, "status": j.status.value} for j in existing_jobs[:5]]
+            }
+        
+        # Get the test employer user
+        employer_result = await db.execute(
+            select(User).where(User.email == "employer@test.com")
+        )
+        employer = employer_result.scalar_one_or_none()
+        
+        if not employer:
+            return {"error": "Test employer not found. Create test users first."}
+        
+        # Demo jobs data
+        demo_jobs_data = [
+            {
+                "title": "Software Developer - Python/FastAPI",
+                "description": "We are looking for a skilled Python developer to join our team. Experience with FastAPI, SQLAlchemy, and async programming required. You will work on building scalable web applications and APIs.",
+                "requirements": "Bachelor's degree in Computer Science, 2+ years Python experience",
+                "responsibilities": "Develop and maintain web applications, work with APIs, collaborate with team",
+                "category": "Technology",
+                "subcategory": "Software Development",
+                "location_city": "Chandigarh",
+                "location_state": "Punjab",
+                "job_type": "full_time",
+                "salary_min": 50000,
+                "salary_max": 80000,
+                "experience_min": 2,
+                "experience_max": 5,
+                "skills_required": ["Python", "FastAPI", "SQL", "Git"],
+                "status": JobStatus.ACTIVE
+            },
+            {
+                "title": "Digital Marketing Manager",
+                "description": "Join our marketing team to develop and execute digital marketing strategies. Experience in social media marketing, SEO, and content marketing required.",
+                "requirements": "MBA in Marketing, 3+ years digital marketing experience",
+                "responsibilities": "Develop marketing campaigns, manage social media, analyze performance metrics",
+                "category": "Marketing",
+                "subcategory": "Digital Marketing",
+                "location_city": "Ludhiana",
+                "location_state": "Punjab",
+                "job_type": "full_time",
+                "salary_min": 40000,
+                "salary_max": 60000,
+                "experience_min": 3,
+                "experience_max": 7,
+                "skills_required": ["Marketing", "Social Media", "SEO", "Analytics"],
+                "status": JobStatus.PENDING  # Needs admin approval
+            },
+            {
+                "title": "Data Analyst",
+                "description": "Analyze large datasets to provide insights for business decisions. Experience with Python, SQL, and data visualization tools required. Work with cross-functional teams to drive data-driven decisions.",
+                "requirements": "Bachelor's in Statistics/Computer Science, 1+ years experience",
+                "responsibilities": "Data analysis, reporting, data visualization, statistical modeling",
+                "category": "Technology",
+                "subcategory": "Data Science",
+                "location_city": "Amritsar",
+                "location_state": "Punjab",
+                "job_type": "full_time",
+                "salary_min": 35000,
+                "salary_max": 55000,
+                "experience_min": 1,
+                "experience_max": 4,
+                "skills_required": ["Python", "SQL", "Excel", "Statistics"],
+                "status": JobStatus.ACTIVE
+            },
+            {
+                "title": "Frontend Developer - React",
+                "description": "Build responsive web applications using React and modern JavaScript. Strong CSS and design skills required. Experience with state management and modern build tools preferred.",
+                "requirements": "Bachelor's degree, 2+ years React experience",
+                "responsibilities": "Develop UI components, implement responsive designs, optimize performance",
+                "category": "Technology",
+                "subcategory": "Frontend Development",
+                "location_city": "Jalandhar",
+                "location_state": "Punjab",
+                "job_type": "full_time",
+                "remote_allowed": True,
+                "salary_min": 45000,
+                "salary_max": 70000,
+                "experience_min": 2,
+                "experience_max": 6,
+                "skills_required": ["React", "JavaScript", "CSS", "HTML"],
+                "status": JobStatus.ACTIVE
+            }
+        ]
+        
+        created_jobs = []
+        for job_data in demo_jobs_data:
+            job = Job(
+                job_id=f"job_{uuid.uuid4().hex[:12]}",
+                employer_id=employer.user_id,
+                title=job_data["title"],
+                description=job_data["description"],
+                requirements=job_data.get("requirements"),
+                responsibilities=job_data.get("responsibilities"),
+                category=job_data["category"],
+                subcategory=job_data.get("subcategory"),
+                location_city=job_data["location_city"],
+                location_state=job_data["location_state"],
+                job_type=job_data["job_type"],
+                salary_min=job_data.get("salary_min"),
+                salary_max=job_data.get("salary_max"),
+                experience_min=job_data.get("experience_min"),
+                experience_max=job_data.get("experience_max"),
+                skills_required=job_data.get("skills_required"),
+                status=job_data["status"],
+                remote_allowed=job_data.get("remote_allowed", False),
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
+                application_deadline=datetime.utcnow() + timedelta(days=30)
+            )
+            
+            db.add(job)
+            created_jobs.append(job_data["title"])
+        
+        await db.commit()
+        
+        return {
+            "message": "Demo jobs created successfully!",
+            "created": created_jobs,
+            "total_jobs": len(created_jobs)
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to create demo jobs: {e}")
+        return {"error": str(e)}
