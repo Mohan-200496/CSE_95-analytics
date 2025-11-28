@@ -3,6 +3,41 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-009688.svg?style=flat&logo=FastAPI&logoColor=white)](https://fastapi.tiangolo.com)
+[![Render Deployment Ready](https://img.shields.io/badge/Render-Deployment%20Ready-46E3B7.svg)](https://render.com)
+
+## 🚀 Render Deployment Instructions
+
+This application is **ready for immediate deployment** on Render! 
+
+### Quick Deploy to Render:
+
+1. **Fork this repository** to your GitHub account
+2. **Connect to Render**:
+   - Go to [render.com](https://render.com)
+   - Connect your GitHub account
+   - Select this repository
+3. **Create Web Service**:
+   - Service Type: `Web Service`
+   - Build Command: `pip install -r requirements.txt`
+   - Start Command: `cd backend && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - Python Version: `3.11.0`
+4. **Set Environment Variables**:
+   ```
+   ENVIRONMENT=production
+   JWT_SECRET_KEY=punjab-rozgar-render-secret-key-2025
+   DATABASE_URL=sqlite:///./data/punjab_rozgar.db
+   ```
+5. **Deploy!** - Your app will be live at: `https://your-app-name.onrender.com`
+
+### 🔑 Test the Deployed App:
+- **Job Seeker**: `jobseeker@test.com` / `jobseeker123`
+- **Admin**: `admin@test.com` / `admin123`
+- **Employer**: `employer@test.com` / `test123`
+
+### 📱 API Endpoints:
+- Backend: `https://your-app.onrender.com`
+- API Docs: `https://your-app.onrender.com/docs`
+- Jobs API: `https://your-app.onrender.com/api/v1/jobs/`
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933.svg?style=flat&logo=Node.js&logoColor=white)](https://nodejs.org)
 
 ## 🎯 Project Overview

@@ -152,6 +152,9 @@ class User(Base):
     def is_admin(self) -> bool:
         """Check if user is an admin"""
         return self.role in [UserRole.ADMIN, UserRole.MODERATOR]
+    
+    # TODO: Add Company relationship after resolving import issues
+    # company = relationship("Company", back_populates="user", uselist=False)
 
 
 class UserProfile(Base):

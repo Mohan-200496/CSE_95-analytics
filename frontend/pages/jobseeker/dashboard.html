@@ -1425,7 +1425,7 @@ hManager !== 'undefined' && authManager.setTestAdminUser) {
             }
         }
 
-        // Enhanced loadRecommendedJobs with better mock data
+        // Enhanced loadRecommendedJobs with proper API integration
         async function loadRecommendedJobs() {
             console.log('LoadRecommendedJobs called - enhanced version');
             
@@ -1443,39 +1443,51 @@ hManager !== 'undefined' && authManager.setTestAdminUser) {
             }
 
             try {
-                // Try to load from API first
-                let jobs = [];
-                try {
-                    // Try local API server first
-                    let response = await fetch('http://localhost:3001/jobs/recommended');
-                    if (!response.ok) {
-                        // Fallback to backend API
-                        response = await fetch(`${authManager.apiBaseUrl}/jobs/recommended`, {
-                            headers: authManager.getAuthHeaders()
-                        });
-                    }
-                    
-                    if (response.ok) {
-                        jobs = await response.json();
-                    } else {
-                        throw new Error(`API returned ${response.status}`);
-                    }
-                } catch (apiError) {
-                    console.log('API call failed, using mock data:', apiError.message);
-                    jobs = getMockRecommendedJobs();
+                // Get user authentication
+                const user = authManager.getCurrentUser();
+                const token = authManager.accessToken;
+                
+                if (!token || !user) {
+                    console.log('No auth token, using mock data');
+                    const jobs = getMockRecommendedJobs();
+                    renderRecommendedJobs(jobs, jobsList);
+                    return;
                 }
 
-                renderRecommendedJobs(jobs, jobsList);
+                // Call the recommendations API
+                console.log('Calling recommendations API...');
+                const response = await fetch(`${authManager.apiBaseUrl}/recommendations/`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const jobs = await response.json();
+                    console.log('Successfully loaded', jobs.length, 'job recommendations from API');
+                    renderRecommendedJobs(jobs, jobsList);
+                } else if (response.status === 403) {
+                    console.log('User not authorized for recommendations (probably not a job seeker)');
+                    jobsList.innerHTML = `
+                        <div style="padding: 40px; text-align: center; color: #666;">
+                            <i class="fas fa-info-circle" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                            <p>Job recommendations are available for job seekers only.</p>
+                            <a href="../jobs/browse.html" style="display: inline-block; margin-top: 16px; color: #667eea; text-decoration: none;">
+                                <i class="fas fa-search" style="margin-right: 8px;"></i>Browse All Jobs
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(`API returned ${response.status}`);
+                }
                 
             } catch (error) {
                 console.error('Error loading recommended jobs:', error);
-                jobsList.innerHTML = `
-                    <div style="padding: 40px; text-align: center; color: #dc3545;">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px;"></i>
-                        <p>Error loading job recommendations.</p>
-                        <p style="margin-top: 8px; font-size: 14px;">Please try again later.</p>
-                    </div>
-                `;
+                console.log('Using mock data as fallback');
+                const jobs = getMockRecommendedJobs();
+                renderRecommendedJobs(jobs, jobsList);
             }
         }
 

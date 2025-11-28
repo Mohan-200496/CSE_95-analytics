@@ -327,19 +327,95 @@
     </section>
 
     <script>
+        // Global analytics tracking function
+        window.trackEvent = function(event, data) {
+            try {
+                console.log('📊 Analytics:', event, data);
+                // Future: Send to analytics service
+            } catch (e) {
+                console.warn('Analytics failed:', e);
+            }
+        };
+        
+        // Mock data fallback
+        function displayMockJobs(params = {}) {
+            const mockJobs = [
+                {
+                    job_id: 'mock-1',
+                    title: 'Full Stack Developer',
+                    company_name: 'Tech Solutions Punjab',
+                    location_city: 'Chandigarh',
+                    job_type: 'full_time',
+                    salary_min: 500000,
+                    salary_max: 800000,
+                    description: 'Looking for experienced Full Stack Developer...'
+                },
+                {
+                    job_id: 'mock-2', 
+                    title: 'Frontend Developer',
+                    company_name: 'Digital Punjab',
+                    location_city: 'Ludhiana',
+                    job_type: 'full_time',
+                    salary_min: 400000,
+                    salary_max: 600000,
+                    description: 'Join our frontend team...'
+                },
+                {
+                    job_id: 'mock-3',
+                    title: 'Data Analyst', 
+                    company_name: 'Analytics Corp',
+                    location_city: 'Amritsar',
+                    job_type: 'full_time',
+                    salary_min: 350000,
+                    salary_max: 500000,
+                    description: 'Data analysis role...'
+                }
+            ];
+            
+            document.getElementById('job-count').textContent = mockJobs.length;
+            const jobsGrid = document.getElementById('jobs-grid');
+            
+            jobsGrid.innerHTML = mockJobs.map(job => `
+                <div class="job-card">
+                    <div class="job-header">
+                        <h3>${job.title}</h3>
+                        <span class="job-type">${job.job_type.replace('_', ' ')}</span>
+                    </div>
+                    <p class="company">${job.company_name}</p>
+                    <p class="location"><i class="fas fa-map-marker-alt"></i> ${job.location_city}</p>
+                    <p class="salary">₹${(job.salary_min/100000).toFixed(1)}L - ₹${(job.salary_max/100000).toFixed(1)}L</p>
+                    <p class="description">${job.description.substring(0, 100)}...</p>
+                    <div class="job-actions">
+                        <button class="btn-primary" onclick="applyForJob('${job.job_id}')">Apply Now</button>
+                        <button class="btn-secondary" onclick="saveJob('${job.job_id}')">Save</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
         // Fetch and display jobs from backend API
         async function loadJobsFromApi(params = {}) {
             try {
                 const query = new URLSearchParams();
-                // Show all jobs for debugging (including pending approval)
-                // query.set('only_active', 'true');  // Commented out for debugging
+                query.set('only_active', 'true');  // Only show active jobs for public browsing
                 if (params.search && params.search.trim()) query.set('search', params.search.trim());
                 if (params.location_city && params.location_city.trim()) query.set('location_city', params.location_city.trim());
                 if (params.job_type && params.job_type.trim()) query.set('job_type', params.job_type.trim());
 
                 const url = `${authManager.apiBaseUrl}/jobs/${query.toString() ? `?${query.toString()}` : ''}`;
-                const res = await fetch(url, { method: 'GET' });
-                if (!res.ok) throw new Error(`Failed to load jobs (${res.status})`);
+                
+                // Public API call - no authentication needed for browsing
+                const res = await fetch(url, { 
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (!res.ok) {
+                    console.error(`Jobs API error: ${res.status}`);
+                    // Fallback to mock data if API fails
+                    return displayMockJobs(params);
+                }
+                
                 const jobs = await res.json();
 
                 // Update job count
@@ -497,19 +573,163 @@
                 return;
             }
 
-            // Show application modal
-            showApplicationModal(jobId, jobTitle);
+            // Fetch job details to check resume requirement
+            let jobDetails = null;
+            try {
+                const response = await fetch(`${authManager.apiBaseUrl}/jobs/${jobId}`, {
+                    headers: { 'Authorization': `Bearer ${authManager.getToken()}` }
+                });
+                if (response.ok) {
+                    jobDetails = await response.json();
+                }
+            } catch (error) {
+                console.error('Error fetching job details:', error);
+            }
+
+            // Show application modal with job details
+            showApplicationModal(jobId, jobTitle, jobDetails);
             
             // Track application started
             trackEvent('Job Application Started', {
                 job_id: jobId,
                 job_title: jobTitle,
                 source: 'job_browse_page',
-                action: 'apply_button'
+                action: 'apply_button',
+                resume_required: jobDetails?.resume_required || false
             });
         }
 
-        function showApplicationModal(jobId, jobTitle) {
+        function showApplicationModal(jobId, jobTitle, jobDetails = null) {
+            const resumeRequired = jobDetails?.resume_required !== false; // Default to true if not specified
+            const applicationMethod = jobDetails?.application_method || 'online';
+            
+            // Show different UI based on application method
+            if (applicationMethod === 'email' && jobDetails?.contact_email) {
+                // For email applications, provide instructions
+                const modal = document.createElement('div');
+                modal.id = 'application-modal';
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                `;
+
+                modal.innerHTML = `
+                    <div style="background: white; border-radius: 12px; padding: 2rem; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h2 style="margin: 0; color: #333;">Apply for ${jobTitle}</h2>
+                            <button onclick="closeApplicationModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">&times;</button>
+                        </div>
+                        
+                        <div style="background: #f8f9fa; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                            <h3 style="margin: 0 0 1rem 0; color: #333; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-envelope" style="color: #667eea;"></i>
+                                Email Application Required
+                            </h3>
+                            <p style="margin: 0 0 1rem 0; color: #666;">
+                                This position requires you to send your application via email to:
+                            </p>
+                            <div style="background: white; padding: 1rem; border-radius: 6px; border: 1px solid #ddd; font-family: monospace; font-size: 1.1rem; color: #333; margin-bottom: 1rem;">
+                                ${jobDetails.contact_email}
+                            </div>
+                            <div style="margin-bottom: 1rem;">
+                                <strong style="color: #333;">Required documents:</strong>
+                                <ul style="margin: 0.5rem 0; padding-left: 1.5rem; color: #666;">
+                                    <li>Cover letter explaining your interest and qualifications</li>
+                                    ${resumeRequired ? '<li><strong>Resume/CV (Required)</strong></li>' : '<li>Resume/CV (Optional but recommended)</li>'}
+                                    <li>Any relevant portfolio or work samples</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                            <button onclick="closeApplicationModal()" style="padding: 0.75rem 1.5rem; border: 1px solid #ddd; background: white; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                                Close
+                            </button>
+                            <button onclick="window.open('mailto:${jobDetails.contact_email}?subject=Application for ${encodeURIComponent(jobTitle)}&body=Dear Hiring Manager,%0A%0AI am writing to express my interest in the ${encodeURIComponent(jobTitle)} position.%0A%0APlease find my application documents attached.%0A%0ABest regards')" 
+                                    style="padding: 0.75rem 1.5rem; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                                <i class="fas fa-envelope"></i> Open Email Client
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+                return;
+            }
+
+            if (applicationMethod === 'offline') {
+                // For offline applications, provide contact information
+                const modal = document.createElement('div');
+                modal.id = 'application-modal';
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                `;
+
+                modal.innerHTML = `
+                    <div style="background: white; border-radius: 12px; padding: 2rem; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h2 style="margin: 0; color: #333;">Apply for ${jobTitle}</h2>
+                            <button onclick="closeApplicationModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">&times;</button>
+                        </div>
+                        
+                        <div style="background: #f8f9fa; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                            <h3 style="margin: 0 0 1rem 0; color: #333; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-building" style="color: #667eea;"></i>
+                                In-Person Application Required
+                            </h3>
+                            <p style="margin: 0 0 1rem 0; color: #666;">
+                                This position requires you to apply in person. Please visit the employer's location with the following documents:
+                            </p>
+                            
+                            ${jobDetails?.contact_phone || jobDetails?.contact_email ? `
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: #333;">Contact Information:</strong>
+                                    ${jobDetails.contact_phone ? `<div style="color: #666;"><i class="fas fa-phone" style="margin-right: 0.5rem;"></i>${jobDetails.contact_phone}</div>` : ''}
+                                    ${jobDetails.contact_email ? `<div style="color: #666;"><i class="fas fa-envelope" style="margin-right: 0.5rem;"></i>${jobDetails.contact_email}</div>` : ''}
+                                </div>
+                            ` : ''}
+                            
+                            <div style="margin-bottom: 1rem;">
+                                <strong style="color: #333;">Required documents to bring:</strong>
+                                <ul style="margin: 0.5rem 0; padding-left: 1.5rem; color: #666;">
+                                    <li>Completed application form (if provided)</li>
+                                    ${resumeRequired ? '<li><strong>Resume/CV (Required)</strong></li>' : '<li>Resume/CV (Optional but recommended)</li>'}
+                                    <li>Valid identification document</li>
+                                    <li>Any relevant certificates or qualifications</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                            <button onclick="closeApplicationModal()" style="padding: 0.75rem 1.5rem; border: 1px solid #ddd; background: white; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+                return;
+            }
+
+            // Default to online application form
             const modal = document.createElement('div');
             modal.id = 'application-modal';
             modal.style.cssText = `
@@ -545,10 +765,14 @@
                         </div>
 
                         <div style="margin-bottom: 1.5rem;">
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Resume URL</label>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                                Resume URL ${resumeRequired ? '*' : ''}
+                                ${resumeRequired ? '<span style="color: #c33; font-weight: normal;">(Required by employer)</span>' : '<span style="color: #666; font-weight: normal;">(Optional)</span>'}
+                            </label>
                             <input 
                                 type="url" 
                                 name="resume_url" 
+                                ${resumeRequired ? 'required' : ''}
                                 placeholder="https://example.com/resume.pdf"
                                 style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px;"
                             />

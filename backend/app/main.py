@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.ext.asyncio import AsyncSession
 import uvicorn
 import logging
+import os
 from datetime import datetime
 from contextlib import asynccontextmanager
 
@@ -126,13 +127,12 @@ async def health_check():
     }
 
 # Database initialization endpoint
-@app.post("/init-demo-accounts", tags=["System"])
-async def init_demo_accounts(db: AsyncSession = Depends(get_database)):
+# Demo accounts endpoint (temporarily disabled for debugging)
+# @app.post("/init-demo-accounts", tags=["System"])
+# async def init_demo_accounts(db: AsyncSession = Depends(get_database)):
     """Initialize demo accounts in database"""
     try:
-        from app.models.user import User
-        from app.models.company import Company  
-        from app.models.admin import Admin
+        from app.models.user import User, UserRole, AccountStatus
         from passlib.context import CryptContext
         from sqlalchemy import select
         
@@ -143,78 +143,57 @@ async def init_demo_accounts(db: AsyncSession = Depends(get_database)):
         if result.scalar_one_or_none():
             return {"message": "Demo accounts already exist", "status": "already_initialized"}
         
-        # Create Admin User
+        # Import UserRole enum
+        from app.models.user import UserRole, AccountStatus
+        
+        # Create Admin User  
         admin_user = User(
             user_id="admin_demo_001",
             email="admin@test.com",
-            password_hash=pwd_context.hash("admin123"),
+            hashed_password=pwd_context.hash("admin123"),
             first_name="Admin",
             last_name="User",
             phone="+1234567890",
-            user_type="admin",
-            is_active=True,
-            is_verified=True,
+            role=UserRole.ADMIN,
+            status=AccountStatus.ACTIVE,
+            email_verified=True,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
         db.add(admin_user)
         await db.flush()
         
-        # Create Admin record
-        admin_record = Admin(
-            user_id=admin_user.id,
-            admin_level="super_admin",
-            permissions=["manage_users", "manage_jobs", "view_analytics", "system_admin"],
-            created_at=datetime.utcnow()
-        )
-        db.add(admin_record)
-        
         # Create Employer User
         employer_user = User(
             user_id="employer_demo_001",
             email="employer@test.com", 
-            password_hash=pwd_context.hash("employer123"),
+            hashed_password=pwd_context.hash("employer123"),
             first_name="Test",
             last_name="Employer",
             phone="+1234567891",
-            user_type="employer",
-            is_active=True,
-            is_verified=True,
+            role=UserRole.EMPLOYER,
+            status=AccountStatus.ACTIVE,
+            email_verified=True,
+            company_name="Demo Tech Solutions",  # Store company name in user record for now
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
         db.add(employer_user)
         await db.flush()
         
-        # Create Company for Employer
-        company = Company(
-            company_id="company_demo_001",
-            name="Demo Tech Solutions",
-            description="A demo technology company for testing",
-            industry="Technology", 
-            location="Punjab, India",
-            website="https://demo-tech.com",
-            email="hr@demo-tech.com",
-            phone="+91-98765-43210",
-            employees_count="50-100",
-            user_id=employer_user.id,
-            is_verified=True,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
-        )
-        db.add(company)
+        # TODO: Create Company record separately once Company model is stable
         
         # Create Job Seeker User
         jobseeker_user = User(
             user_id="jobseeker_demo_001",
             email="jobseeker@email.com",
-            password_hash=pwd_context.hash("jobseeker123"),
+            hashed_password=pwd_context.hash("jobseeker123"),
             first_name="Test", 
             last_name="JobSeeker",
             phone="+1234567892",
-            user_type="jobseeker",
-            is_active=True,
-            is_verified=True,
+            role=UserRole.JOB_SEEKER,
+            status=AccountStatus.ACTIVE,
+            email_verified=True,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
@@ -373,10 +352,12 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 # Development server
 if __name__ == "__main__":
+    # Use PORT environment variable for Render deployment
+    port = int(os.environ.get("PORT", settings.PORT))
     uvicorn.run(
         "main:app",
-        host=settings.HOST,
-        port=settings.PORT,
+        host="0.0.0.0",  # Bind to all interfaces for deployment
+        port=port,
         reload=settings.DEBUG,
         log_level="info" if not settings.DEBUG else "debug"
     )

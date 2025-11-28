@@ -468,8 +468,26 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="applicationMethod">Application Method <span class="required">*</span></label>
+                        <select id="applicationMethod" name="applicationMethod" required>
+                            <option value="online">Online Application (Default)</option>
+                            <option value="email">Email Application</option>
+                            <option value="offline">In-Person Application</option>
+                        </select>
+                        <div class="help-text">Choose how candidates should apply for this position</div>
+                    </div>
+
+                    <div class="form-group">
                         <label for="applicationInstructions">Application Instructions</label>
                         <textarea id="applicationInstructions" name="applicationInstructions" placeholder="Provide specific instructions for applicants on how to apply..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="resumeRequired" name="resumeRequired" checked>
+                            <label for="resumeRequired">Resume Required</label>
+                        </div>
+                        <div class="help-text">Uncheck if resume is not mandatory for this position</div>
                     </div>
                 </div>
 
@@ -643,7 +661,8 @@
                 skills_required: skills,
                 application_deadline: formData.get('applicationDeadline') ? new Date(formData.get('applicationDeadline')).toISOString() : null,
                 application_method: formData.get('applicationMethod') || 'online',
-                contact_email: user.email
+                contact_email: user.email,
+                resume_required: formData.has('resumeRequired') && formData.get('resumeRequired') === 'on'
             };
 
             try {

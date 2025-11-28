@@ -18,7 +18,7 @@ from app.analytics.tracker import get_analytics_tracker
 from pydantic import BaseModel, Field
 
 router = APIRouter(tags=["jobs"])
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 # Pydantic schemas for job operations (mapped to Job model)
 class JobCreate(BaseModel):
@@ -46,6 +46,7 @@ class JobCreate(BaseModel):
     application_url: Optional[str] = None
     contact_email: Optional[str] = None
     contact_phone: Optional[str] = None
+    resume_required: Optional[bool] = True
 
 class JobPublicResponse(BaseModel):
     job_id: str
@@ -158,6 +159,7 @@ async def create_job(
         application_url=job_data.application_url,
         contact_email=job_data.contact_email or current_user.email,
         contact_phone=job_data.contact_phone,
+        resume_required=job_data.resume_required,
         status=JobStatus.DRAFT,
         published_at=None
     )
@@ -354,7 +356,7 @@ async def list_jobs(
     only_active: bool = True,
     session: AsyncSession = Depends(get_database),
     analytics = Depends(get_analytics_tracker),
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False))
 ):
     """List all job postings with filters (role-based access)"""
     

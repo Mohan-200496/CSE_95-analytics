@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Jobs API</title>
+</head>
+<body>
+    <h1>Testing Jobs API</h1>
+    <div id="result"></div>
+
+    <script>
+        async function testJobsAPI() {
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/jobs/');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const jobs = await response.json();
+                document.getElementById('result').innerHTML = `
+                    <h2>✅ Jobs API Working</h2>
+                    <p>Found ${jobs.length} jobs:</p>
+                    <ul>
+                        ${jobs.slice(0, 5).map(job => `<li>${job.title} at ${job.company_name || 'Unknown Company'}</li>`).join('')}
+                    </ul>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <h2>❌ Error</h2>
+                    <p>Error: ${error.message}</p>
+                `;
+                console.error('API test failed:', error);
+            }
+        }
+
+        // Test on load
+        window.onload = testJobsAPI;
+    </script>
+</body>
+</html>

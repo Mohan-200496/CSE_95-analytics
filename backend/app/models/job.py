@@ -105,6 +105,7 @@ class Job(Base):
     application_url = Column(String(500))
     contact_email = Column(String(255))
     contact_phone = Column(String(20))
+    resume_required = Column(Boolean, default=True)  # Whether resume is mandatory
     
     # Status and Lifecycle
     status = Column(SQLEnum(JobStatus), default=JobStatus.DRAFT, index=True)

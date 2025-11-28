@@ -1,0 +1,18 @@
+# Render Deployment Configuration
+
+# Build command for Render
+build: |
+  pip install --upgrade pip
+  pip install -r backend/requirements.txt
+
+# Start command for Render
+start: cd backend && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+
+# Environment variables needed for Render
+environment:
+  - ENVIRONMENT=production
+  - DATABASE_URL=sqlite:///./data/punjab_rozgar.db
+  - JWT_SECRET_KEY=punjab-rozgar-render-secret-key-2025
+  - CORS_ORIGINS=["https://punjab-rozgar-portal.onrender.com","http://localhost:3000"]
+  - HOST=0.0.0.0
+  - PORT=10000
