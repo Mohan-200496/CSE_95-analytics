@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Role-Based Dashboard Test - Punjab Rozgar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .role-card {
+            border: 2px solid #e3f2fd;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            transition: transform 0.2s;
+        }
+        .role-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .admin-card { border-left: 5px solid #dc3545; }
+        .employer-card { border-left: 5px solid #ffc107; }
+        .jobseeker-card { border-left: 5px solid #28a745; }
+        .test-result {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .test-success { background: #d4edda; border-left: 4px solid #28a745; }
+        .test-error { background: #f8d7da; border-left: 4px solid #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <h1 class="text-center mb-4">
+                    <i class="fas fa-users-cog text-primary"></i>
+                    Role-Based Dashboard Test
+                </h1>
+                
+                <div class="alert alert-info">
+                    <h5><i class="fas fa-info-circle"></i> Test Instructions</h5>
+                    <p>Click on each role below to test the authentication and dashboard redirection. Each user type should be redirected to their specific dashboard after login.</p>
+                </div>
+
+                <!-- Admin Test -->
+                <div class="role-card admin-card">
+                    <h4><i class="fas fa-shield-alt text-danger"></i> Admin Dashboard Test</h4>
+                    <p><strong>User:</strong> admin@test.com <br>
+                       <strong>Password:</strong> admin123 <br>
+                       <strong>Expected:</strong> Should redirect to <code>/pages/admin/dashboard.html</code></p>
+                    <button class="btn btn-danger" onclick="testRole('admin', 'admin@test.com', 'admin123')">
+                        <i class="fas fa-sign-in-alt"></i> Test Admin Login
+                    </button>
+                    <div id="admin-result"></div>
+                </div>
+
+                <!-- Employer Test -->
+                <div class="role-card employer-card">
+                    <h4><i class="fas fa-building text-warning"></i> Employer Dashboard Test</h4>
+                    <p><strong>User:</strong> employer@test.com <br>
+                       <strong>Password:</strong> employer123 <br>
+                       <strong>Expected:</strong> Should redirect to <code>/pages/employer/dashboard.html</code></p>
+                    <button class="btn btn-warning" onclick="testRole('employer', 'employer@test.com', 'employer123')">
+                        <i class="fas fa-sign-in-alt"></i> Test Employer Login
+                    </button>
+                    <div id="employer-result"></div>
+                </div>
+
+                <!-- Job Seeker Test -->
+                <div class="role-card jobseeker-card">
+                    <h4><i class="fas fa-user-graduate text-success"></i> Job Seeker Dashboard Test</h4>
+                    <p><strong>User:</strong> jobseeker@test.com <br>
+                       <strong>Password:</strong> jobseeker123 <br>
+                       <strong>Expected:</strong> Should redirect to <code>/pages/jobseeker/dashboard.html</code></p>
+                    <button class="btn btn-success" onclick="testRole('jobseeker', 'jobseeker@test.com', 'jobseeker123')">
+                        <i class="fas fa-sign-in-alt"></i> Test Job Seeker Login
+                    </button>
+                    <div id="jobseeker-result"></div>
+                </div>
+
+                <!-- Current User Status -->
+                <div class="alert alert-secondary mt-4">
+                    <h5><i class="fas fa-user"></i> Current User Status</h5>
+                    <div id="current-user-status">Not logged in</div>
+                    <button class="btn btn-outline-secondary btn-sm mt-2" onclick="checkCurrentUser()">
+                        <i class="fas fa-refresh"></i> Refresh Status
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm mt-2 ms-2" onclick="logoutUser()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+
+                <!-- Test Results Summary -->
+                <div class="alert alert-light mt-4">
+                    <h5><i class="fas fa-clipboard-check"></i> Test Results Summary</h5>
+                    <div id="test-summary">Click the buttons above to run tests...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        let testResults = {
+            admin: null,
+            employer: null,
+            jobseeker: null
+        };
+
+        async function testRole(role, email, password) {
+            const resultDiv = document.getElementById(role + '-result');
+            resultDiv.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div> Testing...';
+            
+            try {
+                // Test login
+                const loginResult = await authManager.login(email, password, false);
+                
+                if (loginResult.success) {
+                    const user = loginResult.user;
+                    testResults[role] = {
+                        success: true,
+                        message: `✅ Login successful! Role: ${user.role}`,
+                        userRole: user.role,
+                        expectedRole: role === 'jobseeker' ? 'job_seeker' : role
+                    };
+                    
+                    resultDiv.innerHTML = `<div class="test-success">
+                        <strong>✅ Success!</strong><br>
+                        Logged in as: ${user.email}<br>
+                        Role: ${user.role}<br>
+                        Name: ${user.name}<br>
+                        <small>Note: Redirect disabled for testing purposes</small>
+                    </div>`;
+                    
+                } else {
+                    testResults[role] = {
+                        success: false,
+                        message: `❌ Login failed: ${loginResult.error}`
+                    };
+                    
+                    resultDiv.innerHTML = `<div class="test-error">
+                        <strong>❌ Failed!</strong><br>
+                        Error: ${loginResult.error}
+                    </div>`;
+                }
+            } catch (error) {
+                testResults[role] = {
+                    success: false,
+                    message: `❌ Error: ${error.message}`
+                };
+                
+                resultDiv.innerHTML = `<div class="test-error">
+                    <strong>❌ Error!</strong><br>
+                    ${error.message}
+                </div>`;
+            }
+            
+            updateTestSummary();
+            checkCurrentUser();
+        }
+
+        function checkCurrentUser() {
+            const currentUser = authManager.getCurrentUser();
+            const statusDiv = document.getElementById('current-user-status');
+            
+            if (currentUser) {
+                statusDiv.innerHTML = `
+                    <strong>Logged in as:</strong> ${currentUser.email}<br>
+                    <strong>Role:</strong> ${currentUser.role}<br>
+                    <strong>Name:</strong> ${currentUser.name}<br>
+                    <small class="text-muted">User ID: ${currentUser.user_id}</small>
+                `;
+            } else {
+                statusDiv.innerHTML = 'Not logged in';
+            }
+        }
+
+        function logoutUser() {
+            authManager.logout();
+            checkCurrentUser();
+            updateTestSummary();
+            // Clear all test results
+            document.getElementById('admin-result').innerHTML = '';
+            document.getElementById('employer-result').innerHTML = '';
+            document.getElementById('jobseeker-result').innerHTML = '';
+            testResults = { admin: null, employer: null, jobseeker: null };
+        }
+
+        function updateTestSummary() {
+            const summaryDiv = document.getElementById('test-summary');
+            const totalTests = Object.keys(testResults).length;
+            const completedTests = Object.values(testResults).filter(r => r !== null).length;
+            const successfulTests = Object.values(testResults).filter(r => r && r.success).length;
+            
+            if (completedTests === 0) {
+                summaryDiv.innerHTML = 'Click the buttons above to run tests...';
+                return;
+            }
+            
+            let summary = `<strong>Tests completed:</strong> ${completedTests}/${totalTests}<br>`;
+            summary += `<strong>Successful:</strong> ${successfulTests}/${completedTests}<br><br>`;
+            
+            for (const [role, result] of Object.entries(testResults)) {
+                if (result !== null) {
+                    const status = result.success ? '✅' : '❌';
+                    summary += `${status} ${role}: ${result.message}<br>`;
+                }
+            }
+            
+            summaryDiv.innerHTML = summary;
+        }
+
+        // Check current user status on page load
+        checkCurrentUser();
+        
+        // Refresh status every 5 seconds
+        setInterval(checkCurrentUser, 5000);
+    </script>
+</body>
+</html>
