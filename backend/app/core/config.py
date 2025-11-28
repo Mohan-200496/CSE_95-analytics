@@ -38,8 +38,8 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # CORS settings
-    CORS_ORIGINS: List[str] = ["*"]  # Allow all origins for now
-    CORS_ALLOW_CREDENTIALS: bool = False
+    CORS_ORIGINS: List[str] = ["*"]  # Allow all origins
+    CORS_ALLOW_CREDENTIALS: bool = True  # Allow credentials
     CORS_ALLOW_METHODS: List[str] = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
     CORS_ALLOW_HEADERS: List[str] = ["*"]
     
@@ -174,6 +174,15 @@ class RenderSettings(Settings):
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "*"  # Allow all for development - restrict in production
+    ]
+    
+    # CORS settings - override the default CORS_ORIGINS
+    CORS_ORIGINS: List[str] = [
+        "https://punjab-rozgar-portal1.onrender.com",
+        "https://punjab-rozgar-api.onrender.com",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "*"  # Allow all origins for now to fix CORS issues
     ]
     
     # Render PostgreSQL database (from environment variable)
