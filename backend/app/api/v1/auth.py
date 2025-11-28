@@ -504,6 +504,129 @@ async def fix_user_roles(db: AsyncSession = Depends(get_database)):
         return {"error": str(e)}
 
 
+@router.get("/create-simple-jobs")
+async def create_simple_jobs_endpoint(db: AsyncSession = Depends(get_database)):
+    """Create simplified demo jobs for testing - only for development use"""
+    try:
+        from app.models.job import Job, JobStatus, JobType
+        from datetime import datetime, timedelta
+        import uuid
+        
+        # Check if jobs already exist
+        result = await db.execute(select(Job))
+        existing_jobs = result.scalars().all()
+        
+        if len(existing_jobs) >= 3:
+            return {
+                "message": "Demo jobs already exist", 
+                "jobs_count": len(existing_jobs),
+                "jobs": [{"title": j.title, "status": j.status.value} for j in existing_jobs[:5]]
+            }
+        
+        # Get the test employer user
+        employer_result = await db.execute(
+            select(User).where(User.email == "employer@test.com")
+        )
+        employer = employer_result.scalar_one_or_none()
+        
+        if not employer:
+            return {"error": "Test employer not found. Create test users first."}
+        
+        # Simplified jobs data (without resume_required and other problematic fields)
+        simple_jobs_data = [
+            {
+                "title": "Python Developer",
+                "description": "Develop web applications using Python and FastAPI",
+                "requirements": "2+ years Python experience",
+                "responsibilities": "Build APIs, work with databases",
+                "category": "Technology",
+                "location_city": "Chandigarh",
+                "location_state": "Punjab",
+                "job_type": JobType.FULL_TIME,
+                "salary_min": 50000,
+                "salary_max": 80000,
+                "experience_min": 2,
+                "experience_max": 5,
+                "skills_required": ["Python", "FastAPI", "SQL"],
+                "status": JobStatus.ACTIVE
+            },
+            {
+                "title": "Digital Marketing Specialist", 
+                "description": "Manage social media and digital marketing campaigns",
+                "requirements": "Marketing degree, 2+ years experience",
+                "responsibilities": "Social media, SEO, content marketing",
+                "category": "Marketing",
+                "location_city": "Ludhiana",
+                "location_state": "Punjab",
+                "job_type": JobType.FULL_TIME,
+                "salary_min": 35000,
+                "salary_max": 55000,
+                "experience_min": 2,
+                "experience_max": 5,
+                "skills_required": ["Marketing", "SEO", "Social Media"],
+                "status": JobStatus.ACTIVE
+            },
+            {
+                "title": "Frontend Developer",
+                "description": "Build user interfaces using React and JavaScript",
+                "requirements": "Bachelor's degree, React experience",
+                "responsibilities": "UI development, responsive design",
+                "category": "Technology", 
+                "location_city": "Amritsar",
+                "location_state": "Punjab",
+                "job_type": JobType.FULL_TIME,
+                "salary_min": 40000,
+                "salary_max": 65000,
+                "experience_min": 1,
+                "experience_max": 4,
+                "skills_required": ["React", "JavaScript", "CSS"],
+                "status": JobStatus.ACTIVE
+            }
+        ]
+        
+        created_jobs = []
+        for job_data in simple_jobs_data:
+            job = Job(
+                job_id=f"job_{uuid.uuid4().hex[:12]}",
+                employer_id=employer.user_id,
+                employer_name=employer.name,
+                employer_type="private",
+                title=job_data["title"],
+                description=job_data["description"],
+                requirements=job_data.get("requirements"),
+                responsibilities=job_data.get("responsibilities"),
+                category=job_data["category"],
+                location_city=job_data["location_city"],
+                location_state=job_data["location_state"],
+                job_type=job_data["job_type"],
+                salary_min=job_data.get("salary_min"),
+                salary_max=job_data.get("salary_max"),
+                experience_min=job_data.get("experience_min"),
+                experience_max=job_data.get("experience_max"),
+                skills_required=job_data.get("skills_required"),
+                status=job_data["status"],
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
+                application_deadline=datetime.utcnow() + timedelta(days=30),
+                published_at=datetime.utcnow() if job_data["status"] == JobStatus.ACTIVE else None
+            )
+            
+            db.add(job)
+            created_jobs.append(job_data["title"])
+        
+        await db.commit()
+        
+        return {
+            "message": "Simple demo jobs created successfully!",
+            "created": created_jobs,
+            "total_jobs": len(created_jobs)
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to create simple jobs: {e}")
+        return {"error": str(e)}
+
+
 @router.get("/create-demo-jobs")
 async def create_demo_jobs_endpoint(db: AsyncSession = Depends(get_database)):
     """Create demo jobs for testing - only for development use"""
@@ -670,6 +793,80 @@ async def initialize_database(db: AsyncSession = Depends(get_database)):
     except Exception as e:
         logger.error(f"Database initialization error: {e}")
         return {"error": str(e), "type": type(e).__name__}
+
+
+@router.get("/create-demo-users")
+async def create_demo_users_endpoint(db: AsyncSession = Depends(get_database)):
+    """Create additional demo users for testing recommendations"""
+    try:
+        import uuid
+        
+        # Pre-computed bcrypt hash for "test123"
+        password_hash = "$2b$12$EixZaYVK1fsbw1ZfbX3OXe.OW.0i.XYWjwCvGfpHsXW1SgKvGfCmi"
+        
+        # Additional job seekers with different profiles
+        demo_users_data = [
+            {
+                "email": "developer@test.com",
+                "first_name": "Raj",
+                "last_name": "Singh",
+                "role": UserRole.JOB_SEEKER,
+                "city": "Chandigarh",
+                "state": "Punjab"
+            },
+            {
+                "email": "marketer@test.com", 
+                "first_name": "Priya",
+                "last_name": "Sharma",
+                "role": UserRole.JOB_SEEKER,
+                "city": "Ludhiana",
+                "state": "Punjab"
+            },
+            {
+                "email": "designer@test.com",
+                "first_name": "Amit",
+                "last_name": "Kumar",
+                "role": UserRole.JOB_SEEKER,
+                "city": "Amritsar", 
+                "state": "Punjab"
+            }
+        ]
+        
+        created_users = []
+        for user_data in demo_users_data:
+            # Check if user already exists
+            existing_result = await db.execute(
+                select(User).where(User.email == user_data["email"])
+            )
+            if existing_result.scalar_one_or_none():
+                continue  # Skip if already exists
+                
+            user = User(
+                user_id=f"user_{uuid.uuid4().hex[:12]}",
+                email=user_data["email"],
+                hashed_password=password_hash,
+                role=user_data["role"],
+                status=AccountStatus.ACTIVE,
+                first_name=user_data["first_name"],
+                last_name=user_data["last_name"],
+                email_verified=True,
+                city=user_data["city"],
+                state=user_data["state"]
+            )
+            db.add(user)
+            created_users.append(user_data["email"])
+        
+        await db.commit()
+        
+        return {
+            "message": "Demo users created successfully!",
+            "created": created_users,
+            "credentials": "All users have password: test123"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to create demo users: {e}")
+        return {"error": str(e)}
 
 
 @router.get("/debug-db")
