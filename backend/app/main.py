@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.ext.asyncio import AsyncSession
 import uvicorn
 import logging
 from datetime import datetime
@@ -123,6 +124,118 @@ async def health_check():
         "version": "1.0.0",
         "service": "Punjab Rozgar Portal API"
     }
+
+# Database initialization endpoint
+@app.post("/init-demo-accounts", tags=["System"])
+async def init_demo_accounts(db: AsyncSession = Depends(get_database)):
+    """Initialize demo accounts in database"""
+    try:
+        from app.models.user import User
+        from app.models.company import Company  
+        from app.models.admin import Admin
+        from passlib.context import CryptContext
+        from sqlalchemy import select
+        
+        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        
+        # Check if admin already exists
+        result = await db.execute(select(User).where(User.email == "admin@test.com"))
+        if result.scalar_one_or_none():
+            return {"message": "Demo accounts already exist", "status": "already_initialized"}
+        
+        # Create Admin User
+        admin_user = User(
+            user_id="admin_demo_001",
+            email="admin@test.com",
+            password_hash=pwd_context.hash("admin123"),
+            first_name="Admin",
+            last_name="User",
+            phone="+1234567890",
+            user_type="admin",
+            is_active=True,
+            is_verified=True,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        db.add(admin_user)
+        await db.flush()
+        
+        # Create Admin record
+        admin_record = Admin(
+            user_id=admin_user.id,
+            admin_level="super_admin",
+            permissions=["manage_users", "manage_jobs", "view_analytics", "system_admin"],
+            created_at=datetime.utcnow()
+        )
+        db.add(admin_record)
+        
+        # Create Employer User
+        employer_user = User(
+            user_id="employer_demo_001",
+            email="employer@test.com", 
+            password_hash=pwd_context.hash("employer123"),
+            first_name="Test",
+            last_name="Employer",
+            phone="+1234567891",
+            user_type="employer",
+            is_active=True,
+            is_verified=True,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        db.add(employer_user)
+        await db.flush()
+        
+        # Create Company for Employer
+        company = Company(
+            company_id="company_demo_001",
+            name="Demo Tech Solutions",
+            description="A demo technology company for testing",
+            industry="Technology", 
+            location="Punjab, India",
+            website="https://demo-tech.com",
+            email="hr@demo-tech.com",
+            phone="+91-98765-43210",
+            employees_count="50-100",
+            user_id=employer_user.id,
+            is_verified=True,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        db.add(company)
+        
+        # Create Job Seeker User
+        jobseeker_user = User(
+            user_id="jobseeker_demo_001",
+            email="jobseeker@email.com",
+            password_hash=pwd_context.hash("jobseeker123"),
+            first_name="Test", 
+            last_name="JobSeeker",
+            phone="+1234567892",
+            user_type="jobseeker",
+            is_active=True,
+            is_verified=True,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        db.add(jobseeker_user)
+        
+        await db.commit()
+        
+        return {
+            "message": "Demo accounts created successfully",
+            "status": "initialized",
+            "accounts": [
+                {"email": "admin@test.com", "password": "admin123", "type": "admin"},
+                {"email": "employer@test.com", "password": "employer123", "type": "employer"}, 
+                {"email": "jobseeker@email.com", "password": "jobseeker123", "type": "jobseeker"}
+            ]
+        }
+        
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Error initializing demo accounts: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to initialize demo accounts: {str(e)}")
 
 # Root endpoint
 @app.get("/", tags=["System"])
