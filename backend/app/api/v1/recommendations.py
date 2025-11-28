@@ -81,7 +81,7 @@ async def get_job_recommendations(
             "company_name": getattr(employer, 'company_name', None) if employer else "Unknown Company",
             "location_city": job.location_city,
             "location_state": job.location_state,
-            "job_type": job.job_type.value if job.job_type else None,
+            "job_type": job.job_type.value if hasattr(job.job_type, 'value') else job.job_type,
             "category": job.category,
             "salary_min": job.salary_min,
             "salary_max": job.salary_max,

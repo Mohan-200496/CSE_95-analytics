@@ -498,7 +498,7 @@ async def create_demo_jobs_endpoint(db: AsyncSession = Depends(get_database)):
                 "experience_min": 3,
                 "experience_max": 7,
                 "skills_required": ["Marketing", "Social Media", "SEO", "Analytics"],
-                "status": JobStatus.PENDING  # Needs admin approval
+                "status": JobStatus.PENDING_APPROVAL  # Needs admin approval
             },
             {
                 "title": "Data Analyst",

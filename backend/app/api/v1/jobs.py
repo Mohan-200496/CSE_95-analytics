@@ -72,7 +72,7 @@ def _to_public_response(job: Job) -> JobPublicResponse:
         job_id=job.job_id,
         title=job.title,
         description=job.description,
-        job_type=job.job_type.value if job.job_type else None,
+        job_type=job.job_type.value if hasattr(job.job_type, 'value') else job.job_type,
         category=job.category,
         location_city=job.location_city,
         location_state=job.location_state,
