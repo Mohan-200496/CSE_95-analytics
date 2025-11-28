@@ -579,6 +579,31 @@ async def create_demo_jobs_endpoint(db: AsyncSession = Depends(get_database)):
         return {"error": str(e)}
 
 
+@router.get("/init-database")
+async def initialize_database(db: AsyncSession = Depends(get_database)):
+    """Initialize database with proper schema - DEVELOPMENT ONLY"""
+    try:
+        from app.core.database import create_tables
+        from app.models.job import Job
+        
+        # Create all tables
+        await create_tables()
+        
+        # Check if tables exist now
+        result = await db.execute(select(func.count(Job.job_id)))
+        job_count = result.scalar()
+        
+        return {
+            "status": "Database initialized successfully",
+            "total_jobs": job_count,
+            "message": "All tables created with proper schema"
+        }
+        
+    except Exception as e:
+        logger.error(f"Database initialization error: {e}")
+        return {"error": str(e), "type": type(e).__name__}
+
+
 @router.get("/debug-db")
 async def debug_database(db: AsyncSession = Depends(get_database)):
     """Debug database connection and basic queries"""
