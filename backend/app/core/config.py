@@ -143,8 +143,8 @@ class ProductionSettings(Settings):
     LOG_LEVEL: str = "INFO"
     
     # Strict security in production
-    ALLOWED_HOSTS: List[str] = ["punjabrozgar.gov.in", "www.punjabrozgar.gov.in"]
-    ALLOWED_ORIGINS: List[str] = ["https://punjabrozgar.gov.in"]
+    ALLOWED_HOSTS: List[str] = ["punjabrozgar.gov.in", "www.punjabrozgar.gov.in", "punjab-rozgar-api.onrender.com"]
+    ALLOWED_ORIGINS: List[str] = ["https://punjabrozgar.gov.in", "https://punjab-rozgar-portal1.onrender.com"]
     
     # Production database (PostgreSQL recommended)
     DATABASE_URL: str = "postgresql://user:password@localhost/punjab_rozgar"
@@ -161,6 +161,33 @@ class ProductionSettings(Settings):
         return v
 
 
+class RenderSettings(Settings):
+    """Render.com deployment settings"""
+    DEBUG: bool = False
+    LOG_LEVEL: str = "INFO"
+    
+    # Render-specific hosts
+    ALLOWED_HOSTS: List[str] = ["punjab-rozgar-api.onrender.com", "0.0.0.0"]
+    ALLOWED_ORIGINS: List[str] = [
+        "https://punjab-rozgar-portal1.onrender.com",
+        "https://punjab-rozgar-api.onrender.com",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "*"  # Allow all for development - restrict in production
+    ]
+    
+    # Render PostgreSQL database (from environment variable)
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/punjab_rozgar")
+    
+    # Use environment variables for security
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "punjab-rozgar-render-secret-key-2024")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    
+    # Enable all features on Render
+    ANALYTICS_ENABLED: bool = True
+    ENABLE_ML_RECOMMENDATIONS: bool = True
+
+
 class TestingSettings(Settings):
     """Testing environment settings"""
     DEBUG: bool = True
@@ -174,7 +201,11 @@ def get_settings() -> Settings:
     """Get application settings based on environment"""
     environment = os.getenv("ENVIRONMENT", "development").lower()
     
-    if environment == "production":
+    # Detect Render environment
+    if os.getenv("RENDER"):
+        print("🚀 Running on Render.com")
+        return RenderSettings()
+    elif environment == "production":
         return ProductionSettings()
     elif environment == "testing":
         return TestingSettings()
