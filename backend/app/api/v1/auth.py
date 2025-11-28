@@ -6,7 +6,7 @@ User registration, login, and authentication management
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from datetime import datetime, timedelta
 from typing import Optional
@@ -577,3 +577,24 @@ async def create_demo_jobs_endpoint(db: AsyncSession = Depends(get_database)):
     except Exception as e:
         logger.error(f"Failed to create demo jobs: {e}")
         return {"error": str(e)}
+
+
+@router.get("/debug-db")
+async def debug_database(db: AsyncSession = Depends(get_database)):
+    """Debug database connection and basic queries"""
+    try:
+        from app.models.job import Job
+        
+        # Simple count query
+        result = await db.execute(select(func.count(Job.job_id)))
+        job_count = result.scalar()
+        
+        return {
+            "status": "Database working",
+            "total_jobs": job_count,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Database debug error: {e}")
+        return {"error": str(e), "type": type(e).__name__}
