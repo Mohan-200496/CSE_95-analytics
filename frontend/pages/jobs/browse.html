@@ -331,8 +331,8 @@
         async function loadJobsFromApi(params = {}) {
             try {
                 const query = new URLSearchParams();
-                // Only show active jobs by default
-                query.set('only_active', 'true');
+                // Show all jobs for debugging (including pending approval)
+                // query.set('only_active', 'true');  // Commented out for debugging
                 if (params.search && params.search.trim()) query.set('search', params.search.trim());
                 if (params.location_city && params.location_city.trim()) query.set('location_city', params.location_city.trim());
                 if (params.job_type && params.job_type.trim()) query.set('job_type', params.job_type.trim());
