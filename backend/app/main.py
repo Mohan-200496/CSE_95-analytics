@@ -82,10 +82,10 @@ app = FastAPI(
 settings = get_settings()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
-    allow_methods=settings.CORS_ALLOW_METHODS,
-    allow_headers=settings.CORS_ALLOW_HEADERS,
+    allow_origins=["*"],  # Allow all origins to fix CORS issues
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["*"],
     expose_headers=["*"]
 )
 
@@ -96,6 +96,15 @@ async def debug_requests(request: Request, call_next):
     start_time = datetime.utcnow()
     logger.info(f"Request: {request.method} {request.url}")
     logger.info(f"Headers: {dict(request.headers)}")
+    
+    # Handle CORS preflight requests
+    if request.method == "OPTIONS":
+        response = JSONResponse(content={})
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        return response
     
     response = await call_next(request)
     
