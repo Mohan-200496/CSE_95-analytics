@@ -1207,7 +1207,8 @@
             alert('Application details page coming soon!');
         }
 
-hManager !== 'undefined' && authManager.setTestAdminUser) {
+        // Initialize test user for jobseeker dashboard
+        if (typeof authManager !== 'undefined' && authManager.setTestAdminUser) {
                 // Set as job seeker instead of admin
                 const testJobSeeker = {
                     id: 3,

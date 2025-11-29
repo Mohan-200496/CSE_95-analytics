@@ -80,14 +80,30 @@ app = FastAPI(
 # app.add_middleware(SecurityMiddleware)
 # app.add_middleware(AnalyticsMiddleware)
 
-# Configure CORS with settings from config
-settings = get_settings()
+# Configure CORS with enhanced settings for frontend access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins to fix CORS issues
+    allow_origins=[
+        "https://punjab-rozgar-portal1.onrender.com",
+        "https://mohan-200496.github.io", 
+        "http://localhost:3000",
+        "http://localhost:8080",
+        "*"  # Allow all for now
+    ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    allow_headers=[
+        "Accept",
+        "Accept-Language", 
+        "Content-Language",
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Origin",
+        "User-Agent",
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers"
+    ],
     expose_headers=["*"]
 )
 

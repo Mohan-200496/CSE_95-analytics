@@ -344,6 +344,63 @@ async def get_employer_job_stats(
         "draft_jobs": stats.get("draft", 0)
     }
 
+@router.get("/mock", response_model=dict)
+async def get_mock_jobs():
+    """Get mock jobs for testing when database is unavailable"""
+    return {
+        "success": True,
+        "data": [
+            {
+                "job_id": "job_mock_1",
+                "title": "Software Developer - Python",
+                "description": "Develop web applications using Python and FastAPI",
+                "company_name": "TechSoft Solutions",
+                "location": {"city": "Chandigarh", "state": "Punjab"},
+                "job_type": "full_time",
+                "category": "Technology",
+                "salary": {"min": 50000, "max": 80000, "currency": "INR"},
+                "experience": {"min": 2, "max": 5},
+                "skills_required": ["Python", "FastAPI", "SQL"],
+                "remote_allowed": True,
+                "created_at": "2024-11-28T10:00:00",
+                "status": "active"
+            },
+            {
+                "job_id": "job_mock_2", 
+                "title": "Digital Marketing Manager",
+                "description": "Lead digital marketing campaigns and strategies",
+                "company_name": "Creative Agency Punjab",
+                "location": {"city": "Ludhiana", "state": "Punjab"},
+                "job_type": "full_time",
+                "category": "Marketing",
+                "salary": {"min": 40000, "max": 60000, "currency": "INR"},
+                "experience": {"min": 3, "max": 7},
+                "skills_required": ["Marketing", "SEO", "Social Media"],
+                "remote_allowed": True,
+                "created_at": "2024-11-27T15:30:00",
+                "status": "active"
+            },
+            {
+                "job_id": "job_mock_3",
+                "title": "Frontend Developer",
+                "description": "Build responsive user interfaces using React",
+                "company_name": "Digital Innovations",
+                "location": {"city": "Amritsar", "state": "Punjab"},
+                "job_type": "full_time",
+                "category": "Technology",
+                "salary": {"min": 45000, "max": 70000, "currency": "INR"},
+                "experience": {"min": 2, "max": 6},
+                "skills_required": ["React", "JavaScript", "CSS"],
+                "remote_allowed": False,
+                "created_at": "2024-11-25T14:20:00",
+                "status": "active"
+            }
+        ],
+        "total": 3,
+        "message": "Mock jobs data for testing"
+    }
+
+
 @router.get("/", response_model=List[JobPublicResponse])
 async def list_jobs(
     skip: int = Query(0, ge=0),
