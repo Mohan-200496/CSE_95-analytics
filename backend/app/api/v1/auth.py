@@ -6,7 +6,7 @@ User registration, login, and authentication management
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, text
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from datetime import datetime, timedelta
 from typing import Optional
@@ -520,8 +520,8 @@ async def create_raw_jobs_endpoint(db: AsyncSession = Depends(get_database)):
         if not employer:
             return {"error": "Test employer not found. Create test users first."}
         
-        # Check existing jobs count
-        count_result = await db.execute("SELECT COUNT(*) as count FROM jobs")
+        # Check existing jobs count using proper SQLAlchemy syntax
+        count_result = await db.execute(text("SELECT COUNT(*) as count FROM jobs"))
         count = count_result.fetchone()[0] if count_result else 0
         
         if count >= 3:
@@ -591,9 +591,9 @@ async def create_raw_jobs_endpoint(db: AsyncSession = Depends(get_database)):
             }
         ]
         
-        # Insert each job using raw SQL
+        # Insert each job using raw SQL with proper text() wrapper
         for job in job_data:
-            insert_sql = """
+            insert_sql = text("""
             INSERT INTO jobs (
                 job_id, employer_id, employer_name, title, description, requirements,
                 category, location_city, location_state, job_type, salary_min, salary_max,
@@ -603,7 +603,7 @@ async def create_raw_jobs_endpoint(db: AsyncSession = Depends(get_database)):
                 :category, :location_city, :location_state, :job_type, :salary_min, :salary_max,
                 :experience_min, :experience_max, :status, :created_at, :updated_at, :published_at
             )
-            """
+            """)
             await db.execute(insert_sql, job)
         
         await db.commit()
