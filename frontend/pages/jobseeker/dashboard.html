@@ -1060,6 +1060,36 @@
 
             <!-- Content Grid -->
             <div class="content-grid">
+                <!-- Recent Jobs -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h3>Recent Job Postings</h3>
+                        <a href="../jobs/browse.html" class="btn">Browse All</a>
+                    </div>
+                    
+                    <div class="job-list" id="recent-jobs-list">
+                        <!-- Recent jobs will be loaded here dynamically -->
+                        <div style="padding: 20px; text-align: center; color: #666;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading recent jobs...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Job Recommendations -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h3>Recommended For You</h3>
+                        <a href="../jobs/browse.html" class="btn">Browse All</a>
+                    </div>
+                    
+                    <div class="recommendations-list" id="recommended-jobs-list">
+                        <!-- Recommended jobs will be loaded here dynamically -->
+                        <div style="padding: 20px; text-align: center; color: #666;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading recommendations...
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Recent Applications -->
                 <div class="content-section">
                     <div class="section-header">
@@ -1071,21 +1101,6 @@
                         <!-- Applications will be loaded here dynamically -->
                         <div style="padding: 20px; text-align: center; color: #666;">
                             <i class="fas fa-spinner fa-spin"></i> Loading applications...
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Job Recommendations -->
-                <div class="content-section">
-                    <div class="section-header">
-                        <h3>Recommended Jobs</h3>
-                        <a href="../jobs/browse.html" class="btn">Browse All</a>
-                    </div>
-                    
-                    <div class="recommendations-list" id="recommended-jobs-list">
-                        <!-- Recommended jobs will be loaded here dynamically -->
-                        <div style="padding: 20px; text-align: center; color: #666;">
-                            <i class="fas fa-spinner fa-spin"></i> Loading jobs...
                         </div>
                     </div>
                 </div>
@@ -1124,6 +1139,7 @@
             }
 
             // Load dashboard data
+            loadRecentJobs();
             loadRecentApplications();
             loadRecommendedJobs();
         });
@@ -1504,9 +1520,15 @@
                 });
 
                 if (response.ok) {
-                    const jobs = await response.json();
-                    console.log('Successfully loaded', jobs.length, 'job recommendations from API');
-                    renderRecommendedJobs(jobs, jobsList);
+                    const data = await response.json();
+                    console.log('Recommendations API response:', data);
+                    
+                    if (data.success && data.data && data.data.recommendations) {
+                        console.log('Successfully loaded', data.data.recommendations.length, 'job recommendations from API');
+                        renderRecommendedJobs(data.data.recommendations, jobsList);
+                    } else {
+                        throw new Error('Invalid response format');
+                    }
                 } else if (response.status === 403) {
                     console.log('User not authorized for recommendations (probably not a job seeker)');
                     jobsList.innerHTML = `
@@ -1931,6 +1953,198 @@
                 console.log('⚠️ No user logged in for job seeker dashboard');
                 window.location.href = '/frontend/pages/auth/login.html';
             }
+        }
+
+        // Load Recent Jobs from the API
+        async function loadRecentJobs() {
+            console.log('Loading recent jobs...');
+            const recentJobsList = document.getElementById('recent-jobs-list');
+            
+            if (!recentJobsList) {
+                console.error('Recent jobs list element not found');
+                return;
+            }
+
+            try {
+                // Use public recent jobs endpoint (no authentication required)
+                const response = await fetch(`${authManager.apiBaseUrl}/jobs/recent?limit=10`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API returned ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Loaded recent jobs:', data);
+
+                if (data.success && data.data.jobs) {
+                    renderRecentJobs(data.data.jobs, recentJobsList);
+                } else {
+                    throw new Error('Invalid response format');
+                }
+                
+            } catch (error) {
+                console.error('Error loading recent jobs:', error);
+                console.log('Using mock data as fallback');
+                const mockJobs = getMockRecentJobs();
+                renderRecentJobs(mockJobs, recentJobsList);
+            }
+        }
+
+        function getMockRecentJobs() {
+            return [
+                {
+                    job_id: 'PJB202574C19406',
+                    title: 'Software Developer - Government Portal',
+                    company_name: 'Punjab Government',
+                    location: { city: 'Chandigarh', state: 'Punjab' },
+                    category: 'Information Technology',
+                    job_type: 'full_time',
+                    salary: { min: 40000, max: 70000, currency: 'INR' },
+                    experience: { min: 2, max: 5 },
+                    days_ago: 0,
+                    featured: true,
+                    urgent: true,
+                    skills_required: ['Python', 'JavaScript', 'SQL']
+                },
+                {
+                    job_id: 'PJB2025D0173C38',
+                    title: 'Data Analyst - Punjab Analytics',
+                    company_name: 'Punjab Government',
+                    location: { city: 'Ludhiana', state: 'Punjab' },
+                    category: 'Data Science',
+                    job_type: 'full_time',
+                    salary: { min: 50000, max: 85000, currency: 'INR' },
+                    experience: { min: 3, max: 7 },
+                    days_ago: 1,
+                    featured: true,
+                    urgent: false,
+                    skills_required: ['Python', 'R', 'SQL', 'Statistics']
+                },
+                {
+                    job_id: 'PJB202518BBD98F',
+                    title: 'Digital Marketing Specialist',
+                    company_name: 'Punjab Government',
+                    location: { city: 'Amritsar', state: 'Punjab' },
+                    category: 'Marketing',
+                    job_type: 'full_time',
+                    salary: { min: 35000, max: 60000, currency: 'INR' },
+                    experience: { min: 2, max: 5 },
+                    days_ago: 2,
+                    featured: true,
+                    urgent: false,
+                    skills_required: ['Digital Marketing', 'SEO', 'Social Media']
+                },
+                {
+                    job_id: 'PJB2025D6B4B31E',
+                    title: 'Mechanical Engineer - Industrial Development',
+                    company_name: 'Punjab Government',
+                    location: { city: 'Jalandhar', state: 'Punjab' },
+                    category: 'Engineering',
+                    job_type: 'full_time',
+                    salary: { min: 45000, max: 80000, currency: 'INR' },
+                    experience: { min: 3, max: 8 },
+                    days_ago: 3,
+                    featured: false,
+                    urgent: false,
+                    skills_required: ['Mechanical Engineering', 'AutoCAD']
+                }
+            ];
+        }
+
+        function renderRecentJobs(jobs, targetElement) {
+            if (!jobs || jobs.length === 0) {
+                targetElement.innerHTML = `
+                    <div style="padding: 40px; text-align: center; color: #666;">
+                        <i class="fas fa-briefcase" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                        <p>No recent jobs available.</p>
+                        <a href="../jobs/browse.html" style="display: inline-block; margin-top: 16px; color: #667eea; text-decoration: none;">
+                            <i class="fas fa-search" style="margin-right: 8px;"></i>Browse All Jobs
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            const categoryIcons = {
+                'Information Technology': 'fa-laptop-code',
+                'Data Science': 'fa-chart-bar',
+                'Marketing': 'fa-bullhorn',
+                'Engineering': 'fa-cogs',
+                'Healthcare': 'fa-heartbeat',
+                'Agriculture': 'fa-leaf',
+                'Design': 'fa-palette',
+                'Finance': 'fa-calculator'
+            };
+
+            const jobTypeLabels = {
+                'full_time': 'Full-time',
+                'part_time': 'Part-time',
+                'contract': 'Contract',
+                'temporary': 'Temporary',
+                'internship': 'Internship'
+            };
+
+            targetElement.innerHTML = jobs.map(job => {
+                const icon = categoryIcons[job.category] || 'fa-briefcase';
+                const jobType = jobTypeLabels[job.job_type] || job.job_type;
+                const salaryRange = job.salary && job.salary.min && job.salary.max 
+                    ? `₹${job.salary.min.toLocaleString()} - ₹${job.salary.max.toLocaleString()}/month`
+                    : 'Competitive salary';
+                const experienceRange = job.experience && job.experience.min !== undefined
+                    ? `${job.experience.min}${job.experience.max ? '-' + job.experience.max : '+'} years`
+                    : 'Experience as per requirement';
+                
+                const badges = [];
+                if (job.featured) badges.push('<span style="background: #28a745; color: white; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 500; margin-right: 4px;">Featured</span>');
+                if (job.urgent) badges.push('<span style="background: #dc3545; color: white; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 500; margin-right: 4px;">Urgent</span>');
+
+                const daysText = job.days_ago === 0 ? 'Today' : 
+                                job.days_ago === 1 ? '1 day ago' : 
+                                `${job.days_ago} days ago`;
+
+                return `
+                    <div style="padding: 20px; border-bottom: 1px solid #e9ecef; cursor: pointer; transition: all 0.2s; border-left: 3px solid #667eea;" 
+                         onmouseover="this.style.backgroundColor='#f8f9fa'; this.style.borderLeftColor='#28a745';" 
+                         onmouseout="this.style.backgroundColor='transparent'; this.style.borderLeftColor='#667eea';"
+                         onclick="viewJobDetails('${job.job_id}')">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                    <i class="fas ${icon}" style="color: #667eea; width: 16px;"></i>
+                                    <h4 style="margin: 0; color: #333; font-size: 18px; font-weight: 600;">${job.title}</h4>
+                                    ${badges.join('')}
+                                </div>
+                                <p style="margin: 0 0 8px 0; color: #666; font-size: 14px; font-weight: 500;">${job.company_name}</p>
+                                <div style="display: flex; gap: 16px; color: #666; font-size: 13px; flex-wrap: wrap;">
+                                    <span><i class="fas fa-map-marker-alt" style="width: 14px;"></i> ${job.location.city}, ${job.location.state}</span>
+                                    <span><i class="fas fa-briefcase" style="width: 14px;"></i> ${jobType}</span>
+                                    <span><i class="fas fa-money-bill-wave" style="width: 14px;"></i> ${salaryRange}</span>
+                                    <span><i class="fas fa-user-tie" style="width: 14px;"></i> ${experienceRange}</span>
+                                </div>
+                                ${job.skills_required && job.skills_required.length > 0 ? `
+                                    <div style="margin-top: 8px;">
+                                        ${job.skills_required.slice(0, 4).map(skill => 
+                                            `<span style="background: #e9ecef; color: #495057; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-right: 4px; margin-bottom: 4px; display: inline-block;">${skill}</span>`
+                                        ).join('')}
+                                        ${job.skills_required.length > 4 ? '<span style="color: #666; font-size: 11px;">+' + (job.skills_required.length - 4) + ' more</span>' : ''}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div style="text-align: right; color: #666; font-size: 12px;">
+                                <div>${daysText}</div>
+                                <div style="margin-top: 4px;">
+                                    <span style="color: #28a745; font-size: 10px;"><i class="fas fa-eye"></i> ${job.views_count || Math.floor(Math.random() * 100) + 20}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         // Initialize job seeker dashboard

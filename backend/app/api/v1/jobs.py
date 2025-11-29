@@ -401,6 +401,143 @@ async def get_mock_jobs():
     }
 
 
+@router.get("/recent", response_model=dict)
+async def get_recent_jobs(
+    limit: int = Query(20, ge=1, le=50),
+    session: AsyncSession = Depends(get_database),
+    analytics = Depends(get_analytics_tracker)
+):
+    """Get recently posted jobs for public browsing"""
+    try:
+        # Get recent active jobs
+        query = select(Job).where(
+            Job.status == JobStatus.ACTIVE
+        ).order_by(desc(Job.created_at)).limit(limit)
+        
+        result = await session.execute(query)
+        jobs = result.scalars().all()
+        
+        jobs_data = []
+        for job in jobs:
+            job_data = {
+                "job_id": job.job_id,
+                "title": job.title,
+                "description": job.description[:200] + "..." if len(job.description) > 200 else job.description,
+                "company_name": job.employer_name,
+                "location": {
+                    "city": job.location_city,
+                    "state": job.location_state,
+                    "remote_allowed": job.remote_allowed or False
+                },
+                "job_type": job.job_type.value if hasattr(job.job_type, 'value') else str(job.job_type),
+                "category": job.category,
+                "salary": {
+                    "min": job.salary_min,
+                    "max": job.salary_max,
+                    "currency": getattr(job, 'salary_currency', 'INR')
+                },
+                "experience": {
+                    "min": job.experience_min or 0,
+                    "max": job.experience_max
+                },
+                "skills_required": getattr(job, 'skills_required', []) or [],
+                "created_at": job.created_at.isoformat() if job.created_at else None,
+                "application_deadline": job.application_deadline.isoformat() if job.application_deadline else None,
+                "views_count": getattr(job, 'views_count', 0),
+                "applications_count": getattr(job, 'applications_count', 0),
+                "featured": getattr(job, 'featured', False),
+                "urgent": getattr(job, 'urgent', False),
+                "days_ago": (datetime.utcnow() - job.created_at).days if job.created_at else None
+            }
+            jobs_data.append(job_data)
+        
+        # Track analytics
+        try:
+            await analytics.track_event(
+                user_id="anonymous",
+                event_type="recent_jobs_viewed",
+                properties={
+                    "jobs_count": len(jobs_data),
+                    "limit": limit
+                }
+            )
+        except Exception:
+            pass
+        
+        return {
+            "success": True,
+            "data": {
+                "jobs": jobs_data,
+                "total_count": len(jobs_data),
+                "showing_recent": True
+            },
+            "message": f"Found {len(jobs_data)} recent jobs"
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching recent jobs: {str(e)}"
+        )
+
+
+@router.get("/featured", response_model=dict)
+async def get_featured_jobs(
+    limit: int = Query(10, ge=1, le=20),
+    session: AsyncSession = Depends(get_database),
+    analytics = Depends(get_analytics_tracker)
+):
+    """Get featured jobs for homepage display"""
+    try:
+        # Get featured active jobs
+        query = select(Job).where(
+            and_(
+                Job.status == JobStatus.ACTIVE,
+                Job.featured == True
+            )
+        ).order_by(desc(Job.views_count), desc(Job.created_at)).limit(limit)
+        
+        result = await session.execute(query)
+        jobs = result.scalars().all()
+        
+        jobs_data = []
+        for job in jobs:
+            job_data = {
+                "job_id": job.job_id,
+                "title": job.title,
+                "description": job.description[:150] + "..." if len(job.description) > 150 else job.description,
+                "company_name": job.employer_name,
+                "location": {
+                    "city": job.location_city,
+                    "state": job.location_state
+                },
+                "job_type": job.job_type.value if hasattr(job.job_type, 'value') else str(job.job_type),
+                "category": job.category,
+                "salary_range": f"₹{job.salary_min:,} - ₹{job.salary_max:,}" if job.salary_min and job.salary_max else "Competitive",
+                "experience_required": f"{job.experience_min or 0}+ years",
+                "created_at": job.created_at.isoformat() if job.created_at else None,
+                "views_count": getattr(job, 'views_count', 0),
+                "applications_count": getattr(job, 'applications_count', 0),
+                "urgent": getattr(job, 'urgent', False)
+            }
+            jobs_data.append(job_data)
+        
+        return {
+            "success": True,
+            "data": {
+                "jobs": jobs_data,
+                "total_count": len(jobs_data)
+            },
+            "message": f"Found {len(jobs_data)} featured jobs"
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching featured jobs: {str(e)}"
+        )
+
+
 @router.get("/", response_model=List[JobPublicResponse])
 async def list_jobs(
     skip: int = Query(0, ge=0),
