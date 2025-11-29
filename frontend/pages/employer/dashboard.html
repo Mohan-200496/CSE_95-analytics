@@ -53,6 +53,118 @@
             min-height: 100vh;
         }
 
+        /* Top Navigation Bar */
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 250px; /* Account for sidebar width */
+            background: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--very-light-gray);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            z-index: 999;
+        }
+
+        .navbar-brand {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary-black);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--secondary-black);
+            font-size: 0.9rem;
+            line-height: 1.2;
+        }
+
+        .user-role {
+            color: var(--medium-gray);
+            font-size: 0.8rem;
+            text-transform: capitalize;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-black), var(--dark-gray));
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--very-light-gray);
+            min-width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .dropdown-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: var(--dark-gray);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover {
+            background: var(--off-white);
+            color: var(--primary-black);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: var(--very-light-gray);
+            margin: 0.5rem 0;
+        }
+
         /* Sidebar */
         .sidebar {
             width: 250px;
@@ -120,7 +232,7 @@
         /* Main Content */
         .main-content {
             flex: 1;
-            padding: 2rem;
+            padding: 5rem 2rem 2rem; /* Add top padding for fixed navbar */
         }
 
         .dashboard-header {
@@ -531,6 +643,38 @@
         });
     </script>
     <div class="dashboard-container">
+        <!-- Top Navigation -->
+        <div class="top-navbar">
+            <div class="navbar-brand">
+                <i class="fas fa-briefcase"></i> Employer Dashboard
+            </div>
+            
+            <div class="user-menu" id="userMenu">
+                <div class="user-info">
+                    <div class="user-name" id="userName">Employer</div>
+                    <div class="user-role" id="userRole">Employer</div>
+                </div>
+                <button class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()">
+                    <i class="fas fa-user"></i>
+                </button>
+                <div class="dropdown-menu" id="userDropdown">
+                    <a href="../profile/profile.html" class="dropdown-item">
+                        <i class="fas fa-user-edit"></i> Edit Profile
+                    </a>
+                    <a href="company.html" class="dropdown-item">
+                        <i class="fas fa-building"></i> Company Profile
+                    </a>
+                    <a href="add-job.html" class="dropdown-item">
+                        <i class="fas fa-plus"></i> Post Job
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <button onclick="authManager.logout()" class="dropdown-item">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Sidebar -->
         <nav class="sidebar">
             <div class="sidebar-header">
@@ -541,6 +685,7 @@
             <ul class="sidebar-nav">
                 <li><a href="../../index.html"><i class="fas fa-home"></i> Home</a></li>
                 <li><a href="#" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="../profile/profile.html"><i class="fas fa-user-edit"></i> Profile</a></li>
                 <li><a href="jobs.html"><i class="fas fa-briefcase"></i> My Jobs</a></li>
                 <li><a href="add-job.html"><i class="fas fa-plus"></i> Post Job</a></li>
                 <li><a href="applications.html"><i class="fas fa-file-alt"></i> Applications</a></li>
@@ -946,5 +1091,5 @@
             `).join('');
         }
     </script>
-</body>
+    <script>\n        // Toggle User Dropdown\n        function toggleUserDropdown() {\n            const dropdown = document.getElementById('userDropdown');\n            if (dropdown) {\n                dropdown.classList.toggle('show');\n            }\n        }\n\n        // Close dropdown when clicking outside\n        document.addEventListener('click', function(event) {\n            const dropdown = document.getElementById('userDropdown');\n            const userAvatar = document.getElementById('userAvatar');\n            \n            if (dropdown && userAvatar && !userAvatar.contains(event.target) && !dropdown.contains(event.target)) {\n                dropdown.classList.remove('show');\n            }\n        });\n\n        // Populate user menu with current user info\n        function populateEmployerUserMenu() {\n            const userName = document.getElementById('userName');\n            const userRole = document.getElementById('userRole');\n            const userAvatar = document.getElementById('userAvatar');\n            const sidebarUserName = document.querySelector('[data-user-name]');\n            \n            if (authManager && authManager.isLoggedIn()) {\n                const user = authManager.getCurrentUser();\n                console.log('🏢 Populating employer user menu with:', user);\n                \n                if (user) {\n                    const fullName = user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || 'Employer';\n                    const role = user.role || 'employer';\n                    \n                    if (userName) userName.textContent = fullName;\n                    if (userRole) userRole.textContent = 'Employer';\n                    if (sidebarUserName) sidebarUserName.textContent = fullName;\n                    \n                    if (userAvatar) {\n                        const initials = authManager.getUserInitials ? authManager.getUserInitials() : \n                                       fullName.split(' ').map(n => n[0]).join('').toUpperCase() || 'EM';\n                        userAvatar.innerHTML = initials;\n                        userAvatar.title = `${fullName} (${role})`;\n                    }\n                    \n                    console.log('✅ Employer user menu populated successfully');\n                } else {\n                    console.log('⚠️ User object is null');\n                }\n            } else {\n                console.log('⚠️ No user logged in for employer dashboard');\n                window.location.href = '/frontend/pages/auth/login.html';\n            }\n        }\n\n        // Initialize employer dashboard\n        function initEmployerDashboard() {\n            console.log('🚀 Initializing employer dashboard...');\n            \n            if (authManager) {\n                if (!authManager.isLoggedIn()) {\n                    console.log('⚠️ User not logged in, redirecting to login');\n                    window.location.href = '/frontend/pages/auth/login.html';\n                    return;\n                }\n                \n                const user = authManager.getCurrentUser();\n                if (!user || user.role !== 'employer') {\n                    console.log('⚠️ User is not employer, redirecting to appropriate dashboard');\n                    authManager.redirectAfterLogin(user?.role || 'job_seeker');\n                    return;\n                }\n                \n                populateEmployerUserMenu();\n                try {\n                    loadEmployerStats();\n                    loadEmployerJobs();\n                } catch (error) {\n                    console.log('Stats/jobs loading failed:', error.message);\n                }\n                console.log('✅ Employer dashboard initialized successfully');\n            } else {\n                console.log('⚠️ AuthManager not available');\n            }\n        }\n\n        // Initialize on page load\n        document.addEventListener('DOMContentLoaded', function() {\n            console.log('🚀 Employer dashboard page loaded');\n            \n            setTimeout(function() {\n                initEmployerDashboard();\n            }, 100);\n            \n            // Protect this page for employers only\n            if (authManager && !authManager.requireRole('employer', '/pages/auth/login.html')) return;\n        });\n    </script>\n</body>
 </html>

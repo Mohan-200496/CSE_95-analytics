@@ -908,6 +908,38 @@
             });
         </script>
     <div class="dashboard-container">
+        <!-- Top Navigation -->
+        <div class="top-navbar">
+            <div class="navbar-brand">
+                <i class="fas fa-tachometer-alt"></i> Job Seeker Dashboard
+            </div>
+            
+            <div class="user-menu" id="userMenu">
+                <div class="user-info">
+                    <div class="user-name" id="userName">Job Seeker</div>
+                    <div class="user-role" id="userRole">Job Seeker</div>
+                </div>
+                <button class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()">
+                    <i class="fas fa-user"></i>
+                </button>
+                <div class="dropdown-menu" id="userDropdown">
+                    <a href="../profile/profile.html" class="dropdown-item">
+                        <i class="fas fa-user-edit"></i> Edit Profile
+                    </a>
+                    <a href="browse-jobs.html" class="dropdown-item">
+                        <i class="fas fa-search"></i> Browse Jobs
+                    </a>
+                    <a href="applications.html" class="dropdown-item">
+                        <i class="fas fa-file-alt"></i> My Applications
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <button onclick="authManager.logout()" class="dropdown-item">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Sidebar -->
         <nav class="sidebar">
             <div class="sidebar-header">
@@ -921,7 +953,7 @@
                 <li><a href="browse-jobs.html"><i class="fas fa-search"></i> Browse Jobs</a></li>
                 <li><a href="applications.html"><i class="fas fa-file-alt"></i> My Applications</a></li>
                 <li><a href="saved-jobs.html"><i class="fas fa-bookmark"></i> Saved Jobs</a></li>
-                <li><a href="profile.html"><i class="fas fa-user"></i> My Profile</a></li>
+                <li><a href="../profile/profile.html"><i class="fas fa-user"></i> My Profile</a></li>
                 <li><a href="resume.html"><i class="fas fa-file-pdf"></i> Resume</a></li>
                 <li><a href="job-alerts.html"><i class="fas fa-bell"></i> Job Alerts</a></li>
             </ul>
@@ -1823,6 +1855,99 @@
             const job = jobs.find(j => j.job_id === jobId);
             if (job) {
                 alert(`Job Details:\n\nTitle: ${job.title}\nCompany: ${job.employer_name}\nLocation: ${job.location_city}\nSalary: ₹${job.salary_min?.toLocaleString()} - ₹${job.salary_max?.toLocaleString()}/month\nExperience: ${job.experience_required}\n\nThis would normally open a detailed job page.`);
+            }
+        }
+
+        // Toggle User Dropdown
+        function toggleUserDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('userDropdown');
+            const userAvatar = document.getElementById('userAvatar');
+            
+            if (dropdown && userAvatar && !userAvatar.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Populate user menu with current user info
+        function populateJobSeekerUserMenu() {
+            const userName = document.getElementById('userName');
+            const userRole = document.getElementById('userRole');
+            const userAvatar = document.getElementById('userAvatar');
+            const sidebarUserName = document.querySelector('[data-user-name]');
+            
+            if (authManager && authManager.isLoggedIn()) {
+                const user = authManager.getCurrentUser();
+                console.log('👤 Populating job seeker user menu with:', user);
+                
+                if (user) {
+                    const fullName = user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || 'Job Seeker';
+                    const role = user.role || 'job_seeker';
+                    
+                    if (userName) userName.textContent = fullName;
+                    if (userRole) userRole.textContent = 'Job Seeker';
+                    if (sidebarUserName) sidebarUserName.textContent = fullName;
+                    
+                    if (userAvatar) {
+                        const initials = authManager.getUserInitials ? authManager.getUserInitials() : 
+                                       fullName.split(' ').map(n => n[0]).join('').toUpperCase() || 'JS';
+                        userAvatar.innerHTML = initials;
+                        userAvatar.title = `${fullName} (${role})`;
+                    }
+                    
+                    console.log('✅ Job seeker user menu populated successfully');
+                } else {
+                    console.log('⚠️ User object is null');
+                }
+            } else {
+                console.log('⚠️ No user logged in for job seeker dashboard');
+                window.location.href = '/frontend/pages/auth/login.html';
+            }
+        }
+
+        // Initialize job seeker dashboard
+        function initJobSeekerDashboard() {
+            console.log('🚀 Initializing job seeker dashboard...');
+            
+            if (authManager) {
+                if (!authManager.isLoggedIn()) {
+                    console.log('⚠️ User not logged in, redirecting to login');
+                    window.location.href = '/frontend/pages/auth/login.html';
+                    return;
+                }
+                
+                const user = authManager.getCurrentUser();
+                if (!user || user.role !== 'job_seeker') {
+                    console.log('⚠️ User is not job seeker, redirecting to appropriate dashboard');
+                    authManager.redirectAfterLogin(user?.role || 'job_seeker');
+                    return;
+                }
+                
+                populateJobSeekerUserMenu();
+                console.log('✅ Job seeker dashboard initialized successfully');
+            } else {
+                console.log('⚠️ AuthManager not available');
+            }
+        }
+
+        // Initialize analytics if available
+        function initAnalytics() {
+            try {
+                if (window.punjabAnalytics && window.punjabAnalytics.track) {
+                    window.punjabAnalytics.track('Dashboard View', {
+                        user_role: 'job_seeker',
+                        page: 'jobseeker_dashboard'
+                    });
+                }
+            } catch (error) {
+                console.log('Analytics not available:', error.message);
             }
         }
 
