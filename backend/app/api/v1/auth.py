@@ -504,6 +504,121 @@ async def fix_user_roles(db: AsyncSession = Depends(get_database)):
         return {"error": str(e)}
 
 
+@router.get("/create-raw-jobs")
+async def create_raw_jobs_endpoint(db: AsyncSession = Depends(get_database)):
+    """Create jobs using raw SQL to bypass schema issues"""
+    try:
+        import uuid
+        from datetime import datetime, timedelta
+        
+        # Get the test employer user first
+        employer_result = await db.execute(
+            select(User).where(User.email == "employer@test.com")
+        )
+        employer = employer_result.scalar_one_or_none()
+        
+        if not employer:
+            return {"error": "Test employer not found. Create test users first."}
+        
+        # Check existing jobs count
+        count_result = await db.execute("SELECT COUNT(*) as count FROM jobs")
+        count = count_result.fetchone()[0] if count_result else 0
+        
+        if count >= 3:
+            return {"message": f"Jobs already exist (count: {count})"}
+        
+        # Raw SQL insert to bypass SQLAlchemy model issues
+        job_data = [
+            {
+                "job_id": f"job_{uuid.uuid4().hex[:12]}",
+                "employer_id": employer.user_id,
+                "employer_name": employer.name,
+                "title": "Python Developer",
+                "description": "Develop web applications using Python and FastAPI. Great opportunity to work with modern technology stack.",
+                "requirements": "2+ years Python experience, FastAPI knowledge preferred",
+                "category": "Technology",
+                "location_city": "Chandigarh",
+                "location_state": "Punjab",
+                "job_type": "full_time",
+                "salary_min": 50000,
+                "salary_max": 80000,
+                "experience_min": 2,
+                "experience_max": 5,
+                "status": "active",
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "published_at": datetime.utcnow()
+            },
+            {
+                "job_id": f"job_{uuid.uuid4().hex[:12]}",
+                "employer_id": employer.user_id, 
+                "employer_name": employer.name,
+                "title": "Digital Marketing Specialist",
+                "description": "Manage social media campaigns and digital marketing strategies for growing company.",
+                "requirements": "Marketing degree, 2+ years digital marketing experience",
+                "category": "Marketing", 
+                "location_city": "Ludhiana",
+                "location_state": "Punjab",
+                "job_type": "full_time",
+                "salary_min": 35000,
+                "salary_max": 55000,
+                "experience_min": 2,
+                "experience_max": 5,
+                "status": "active",
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "published_at": datetime.utcnow()
+            },
+            {
+                "job_id": f"job_{uuid.uuid4().hex[:12]}",
+                "employer_id": employer.user_id,
+                "employer_name": employer.name,
+                "title": "Frontend Developer",
+                "description": "Build responsive user interfaces using React and modern JavaScript frameworks.",
+                "requirements": "Bachelor's degree, React experience, strong CSS skills",
+                "category": "Technology",
+                "location_city": "Amritsar", 
+                "location_state": "Punjab",
+                "job_type": "full_time",
+                "salary_min": 40000,
+                "salary_max": 65000,
+                "experience_min": 1,
+                "experience_max": 4,
+                "status": "active",
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "published_at": datetime.utcnow()
+            }
+        ]
+        
+        # Insert each job using raw SQL
+        for job in job_data:
+            insert_sql = """
+            INSERT INTO jobs (
+                job_id, employer_id, employer_name, title, description, requirements,
+                category, location_city, location_state, job_type, salary_min, salary_max,
+                experience_min, experience_max, status, created_at, updated_at, published_at
+            ) VALUES (
+                :job_id, :employer_id, :employer_name, :title, :description, :requirements,
+                :category, :location_city, :location_state, :job_type, :salary_min, :salary_max,
+                :experience_min, :experience_max, :status, :created_at, :updated_at, :published_at
+            )
+            """
+            await db.execute(insert_sql, job)
+        
+        await db.commit()
+        
+        return {
+            "message": "Raw jobs created successfully!",
+            "created_count": len(job_data),
+            "jobs": [job["title"] for job in job_data]
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to create raw jobs: {e}")
+        return {"error": str(e), "details": str(type(e).__name__)}
+
+
 @router.get("/create-simple-jobs")
 async def create_simple_jobs_endpoint(db: AsyncSession = Depends(get_database)):
     """Create simplified demo jobs for testing - only for development use"""
@@ -512,15 +627,14 @@ async def create_simple_jobs_endpoint(db: AsyncSession = Depends(get_database)):
         from datetime import datetime, timedelta
         import uuid
         
-        # Check if jobs already exist
-        result = await db.execute(select(Job))
-        existing_jobs = result.scalars().all()
+        # Simple check without accessing problematic columns
+        job_count_result = await db.execute(select(func.count()).select_from(Job))
+        job_count = job_count_result.scalar()
         
-        if len(existing_jobs) >= 3:
+        if job_count >= 3:
             return {
                 "message": "Demo jobs already exist", 
-                "jobs_count": len(existing_jobs),
-                "jobs": [{"title": j.title, "status": j.status.value} for j in existing_jobs[:5]]
+                "jobs_count": job_count
             }
         
         # Get the test employer user
