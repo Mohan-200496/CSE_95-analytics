@@ -199,13 +199,29 @@
         .user-menu {
             position: relative;
             display: none;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            text-align: right;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--gray-800);
+            font-size: 0.9rem;
+            line-height: 1.2;
         }
 
         .user-greeting {
-            color: var(--gray-700);
-            font-weight: 500;
-            margin-right: 1rem;
-            font-size: 0.9rem;
+            color: var(--gray-600);
+            font-weight: 400;
+            font-size: 0.8rem;
+            margin-top: 2px;
         }
 
         .user-avatar {
@@ -665,7 +681,10 @@
 
                 <!-- User Menu (Hidden by default, shown when logged in) -->
                 <div class="user-menu" id="userMenu">
-                    <span class="user-greeting" id="userGreeting">Hello, User!</span>
+                    <div class="user-info">
+                        <span class="user-name" id="userName">User Name</span>
+                        <span class="user-greeting" id="userGreeting">Hello, User!</span>
+                    </div>
                     <button class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()">
                         <i class="fas fa-user"></i>
                     </button>
@@ -674,13 +693,16 @@
                             <i class="fas fa-tachometer-alt"></i> Dashboard
                         </a>
                         <a href="pages/profile/profile.html" class="dropdown-item">
-                            <i class="fas fa-user-edit"></i> Profile
+                            <i class="fas fa-user-edit"></i> Edit Profile
                         </a>
                         <a href="job-recommendations.html" class="dropdown-item">
                             <i class="fas fa-star"></i> Recommendations
                         </a>
+                        <a href="pages/jobseeker/browse-jobs.html" class="dropdown-item">
+                            <i class="fas fa-search"></i> Browse Jobs
+                        </a>
                         <div class="dropdown-divider"></div>
-                        <button onclick="logout()" class="dropdown-item">
+                        <button onclick="authManager.logout()" class="dropdown-item">
                             <i class="fas fa-sign-out-alt"></i> Logout
                         </button>
                     </div>
@@ -1048,22 +1070,16 @@
 
         // Logout Function
         function logout() {
-            // Clear authentication data
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('userInfo');
-            
-            // Hide user menu
-            hideUserMenu();
-            
-            // Show success message
-            if (typeof PunjabAnalytics !== 'undefined') {
-                PunjabAnalytics.trackEvent('user_logout', {
-                    timestamp: new Date().toISOString()
-                });
+            if (window.authManager) {
+                window.authManager.logout();
+            } else {
+                // Fallback logout
+                localStorage.removeItem('user');
+                localStorage.removeItem('access_token');
+                sessionStorage.removeItem('user');
+                sessionStorage.removeItem('access_token');
+                window.location.reload();
             }
-            
-            // Optional: Redirect to login page or show notification
-            window.location.href = 'pages/auth/login.html';
         }
 
         // Professional theme initialization

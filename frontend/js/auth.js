@@ -168,6 +168,7 @@ class AuthManager {
     }
 
     logout() {
+        console.log('🚪 Logging out user...');
         this.currentUser = null;
         this.accessToken = null;
         localStorage.removeItem('user');
@@ -175,8 +176,16 @@ class AuthManager {
         sessionStorage.removeItem('user');
         sessionStorage.removeItem('access_token');
         
-        // Redirect to home page
-        window.location.href = '/index.html';
+        // Update UI to show logged out state
+        this.setupAuthUI();
+        
+        // Only redirect if not already on home page
+        if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
+            console.log('🔄 Redirecting to home page after logout');
+            window.location.href = '/index.html';
+        } else {
+            console.log('✅ Already on home page, no redirect needed');
+        }
     }
 
     // User Management
@@ -240,7 +249,25 @@ class AuthManager {
     }
 
     isLoggedIn() {
-        return this.currentUser !== null;
+        // Check current user, but also check storage as backup
+        if (this.currentUser !== null) {
+            return true;
+        }
+        
+        // Check if user data exists in storage
+        const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+        if (storedUser) {
+            try {
+                this.currentUser = JSON.parse(storedUser);
+                console.log('🔄 Session restored from storage');
+                return true;
+            } catch (error) {
+                console.error('❌ Error restoring session:', error);
+                return false;
+            }
+        }
+        
+        return false;
     }
 
     hasRole(role) {
@@ -421,10 +448,43 @@ class AuthManager {
         nav.insertAdjacentHTML('beforeend', userMenuHTML);
     }
 
+    getUserInitials() {
+        if (!this.currentUser) return 'U';
+        
+        const firstName = this.currentUser.first_name || this.currentUser.name?.split(' ')[0] || '';
+        const lastName = this.currentUser.last_name || this.currentUser.name?.split(' ')[1] || '';
+        
+        const first = firstName.charAt(0).toUpperCase();
+        const last = lastName.charAt(0).toUpperCase();
+        
+        return first + last || first || 'U';
+    }
+
     populateUserMenu() {
         const userGreeting = document.querySelector('.user-greeting');
-        if (userGreeting) {
-            userGreeting.textContent = `Hello, ${this.currentUser.name}`;
+        const userAvatar = document.querySelector('.user-avatar');
+        const userName = document.querySelector('.user-name');
+        
+        if (this.currentUser) {
+            const firstName = this.currentUser.first_name || this.currentUser.name?.split(' ')[0] || 'User';
+            const fullName = this.currentUser.name || `${this.currentUser.first_name || ''} ${this.currentUser.last_name || ''}`.trim() || 'User';
+            const role = this.currentUser.role || 'user';
+            
+            if (userGreeting) {
+                userGreeting.textContent = `Hello, ${firstName}!`;
+            }
+            
+            if (userName) {
+                userName.textContent = fullName;
+            }
+            
+            if (userAvatar) {
+                const initials = this.getUserInitials();
+                userAvatar.innerHTML = initials;
+                userAvatar.title = `${fullName} (${role})`;
+            }
+            
+            console.log('👤 User menu populated:', { firstName, fullName, role });
         }
     }
 

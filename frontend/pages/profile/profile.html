@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Punjab Rozgar Portal</title>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.0.0/css/all.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --primary-blue-dark: #1d4ed8;
+            --gray-900: #111827;
+            --gray-800: #1f2937;
+            --gray-700: #374151;
+            --gray-600: #4b5563;
+            --gray-500: #6b7280;
+            --gray-300: #d1d5db;
+            --gray-200: #e5e7eb;
+            --gray-100: #f3f4f6;
+            --gray-50: #f9fafb;
+            --white: #ffffff;
+            --success: #10b981;
+            --error: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--gray-50) 0%, var(--white) 100%);
+            color: var(--gray-800);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding-top: 80px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .profile-header {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 600;
+            margin: 0 auto 1rem;
+        }
+
+        .profile-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-role {
+            color: var(--gray-600);
+            text-transform: capitalize;
+            margin-bottom: 1rem;
+        }
+
+        .profile-form {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input, .form-textarea {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--primary-blue-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--gray-600);
+            margin-right: 1rem;
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-700);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .message.success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .message.error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="profile-avatar" id="profileAvatar">U</div>
+            <h1 class="profile-name" id="profileName">User Name</h1>
+            <p class="profile-role" id="profileRole">Job Seeker</p>
+        </div>
+
+        <!-- Message Display -->
+        <div id="message" class="message"></div>
+
+        <!-- Profile Form -->
+        <form class="profile-form" id="profileForm">
+            <!-- Personal Information -->
+            <div class="form-section">
+                <h2 class="section-title">
+                    <i class="fas fa-user"></i> Personal Information
+                </h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">First Name *</label>
+                        <input type="text" id="firstName" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Name *</label>
+                        <input type="text" id="lastName" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email *</label>
+                        <input type="email" id="email" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="tel" id="phone" class="form-input">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location Information -->
+            <div class="form-section">
+                <h2 class="section-title">
+                    <i class="fas fa-map-marker-alt"></i> Location
+                </h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">City</label>
+                        <input type="text" id="city" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">State</label>
+                        <input type="text" id="state" class="form-input" value="Punjab">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Professional Information -->
+            <div class="form-section" id="professionalSection">
+                <h2 class="section-title">
+                    <i class="fas fa-briefcase"></i> Professional Information
+                </h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Current Job Title</label>
+                        <input type="text" id="jobTitle" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Experience (Years)</label>
+                        <input type="number" id="experience" class="form-input" min="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Skills (comma-separated)</label>
+                    <textarea id="skills" class="form-textarea" placeholder="e.g. JavaScript, Python, Project Management"></textarea>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="goBack()">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button type="submit" class="btn">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script src="../config/environment.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is logged in
+            if (!authManager.isLoggedIn()) {
+                window.location.href = '../auth/login.html';
+                return;
+            }
+
+            loadUserProfile();
+        });
+
+        function loadUserProfile() {
+            const user = authManager.getCurrentUser();
+            if (!user) {
+                showMessage('User information not found', 'error');
+                return;
+            }
+
+            // Update profile header
+            document.getElementById('profileName').textContent = user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User';
+            document.getElementById('profileRole').textContent = (user.role || 'user').replace('_', ' ');
+            
+            // Set avatar initials
+            const initials = authManager.getUserInitials();
+            document.getElementById('profileAvatar').textContent = initials;
+
+            // Populate form fields
+            document.getElementById('firstName').value = user.first_name || '';
+            document.getElementById('lastName').value = user.last_name || '';
+            document.getElementById('email').value = user.email || '';
+            document.getElementById('phone').value = user.phone || '';
+            document.getElementById('city').value = user.city || '';
+            document.getElementById('state').value = user.state || 'Punjab';
+            document.getElementById('jobTitle').value = user.current_job_title || '';
+            document.getElementById('experience').value = user.experience_years || '';
+            
+            // Handle skills array
+            if (user.skills && Array.isArray(user.skills)) {
+                document.getElementById('skills').value = user.skills.join(', ');
+            }
+        }
+
+        document.getElementById('profileForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const profileData = {
+                first_name: document.getElementById('firstName').value,
+                last_name: document.getElementById('lastName').value,
+                phone: document.getElementById('phone').value,
+                city: document.getElementById('city').value,
+                state: document.getElementById('state').value,
+                current_job_title: document.getElementById('jobTitle').value,
+                experience_years: parseInt(document.getElementById('experience').value) || 0,
+                skills: document.getElementById('skills').value.split(',').map(s => s.trim()).filter(s => s)
+            };
+
+            try {
+                showMessage('Saving changes...', 'info');
+                
+                // Update user data locally (since API may not be available)
+                const currentUser = authManager.getCurrentUser();
+                const updatedUser = { ...currentUser, ...profileData };
+                updatedUser.name = `${profileData.first_name} ${profileData.last_name}`.trim();
+                
+                authManager.setCurrentUser(updatedUser, true);
+                
+                showMessage('Profile updated successfully!', 'success');
+                
+                // Update profile display
+                loadUserProfile();
+                
+            } catch (error) {
+                console.error('Profile update error:', error);
+                showMessage('Failed to update profile. Please try again.', 'error');
+            }
+        });
+
+        function showMessage(message, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = message;
+            messageEl.className = `message ${type}`;
+            messageEl.style.display = 'block';
+            
+            // Auto-hide after 5 seconds for success messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    messageEl.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        function goBack() {
+            // Try to go back to dashboard based on user role
+            const user = authManager.getCurrentUser();
+            if (user) {
+                const role = user.role;
+                if (role === 'admin') {
+                    window.location.href = '../admin/dashboard.html';
+                } else if (role === 'employer') {
+                    window.location.href = '../employer/dashboard.html';
+                } else {
+                    window.location.href = '../jobseeker/dashboard.html';
+                }
+            } else {
+                window.location.href = '../index.html';
+            }
+        }
+    </script>
+</body>
+</html>
