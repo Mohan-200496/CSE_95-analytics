@@ -44,6 +44,118 @@
             min-height: 100vh;
         }
 
+        /* Top Navigation Bar */
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 250px; /* Account for sidebar width */
+            background: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--very-light-gray);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            z-index: 999;
+        }
+
+        .navbar-brand {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary-black);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--secondary-black);
+            font-size: 0.9rem;
+            line-height: 1.2;
+        }
+
+        .user-role {
+            color: var(--medium-gray);
+            font-size: 0.8rem;
+            text-transform: capitalize;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-black), var(--dark-gray));
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--very-light-gray);
+            min-width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .dropdown-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: var(--dark-gray);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover {
+            background: var(--off-white);
+            color: var(--primary-black);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: var(--very-light-gray);
+            margin: 0.5rem 0;
+        }
+
         /* Sidebar */
         .sidebar {
             width: 250px;
@@ -111,7 +223,7 @@
         /* Main Content */
         .main-content {
             flex: 1;
-            padding: 2rem;
+            padding: 5rem 2rem 2rem; /* Add top padding for fixed navbar */
         }
 
         .dashboard-header {
@@ -581,6 +693,35 @@
         }
     </script>
     <div class="dashboard-container">
+        <!-- Top Navigation -->
+        <div class="top-navbar">
+            <div class="navbar-brand">
+                <i class="fas fa-tachometer-alt"></i> Admin Dashboard
+            </div>
+            
+            <div class="user-menu" id="userMenu">
+                <div class="user-info">
+                    <div class="user-name" id="userName">Admin User</div>
+                    <div class="user-role" id="userRole">Administrator</div>
+                </div>
+                <button class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()">
+                    <i class="fas fa-user"></i>
+                </button>
+                <div class="dropdown-menu" id="userDropdown">
+                    <a href="../profile/profile.html" class="dropdown-item">
+                        <i class="fas fa-user-edit"></i> Edit Profile
+                    </a>
+                    <a href="settings.html" class="dropdown-item">
+                        <i class="fas fa-cog"></i> Settings
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <button onclick="authManager.logout()" class="dropdown-item">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Sidebar -->
         <nav class="sidebar">
             <div class="sidebar-header">
@@ -591,6 +732,7 @@
             <ul class="sidebar-nav">
                 <li><a href="../../index.html"><i class="fas fa-home"></i> Home</a></li>
                 <li><a href="#" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="../profile/profile.html"><i class="fas fa-user-edit"></i> Profile</a></li>
                 <li><a href="users.html"><i class="fas fa-users"></i> Users</a></li>
                 <li><a href="jobs.html"><i class="fas fa-briefcase"></i> Jobs</a></li>
                 <li><a href="companies.html"><i class="fas fa-building"></i> Companies</a></li>
@@ -765,18 +907,103 @@
     </div>
 
     <script>
-        // Ensure user is logged in and has admin role
-        if (!authManager.requireRole('admin')) {
-            // Will redirect if not admin
+        // Toggle User Dropdown
+        function toggleUserDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
         }
 
-        // Update user name in sidebar
-        document.addEventListener('DOMContentLoaded', function() {
-            const user = authManager.getCurrentUser();
-            if (user) {
-                document.querySelector('[data-user-name]').textContent = user.name;
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('userDropdown');
+            const userAvatar = document.getElementById('userAvatar');
+            
+            if (dropdown && userAvatar && !userAvatar.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('show');
             }
         });
+
+        // Populate user menu with current user info
+        function populateAdminUserMenu() {
+            const userName = document.getElementById('userName');
+            const userRole = document.getElementById('userRole');
+            const userAvatar = document.getElementById('userAvatar');
+            const sidebarUserName = document.querySelector('[data-user-name]');
+            
+            if (authManager && authManager.isLoggedIn()) {
+                const user = authManager.getCurrentUser();
+                console.log('👤 Populating admin user menu with:', user);
+                
+                if (user) {
+                    const fullName = user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || 'Admin User';
+                    const role = user.role || 'admin';
+                    
+                    if (userName) userName.textContent = fullName;
+                    if (userRole) userRole.textContent = role.charAt(0).toUpperCase() + role.slice(1);
+                    if (sidebarUserName) sidebarUserName.textContent = fullName;
+                    
+                    if (userAvatar) {
+                        const initials = authManager.getUserInitials ? authManager.getUserInitials() : 
+                                       fullName.split(' ').map(n => n[0]).join('').toUpperCase() || 'AU';
+                        userAvatar.innerHTML = initials;
+                        userAvatar.title = `${fullName} (${role})`;
+                    }
+                    
+                    console.log('✅ Admin user menu populated successfully');
+                } else {
+                    console.log('⚠️ User object is null');
+                }
+            } else {
+                console.log('⚠️ No user logged in for admin dashboard');
+                // Redirect to login if not authenticated
+                window.location.href = '/frontend/pages/auth/login.html';
+            }
+        }
+
+        // Initialize admin dashboard
+        function initAdminDashboard() {
+            console.log('🚀 Initializing admin dashboard...');
+            
+            // Ensure user is logged in and is admin
+            if (authManager) {
+                if (!authManager.isLoggedIn()) {
+                    console.log('⚠️ User not logged in, redirecting to login');
+                    window.location.href = '/frontend/pages/auth/login.html';
+                    return;
+                }
+                
+                const user = authManager.getCurrentUser();
+                if (!user || user.role !== 'admin') {
+                    console.log('⚠️ User is not admin, redirecting to appropriate dashboard');
+                    authManager.redirectAfterLogin(user?.role || 'job_seeker');
+                    return;
+                }
+                
+                populateAdminUserMenu();
+                console.log('✅ Admin dashboard initialized successfully');
+            } else {
+                console.log('⚠️ AuthManager not available');
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Admin dashboard page loaded');
+            
+            // Small delay to ensure auth manager is fully loaded
+            setTimeout(function() {
+                initAdminDashboard();
+            }, 100);
+        });
+
+        // Fallback initialization if DOM is already loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAdminDashboard);
+        } else {
+            setTimeout(initAdminDashboard, 100);
+        }
     </script>
 </body>
 </html>
