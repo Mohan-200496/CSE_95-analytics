@@ -37,6 +37,23 @@ async def get_current_user(
     
     return user
 
+@router.get("/test", response_model=dict)
+async def test_recommendations_auth(
+    current_user: User = Depends(get_current_user)
+):
+    """Test endpoint to debug authentication and role checking"""
+    return {
+        "success": True,
+        "message": "Authentication successful",
+        "user": {
+            "email": current_user.email,
+            "role": current_user.role.value if hasattr(current_user.role, 'value') else str(current_user.role),
+            "role_type": type(current_user.role).__name__,
+            "user_id": current_user.user_id
+        }
+    }
+
+
 @router.get("/", response_model=dict)
 async def get_job_recommendations(
     limit: int = Query(10, ge=1, le=50),
