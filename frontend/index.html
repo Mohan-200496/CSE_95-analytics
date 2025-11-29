@@ -1082,6 +1082,28 @@
             }
         }
 
+        // Initialize auth state when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Page loaded, checking auth state...');
+            if (window.authManager) {
+                console.log('📝 AuthManager found, setting up UI...');
+                authManager.setupAuthUI();
+                console.log('✅ Auth UI setup complete');
+            } else {
+                console.log('⚠️ AuthManager not available');
+            }
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('userDropdown');
+            const userAvatar = document.getElementById('userAvatar');
+            
+            if (dropdown && userAvatar && !userAvatar.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
         // Professional theme initialization
         document.addEventListener('DOMContentLoaded', function() {
             // Add professional button hover effects

@@ -179,12 +179,23 @@ class AuthManager {
         // Update UI to show logged out state
         this.setupAuthUI();
         
-        // Only redirect if not already on home page
-        if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
-            console.log('🔄 Redirecting to home page after logout');
+        // Show logout success message
+        console.log('✅ User logged out successfully');
+        
+        // Only redirect if we're in a protected area (not on public pages)
+        const currentPath = window.location.pathname;
+        const publicPages = ['/index.html', '/', '/pages/auth/login.html', '/pages/auth/register.html'];
+        const isOnPublicPage = publicPages.some(page => currentPath.endsWith(page) || currentPath === page);
+        
+        if (!isOnPublicPage && (currentPath.includes('/admin/') || currentPath.includes('/employer/') || currentPath.includes('/jobseeker/') || currentPath.includes('/profile/'))) {
+            console.log('🔄 Redirecting from protected area to home page');
             window.location.href = '/index.html';
         } else {
-            console.log('✅ Already on home page, no redirect needed');
+            console.log('✅ Staying on current public page, no redirect needed');
+            // Reload the page to refresh the UI if we're on a public page
+            if (currentPath.includes('index.html') || currentPath === '/') {
+                window.location.reload();
+            }
         }
     }
 
@@ -392,6 +403,8 @@ class AuthManager {
         const authButtons = document.querySelector('.auth-buttons');
         const userMenu = document.querySelector('.user-menu');
         
+        console.log('🎨 Updating navigation, logged in:', this.isLoggedIn());
+        
         if (this.isLoggedIn()) {
             // Hide login/register buttons
             if (authButtons) {
@@ -400,9 +413,11 @@ class AuthManager {
             
             // Show user menu
             if (userMenu) {
-                userMenu.style.display = 'block';
+                userMenu.style.display = 'flex';
                 this.populateUserMenu();
+                console.log('👤 User menu displayed');
             } else {
+                console.log('🏗️ Creating new user menu');
                 this.createUserMenu();
             }
         } else {
@@ -433,7 +448,7 @@ class AuthManager {
                         <a href="${this.getDashboardUrl()}" class="dropdown-item">
                             <i class="fas fa-tachometer-alt"></i> Dashboard
                         </a>
-                        <a href="/pages/profile/view.html" class="dropdown-item">
+                        <a href="pages/profile/profile.html" class="dropdown-item">
                             <i class="fas fa-user"></i> Profile
                         </a>
                         <div class="dropdown-divider"></div>
@@ -465,6 +480,8 @@ class AuthManager {
         const userAvatar = document.querySelector('.user-avatar');
         const userName = document.querySelector('.user-name');
         
+        console.log('👤 Populating user menu with current user:', this.currentUser);
+        
         if (this.currentUser) {
             const firstName = this.currentUser.first_name || this.currentUser.name?.split(' ')[0] || 'User';
             const fullName = this.currentUser.name || `${this.currentUser.first_name || ''} ${this.currentUser.last_name || ''}`.trim() || 'User';
@@ -472,19 +489,24 @@ class AuthManager {
             
             if (userGreeting) {
                 userGreeting.textContent = `Hello, ${firstName}!`;
+                console.log('✅ Updated user greeting:', userGreeting.textContent);
             }
             
             if (userName) {
                 userName.textContent = fullName;
+                console.log('✅ Updated user name:', userName.textContent);
             }
             
             if (userAvatar) {
                 const initials = this.getUserInitials();
                 userAvatar.innerHTML = initials;
                 userAvatar.title = `${fullName} (${role})`;
+                console.log('✅ Updated user avatar:', initials);
             }
             
             console.log('👤 User menu populated:', { firstName, fullName, role });
+        } else {
+            console.log('⚠️ No current user found for menu population');
         }
     }
 
