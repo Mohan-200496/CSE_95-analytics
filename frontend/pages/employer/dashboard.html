@@ -165,6 +165,119 @@
             margin: 0.5rem 0;
         }
 
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -250px;
+                top: 0;
+                height: 100vh;
+                z-index: 1001;
+                transition: left 0.3s ease;
+            }
+            
+            .sidebar.show {
+                left: 0;
+            }
+            
+            .top-navbar {
+                left: 0;
+                padding: 0.5rem 1rem;
+            }
+            
+            .navbar-brand {
+                font-size: 1.1rem;
+                margin-left: 2rem;
+            }
+            
+            .navbar-brand i {
+                display: none;
+            }
+            
+            .user-info {
+                display: none;
+            }
+            
+            .user-avatar {
+                width: 36px;
+                height: 36px;
+                font-size: 0.9rem;
+            }
+            
+            .main-content {
+                padding: 4rem 1rem 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .top-navbar {
+                padding: 0.5rem;
+            }
+            
+            .navbar-brand {
+                font-size: 1rem;
+            }
+            
+            .user-avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 0.8rem;
+            }
+            
+            .main-content {
+                padding: 3.5rem 0.5rem 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
+            }
+        }
+        
+        /* Mobile Menu Toggle */
+        .mobile-menu-toggle {
+            display: none;
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--primary-black);
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 1002;
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: block;
+            }
+        }
+        
+        /* Overlay for mobile sidebar */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar-overlay.show {
+                display: block;
+            }
+        }
+
         /* Sidebar */
         .sidebar {
             width: 250px;
@@ -645,6 +758,9 @@
     <div class="dashboard-container">
         <!-- Top Navigation -->
         <div class="top-navbar">
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
             <div class="navbar-brand">
                 <i class="fas fa-briefcase"></i> Employer Dashboard
             </div>
@@ -674,6 +790,9 @@
                 </div>
             </div>
         </div>
+
+        <!-- Mobile Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileMenu()"></div>
 
         <!-- Sidebar -->
         <nav class="sidebar">
@@ -1091,5 +1210,5 @@
             `).join('');
         }
     </script>
-    <script>\n        // Toggle User Dropdown\n        function toggleUserDropdown() {\n            const dropdown = document.getElementById('userDropdown');\n            if (dropdown) {\n                dropdown.classList.toggle('show');\n            }\n        }\n\n        // Close dropdown when clicking outside\n        document.addEventListener('click', function(event) {\n            const dropdown = document.getElementById('userDropdown');\n            const userAvatar = document.getElementById('userAvatar');\n            \n            if (dropdown && userAvatar && !userAvatar.contains(event.target) && !dropdown.contains(event.target)) {\n                dropdown.classList.remove('show');\n            }\n        });\n\n        // Populate user menu with current user info\n        function populateEmployerUserMenu() {\n            const userName = document.getElementById('userName');\n            const userRole = document.getElementById('userRole');\n            const userAvatar = document.getElementById('userAvatar');\n            const sidebarUserName = document.querySelector('[data-user-name]');\n            \n            if (authManager && authManager.isLoggedIn()) {\n                const user = authManager.getCurrentUser();\n                console.log('🏢 Populating employer user menu with:', user);\n                \n                if (user) {\n                    const fullName = user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || 'Employer';\n                    const role = user.role || 'employer';\n                    \n                    if (userName) userName.textContent = fullName;\n                    if (userRole) userRole.textContent = 'Employer';\n                    if (sidebarUserName) sidebarUserName.textContent = fullName;\n                    \n                    if (userAvatar) {\n                        const initials = authManager.getUserInitials ? authManager.getUserInitials() : \n                                       fullName.split(' ').map(n => n[0]).join('').toUpperCase() || 'EM';\n                        userAvatar.innerHTML = initials;\n                        userAvatar.title = `${fullName} (${role})`;\n                    }\n                    \n                    console.log('✅ Employer user menu populated successfully');\n                } else {\n                    console.log('⚠️ User object is null');\n                }\n            } else {\n                console.log('⚠️ No user logged in for employer dashboard');\n                window.location.href = '/frontend/pages/auth/login.html';\n            }\n        }\n\n        // Initialize employer dashboard\n        function initEmployerDashboard() {\n            console.log('🚀 Initializing employer dashboard...');\n            \n            if (authManager) {\n                if (!authManager.isLoggedIn()) {\n                    console.log('⚠️ User not logged in, redirecting to login');\n                    window.location.href = '/frontend/pages/auth/login.html';\n                    return;\n                }\n                \n                const user = authManager.getCurrentUser();\n                if (!user || user.role !== 'employer') {\n                    console.log('⚠️ User is not employer, redirecting to appropriate dashboard');\n                    authManager.redirectAfterLogin(user?.role || 'job_seeker');\n                    return;\n                }\n                \n                populateEmployerUserMenu();\n                try {\n                    loadEmployerStats();\n                    loadEmployerJobs();\n                } catch (error) {\n                    console.log('Stats/jobs loading failed:', error.message);\n                }\n                console.log('✅ Employer dashboard initialized successfully');\n            } else {\n                console.log('⚠️ AuthManager not available');\n            }\n        }\n\n        // Initialize on page load\n        document.addEventListener('DOMContentLoaded', function() {\n            console.log('🚀 Employer dashboard page loaded');\n            \n            setTimeout(function() {\n                initEmployerDashboard();\n            }, 100);\n            \n            // Protect this page for employers only\n            if (authManager && !authManager.requireRole('employer', '/pages/auth/login.html')) return;\n        });\n    </script>\n</body>
+    <script>\n        // Toggle User Dropdown\n        function toggleUserDropdown() {\n            const dropdown = document.getElementById('userDropdown');\n            if (dropdown) {\n                dropdown.classList.toggle('show');\n            }\n        }\n\n        // Mobile Menu Functions\n        function toggleMobileMenu() {\n            const sidebar = document.querySelector('.sidebar');\n            const overlay = document.getElementById('sidebarOverlay');\n            sidebar.classList.toggle('show');\n            overlay.classList.toggle('show');\n        }\n\n        function closeMobileMenu() {\n            const sidebar = document.querySelector('.sidebar');\n            const overlay = document.getElementById('sidebarOverlay');\n            sidebar.classList.remove('show');\n            overlay.classList.remove('show');\n        }\n\n        // Close dropdown when clicking outside\n        document.addEventListener('click', function(event) {\n            const dropdown = document.getElementById('userDropdown');\n            const userAvatar = document.getElementById('userAvatar');\n            \n            if (dropdown && userAvatar && !userAvatar.contains(event.target) && !dropdown.contains(event.target)) {\n                dropdown.classList.remove('show');\n            }\n        });\n\n        // Populate user menu with current user info\n        function populateEmployerUserMenu() {\n            const userName = document.getElementById('userName');\n            const userRole = document.getElementById('userRole');\n            const userAvatar = document.getElementById('userAvatar');\n            const sidebarUserName = document.querySelector('[data-user-name]');\n            \n            if (authManager && authManager.isLoggedIn()) {\n                const user = authManager.getCurrentUser();\n                console.log('🏢 Populating employer user menu with:', user);\n                \n                if (user) {\n                    const fullName = user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || 'Employer';\n                    const role = user.role || 'employer';\n                    \n                    if (userName) userName.textContent = fullName;\n                    if (userRole) userRole.textContent = 'Employer';\n                    if (sidebarUserName) sidebarUserName.textContent = fullName;\n                    \n                    if (userAvatar) {\n                        const initials = authManager.getUserInitials ? authManager.getUserInitials() : \n                                       fullName.split(' ').map(n => n[0]).join('').toUpperCase() || 'EM';\n                        userAvatar.innerHTML = initials;\n                        userAvatar.title = `${fullName} (${role})`;\n                    }\n                    \n                    console.log('✅ Employer user menu populated successfully');\n                } else {\n                    console.log('⚠️ User object is null');\n                }\n            } else {\n                console.log('⚠️ No user logged in for employer dashboard');\n                window.location.href = '/frontend/pages/auth/login.html';\n            }\n        }\n\n        // Initialize employer dashboard\n        function initEmployerDashboard() {\n            console.log('🚀 Initializing employer dashboard...');\n            \n            if (authManager) {\n                if (!authManager.isLoggedIn()) {\n                    console.log('⚠️ User not logged in, redirecting to login');\n                    window.location.href = '/frontend/pages/auth/login.html';\n                    return;\n                }\n                \n                const user = authManager.getCurrentUser();\n                if (!user || user.role !== 'employer') {\n                    console.log('⚠️ User is not employer, redirecting to appropriate dashboard');\n                    authManager.redirectAfterLogin(user?.role || 'job_seeker');\n                    return;\n                }\n                \n                populateEmployerUserMenu();\n                try {\n                    loadEmployerStats();\n                    loadEmployerJobs();\n                } catch (error) {\n                    console.log('Stats/jobs loading failed:', error.message);\n                }\n                console.log('✅ Employer dashboard initialized successfully');\n            } else {\n                console.log('⚠️ AuthManager not available');\n            }\n        }\n\n        // Initialize on page load\n        document.addEventListener('DOMContentLoaded', function() {\n            console.log('🚀 Employer dashboard page loaded');\n            \n            setTimeout(function() {\n                initEmployerDashboard();\n            }, 100);\n            \n            // Protect this page for employers only\n            if (authManager && !authManager.requireRole('employer', '/pages/auth/login.html')) return;\n        });\n    </script>\n</body>
 </html>

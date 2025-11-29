@@ -156,6 +156,143 @@
             margin: 0.5rem 0;
         }
 
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -250px;
+                top: 0;
+                height: 100vh;
+                z-index: 1001;
+                transition: left 0.3s ease;
+            }
+            
+            .sidebar.show {
+                left: 0;
+            }
+            
+            .top-navbar {
+                left: 0;
+                padding: 0.5rem 1rem;
+            }
+            
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+            
+            .navbar-brand i {
+                display: none;
+            }
+            
+            .user-info {
+                display: none;
+            }
+            
+            .user-avatar {
+                width: 36px;
+                height: 36px;
+                font-size: 0.9rem;
+            }
+            
+            .dropdown-menu {
+                min-width: 160px;
+            }
+            
+            .main-content {
+                padding: 4rem 1rem 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+            }
+            
+            .dashboard-header h1 {
+                font-size: 1.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .top-navbar {
+                padding: 0.5rem;
+            }
+            
+            .navbar-brand {
+                font-size: 1rem;
+            }
+            
+            .user-avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 0.8rem;
+            }
+            
+            .main-content {
+                padding: 3.5rem 0.5rem 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
+            }
+            
+            .stat-card {
+                padding: 1rem;
+            }
+            
+            .dashboard-header {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .dashboard-header h1 {
+                font-size: 1.3rem;
+            }
+        }
+        
+        /* Mobile Menu Toggle */
+        .mobile-menu-toggle {
+            display: none;
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--primary-black);
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 1002;
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: block;
+            }
+            
+            .navbar-brand {
+                margin-left: 2rem;
+            }
+        }
+        
+        /* Overlay for mobile sidebar */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar-overlay.show {
+                display: block;
+            }
+        }
+
         /* Sidebar */
         .sidebar {
             width: 250px;
@@ -695,6 +832,9 @@
     <div class="dashboard-container">
         <!-- Top Navigation -->
         <div class="top-navbar">
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
             <div class="navbar-brand">
                 <i class="fas fa-tachometer-alt"></i> Admin Dashboard
             </div>
@@ -721,6 +861,9 @@
                 </div>
             </div>
         </div>
+
+        <!-- Mobile Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileMenu()"></div>
 
         <!-- Sidebar -->
         <nav class="sidebar">
@@ -913,6 +1056,21 @@
             if (dropdown) {
                 dropdown.classList.toggle('show');
             }
+        }
+
+        // Mobile Menu Functions
+        function toggleMobileMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('show');
+            overlay.classList.toggle('show');
+        }
+
+        function closeMobileMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('show');
+            overlay.classList.remove('show');
         }
 
         // Close dropdown when clicking outside

@@ -910,6 +910,9 @@
     <div class="dashboard-container">
         <!-- Top Navigation -->
         <div class="top-navbar">
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
             <div class="navbar-brand">
                 <i class="fas fa-tachometer-alt"></i> Job Seeker Dashboard
             </div>
@@ -939,6 +942,9 @@
                 </div>
             </div>
         </div>
+
+        <!-- Mobile Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileMenu()"></div>
 
         <!-- Sidebar -->
         <nav class="sidebar">
@@ -1864,6 +1870,21 @@
             if (dropdown) {
                 dropdown.classList.toggle('show');
             }
+        }
+
+        // Mobile Menu Functions
+        function toggleMobileMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('show');
+            overlay.classList.toggle('show');
+        }
+
+        function closeMobileMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('show');
+            overlay.classList.remove('show');
         }
 
         // Close dropdown when clicking outside
