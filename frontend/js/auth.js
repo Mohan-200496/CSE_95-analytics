@@ -488,18 +488,11 @@ class AuthManager {
         console.log('Test admin user set:', testAdmin);
     }
 
-    // Setup test users for different roles
+    // Setup test users for different roles - DISABLED for role-based dashboard testing
     setupTestUsers() {
-        if (!this.isLoggedIn()) {
-            // Automatically set test job seeker for jobseeker pages
-            if (window.location.pathname.includes('/jobseeker/')) {
-                this.setTestJobSeeker();
-            } else if (window.location.pathname.includes('/employer/')) {
-                this.setTestEmployer();
-            } else if (window.location.pathname.includes('/admin/')) {
-                this.setTestAdminUser();
-            }
-        }
+        // Disabled automatic test user setup to prevent interference with real authentication
+        // Users should manually login with: admin@test.com, employer@test.com, jobseeker@test.com
+        return;
     }
 
     setTestJobSeeker() {
