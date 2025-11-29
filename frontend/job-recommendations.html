@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Recommendations - Punjab Rozgar Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+        }
+
+        .job-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .job-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .match-score {
+            border-radius: 20px;
+            padding: 5px 15px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .match-high { background-color: var(--success-color); }
+        .match-medium { background-color: var(--warning-color); }
+        .match-low { background-color: var(--danger-color); }
+
+        .job-type-badge {
+            background: var(--secondary-color);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+        }
+
+        .salary-range {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+
+        .skills-tag {
+            background: var(--primary-color);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.75em;
+            margin: 2px;
+            display: inline-block;
+        }
+
+        .match-reasons {
+            background: #f8f9fa;
+            border-left: 4px solid var(--secondary-color);
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .loading-spinner {
+            text-align: center;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-bullseye text-primary"></i>
+                        Personalized Job Recommendations
+                    </h1>
+                    <button class="btn btn-outline-primary" onclick="loadRecommendations()">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+
+                <!-- User Info -->
+                <div class="alert alert-info mb-4">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6><i class="fas fa-user"></i> Your Profile</h6>
+                            <div id="user-profile">Loading...</div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <small class="text-muted">Last updated: <span id="last-updated">Just now</span></small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommendations Loading -->
+                <div id="loading" class="loading-spinner" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading recommendations...</span>
+                    </div>
+                    <p class="mt-2">Finding the best job matches for you...</p>
+                </div>
+
+                <!-- Recommendations Container -->
+                <div id="recommendations-container" class="row">
+                    <!-- Jobs will be loaded here -->
+                </div>
+
+                <!-- Stats -->
+                <div id="stats" class="mt-4" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h4 class="text-primary" id="total-jobs">0</h4>
+                                    <p class="mb-0">Jobs Found</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h4 class="text-success" id="avg-match">0%</h4>
+                                    <p class="mb-0">Average Match</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h4 class="text-info" id="remote-jobs">0</h4>
+                                    <p class="mb-0">Remote Available</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h4 class="text-warning" id="new-jobs">0</h4>
+                                    <p class="mb-0">Recently Posted</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../config/environment.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script>
+        // Enhanced mock recommendations with Punjab focus
+        const mockRecommendations = [
+            {
+                job_id: "punjab_job_1",
+                title: "Software Developer - Python/FastAPI",
+                description: "Join our dynamic tech team in Punjab's IT hub! Develop scalable web applications using Python and FastAPI. Work on projects for Punjab government digitization and local business automation.",
+                company_name: "TechSoft Solutions Pvt Ltd",
+                location: { city: "Chandigarh", state: "Punjab" },
+                job_type: "full_time",
+                category: "Technology",
+                salary: { min: 50000, max: 80000, currency: "INR" },
+                experience: { min: 2, max: 5 },
+                skills_required: ["Python", "FastAPI", "PostgreSQL", "Git", "Docker"],
+                remote_allowed: true,
+                created_at: "2024-11-28T10:00:00",
+                application_deadline: "2024-12-28T23:59:59",
+                match_score: 92,
+                match_reasons: ["Perfect skill match", "Remote work available", "Salary in your range", "Located in Punjab"]
+            },
+            {
+                job_id: "punjab_job_2", 
+                title: "Digital Marketing Manager",
+                description: "Lead digital transformation for Punjab's growing businesses. Manage social media campaigns, SEO strategies, and performance analytics for diverse clients across the state.",
+                company_name: "Punjab Digital Marketing Hub",
+                location: { city: "Ludhiana", state: "Punjab" },
+                job_type: "full_time",
+                category: "Marketing",
+                salary: { min: 40000, max: 65000, currency: "INR" },
+                experience: { min: 3, max: 7 },
+                skills_required: ["Digital Marketing", "Social Media", "SEO", "Google Analytics", "Content Strategy"],
+                remote_allowed: true,
+                created_at: "2024-11-27T15:30:00",
+                application_deadline: "2024-12-27T23:59:59",
+                match_score: 88,
+                match_reasons: ["Growing field in Punjab", "Hybrid work model", "Career growth opportunities"]
+            },
+            {
+                job_id: "punjab_job_3",
+                title: "Data Analyst - Punjab Government",
+                description: "Contribute to Punjab's data-driven governance! Analyze census data, agricultural statistics, and economic indicators to support policy decisions. Work with real data that impacts millions.",
+                company_name: "Government of Punjab - IT Department",
+                location: { city: "Amritsar", state: "Punjab" },
+                job_type: "full_time",
+                category: "Government",
+                salary: { min: 45000, max: 65000, currency: "INR" },
+                experience: { min: 1, max: 4 },
+                skills_required: ["Python", "SQL", "Excel", "Tableau", "Statistics"],
+                remote_allowed: false,
+                created_at: "2024-11-26T09:15:00",
+                application_deadline: "2024-12-26T23:59:59",
+                match_score: 85,
+                match_reasons: ["Government job security", "Social impact", "Pension benefits", "Job stability"]
+            },
+            {
+                job_id: "punjab_job_4",
+                title: "Frontend Developer - React Specialist",
+                description: "Build beautiful interfaces for Punjab's digital ecosystem! Create responsive web applications using React for agriculture apps, education portals, and e-governance solutions.",
+                company_name: "Punjab Tech Innovations",
+                location: { city: "Jalandhar", state: "Punjab" },
+                job_type: "full_time",
+                category: "Technology",
+                salary: { min: 45000, max: 75000, currency: "INR" },
+                experience: { min: 2, max: 6 },
+                skills_required: ["React", "JavaScript", "CSS3", "Redux", "TypeScript"],
+                remote_allowed: true,
+                created_at: "2024-11-25T14:20:00",
+                application_deadline: "2024-12-25T23:59:59",
+                match_score: 90,
+                match_reasons: ["Modern tech stack", "Creative projects", "Flexible hours", "Growing company"]
+            },
+            {
+                job_id: "punjab_job_5",
+                title: "Customer Support Executive - Multilingual",
+                description: "Support Punjab's diverse customer base! Handle customer inquiries in Punjabi, Hindi, and English. Help farmers, students, and businesses navigate digital services.",
+                company_name: "Punjab Customer Care Solutions",
+                location: { city: "Patiala", state: "Punjab" },
+                job_type: "full_time",
+                category: "Customer Service",
+                salary: { min: 28000, max: 40000, currency: "INR" },
+                experience: { min: 0, max: 3 },
+                skills_required: ["Communication", "Hindi", "Punjabi", "Customer Service", "MS Office"],
+                remote_allowed: false,
+                created_at: "2024-11-24T11:45:00",
+                application_deadline: "2024-12-24T23:59:59",
+                match_score: 82,
+                match_reasons: ["Entry level friendly", "Local language advantage", "Stable employment", "Training provided"]
+            },
+            {
+                job_id: "punjab_job_6",
+                title: "Graphic Designer - Cultural Focus",
+                description: "Design for Punjab's rich heritage! Create visual content for cultural events, festivals, tourism promotion, and local businesses. Showcase Punjab's beauty through your designs.",
+                company_name: "Punjab Creative Studio",
+                location: { city: "Mohali", state: "Punjab" },
+                job_type: "full_time",
+                category: "Design",
+                salary: { min: 35000, max: 55000, currency: "INR" },
+                experience: { min: 1, max: 4 },
+                skills_required: ["Adobe Photoshop", "Illustrator", "CorelDRAW", "Brand Design", "Cultural Awareness"],
+                remote_allowed: true,
+                created_at: "2024-11-23T16:00:00",
+                application_deadline: "2024-12-23T23:59:59",
+                match_score: 87,
+                match_reasons: ["Creative freedom", "Cultural projects", "Portfolio growth", "Freelance opportunities"]
+            }
+        ];
+
+        function loadRecommendations() {
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('recommendations-container').innerHTML = '';
+            document.getElementById('stats').style.display = 'none';
+
+            // Simulate API call delay
+            setTimeout(() => {
+                displayRecommendations(mockRecommendations);
+                updateStats(mockRecommendations);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('stats').style.display = 'block';
+            }, 1500);
+        }
+
+        function displayRecommendations(jobs) {
+            const container = document.getElementById('recommendations-container');
+            
+            jobs.forEach(job => {
+                const matchClass = job.match_score >= 90 ? 'match-high' : 
+                                 job.match_score >= 80 ? 'match-medium' : 'match-low';
+                
+                const jobCard = `
+                    <div class="col-lg-6 col-xl-4 mb-4">
+                        <div class="card job-card h-100">
+                            <div class="card-header d-flex justify-content-between align-items-start">
+                                <h5 class="card-title mb-0">${job.title}</h5>
+                                <span class="match-score ${matchClass}">${job.match_score}%</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <strong><i class="fas fa-building"></i> ${job.company_name}</strong><br>
+                                    <small class="text-muted">
+                                        <i class="fas fa-map-marker-alt"></i> ${job.location.city}, ${job.location.state}
+                                        ${job.remote_allowed ? '<i class="fas fa-laptop ms-2 text-success"></i> Remote OK' : ''}
+                                    </small>
+                                </div>
+                                
+                                <p class="card-text">${job.description.substring(0, 120)}...</p>
+                                
+                                <div class="mb-3">
+                                    <span class="job-type-badge">${job.job_type.replace('_', ' ').toUpperCase()}</span>
+                                    <span class="salary-range ms-2">
+                                        <i class="fas fa-rupee-sign"></i> ${job.salary.min.toLocaleString()}-${job.salary.max.toLocaleString()}
+                                    </span>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <small class="text-muted">Skills:</small><br>
+                                    ${job.skills_required.slice(0, 4).map(skill => 
+                                        `<span class="skills-tag">${skill}</span>`
+                                    ).join('')}
+                                </div>
+                                
+                                <div class="match-reasons">
+                                    <small><strong>Why this matches:</strong></small><br>
+                                    <small>${job.match_reasons.slice(0, 2).join(' • ')}</small>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <button class="btn btn-primary btn-sm" onclick="applyToJob('${job.job_id}')">
+                                    <i class="fas fa-paper-plane"></i> Apply Now
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm ms-2" onclick="saveJob('${job.job_id}')">
+                                    <i class="fas fa-heart"></i> Save
+                                </button>
+                                <small class="text-muted float-end">
+                                    Posted ${getTimeAgo(job.created_at)}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += jobCard;
+            });
+        }
+
+        function updateStats(jobs) {
+            document.getElementById('total-jobs').textContent = jobs.length;
+            
+            const avgMatch = Math.round(jobs.reduce((sum, job) => sum + job.match_score, 0) / jobs.length);
+            document.getElementById('avg-match').textContent = avgMatch + '%';
+            
+            const remoteJobs = jobs.filter(job => job.remote_allowed).length;
+            document.getElementById('remote-jobs').textContent = remoteJobs;
+            
+            const recentJobs = jobs.filter(job => {
+                const daysDiff = Math.floor((new Date() - new Date(job.created_at)) / (1000 * 60 * 60 * 24));
+                return daysDiff <= 7;
+            }).length;
+            document.getElementById('new-jobs').textContent = recentJobs;
+        }
+
+        function getTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) return 'today';
+            if (diffDays === 1) return 'yesterday';
+            if (diffDays <= 7) return `${diffDays} days ago`;
+            return date.toLocaleDateString();
+        }
+
+        function applyToJob(jobId) {
+            alert(`🎉 Application submitted for job ${jobId}! Check your email for confirmation.`);
+        }
+
+        function saveJob(jobId) {
+            alert(`💾 Job ${jobId} saved to your favorites!`);
+        }
+
+        function displayUserProfile() {
+            const user = authManager ? authManager.getCurrentUser() : null;
+            const profileDiv = document.getElementById('user-profile');
+            
+            if (user) {
+                profileDiv.innerHTML = `
+                    <strong>${user.name || user.email}</strong> (${user.role}) 
+                    ${user.city ? `from ${user.city}` : ''}
+                `;
+            } else {
+                profileDiv.innerHTML = 'Job Seeker Profile';
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            displayUserProfile();
+            loadRecommendations();
+        });
+
+        // Update timestamp every minute
+        setInterval(() => {
+            document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+        }, 60000);
+    </script>
+</body>
+</html>
