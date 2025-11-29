@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct Authentication Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn:hover { background: #0056b3; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #1e7e34; }
+        .result {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Direct Authentication Fix & Test</h1>
+        
+        <h2>Step 1: Fix Database Roles</h2>
+        <button class="btn btn-danger" onclick="createAndFixUsers()">CREATE & FIX ALL USER ROLES</button>
+        <div id="fixResult"></div>
+        
+        <h2>Step 2: Test Login for Each Role</h2>
+        <button class="btn" onclick="testLoginDirect('admin@test.com', 'admin123', 'admin')">Test Admin Login</button>
+        <button class="btn" onclick="testLoginDirect('employer@test.com', 'employer123', 'employer')">Test Employer Login</button>
+        <button class="btn" onclick="testLoginDirect('jobseeker@test.com', 'jobseeker123', 'job_seeker')">Test Job Seeker Login</button>
+        <div id="loginResult"></div>
+        
+        <h2>Step 3: Direct Redirect Test</h2>
+        <button class="btn btn-success" onclick="testRedirect('admin')">Redirect as Admin</button>
+        <button class="btn btn-success" onclick="testRedirect('employer')">Redirect as Employer</button>
+        <button class="btn btn-success" onclick="testRedirect('job_seeker')">Redirect as Job Seeker</button>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8001';
+        
+        function showResult(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.className = `result ${type}`;
+            element.textContent = content;
+        }
+
+        async function createAndFixUsers() {
+            showResult('fixResult', 'Creating and fixing user roles...', 'info');
+            
+            try {
+                // First create test users
+                const createResponse = await fetch(`${API_URL}/api/v1/auth/create-test-users`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                const createData = await createResponse.json();
+                console.log('Create users result:', createData);
+                
+                // Then fix their roles
+                const fixResponse = await fetch(`${API_URL}/api/v1/auth/fix-user-roles`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                const fixData = await fixResponse.json();
+                console.log('Fix roles result:', fixData);
+                
+                if (createResponse.ok && fixResponse.ok) {
+                    showResult('fixResult', `✅ SUCCESS! Users created and roles fixed:
+
+CREATE RESULT:
+${JSON.stringify(createData, null, 2)}
+
+FIX RESULT:
+${JSON.stringify(fixData, null, 2)}
+
+✅ Ready to test login!`, 'success');
+                } else {
+                    throw new Error(`Create: ${createData.message || 'Failed'}, Fix: ${fixData.message || 'Failed'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showResult('fixResult', `❌ ERROR: ${error.message}
+
+Make sure backend server is running on port 8001:
+cd backend
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8001`, 'error');
+            }
+        }
+
+        async function testLoginDirect(email, password, expectedRole) {
+            showResult('loginResult', `Testing login for ${email}...`, 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/v1/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password }),
+                    mode: 'cors'
+                });
+                
+                const data = await response.json();
+                console.log('Login response:', data);
+                
+                if (response.ok && data.success) {
+                    const actualRole = data.user.role;
+                    const roleMatch = actualRole === expectedRole;
+                    
+                    showResult('loginResult', `✅ LOGIN SUCCESS for ${email}:
+
+👤 User: ${data.user.name}
+🎭 Role: ${actualRole}
+📧 Email: ${data.user.email}
+🔑 Token: ${data.access_token ? 'Present' : 'Missing'}
+
+ROLE CHECK:
+Expected: ${expectedRole}
+Actual: ${actualRole}
+Match: ${roleMatch ? '✅ CORRECT' : '❌ MISMATCH'}
+
+${roleMatch ? '✅ This user should redirect correctly!' : '⚠️ Role mismatch - may redirect wrong!'}`, 
+                        roleMatch ? 'success' : 'error');
+                } else {
+                    throw new Error(data.message || data.detail || 'Login failed');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showResult('loginResult', `❌ LOGIN FAILED for ${email}: ${error.message}`, 'error');
+            }
+        }
+
+        function testRedirect(role) {
+            // Simulate the redirect logic
+            let redirectUrl;
+            const normalizedRole = role.toLowerCase().trim();
+            
+            if (normalizedRole === 'admin' || normalizedRole === 'administrator') {
+                redirectUrl = '/pages/admin/dashboard.html';
+            } else if (normalizedRole === 'employer' || normalizedRole === 'recruiter') {
+                redirectUrl = '/pages/employer/dashboard.html';
+            } else if (normalizedRole === 'job_seeker' || normalizedRole === 'jobseeker' || normalizedRole === 'seeker') {
+                redirectUrl = '/pages/jobseeker/dashboard.html';
+            } else {
+                redirectUrl = '/pages/jobseeker/dashboard.html'; // default
+            }
+            
+            alert(`Redirect test for role "${role}":
+Target URL: ${redirectUrl}
+            
+This would redirect you to the ${role} dashboard.
+Click OK to continue testing or Cancel to actually redirect.`);
+            
+            // Uncomment the next line to actually redirect:
+            // window.location.href = redirectUrl;
+        }
+    </script>
+</body>
+</html>

@@ -312,38 +312,46 @@ class AuthManager {
         console.log('🔄 redirectAfterLogin called with role:', role);
         console.log('🎭 Available userRoles:', this.userRoles);
         console.log('🔍 Role type:', typeof role);
-        console.log('🔍 Role comparison:');
-        console.log(`  - role === ADMIN (${this.userRoles.ADMIN}):`, role === this.userRoles.ADMIN);
-        console.log(`  - role === EMPLOYER (${this.userRoles.EMPLOYER}):`, role === this.userRoles.EMPLOYER);
-        console.log(`  - role === JOB_SEEKER (${this.userRoles.JOB_SEEKER}):`, role === this.userRoles.JOB_SEEKER);
         
         // Normalize role (handle both string and object cases)
-        const normalizedRole = typeof role === 'string' ? role : role?.value || role?.name || String(role);
+        const normalizedRole = typeof role === 'string' ? role.toLowerCase().trim() : 
+                              (role?.value || role?.name || String(role)).toLowerCase().trim();
         console.log('🔧 Normalized role:', normalizedRole);
         
-        switch (normalizedRole) {
-            case this.userRoles.ADMIN:
-            case 'admin':
-                console.log('✅ Redirecting to ADMIN dashboard');
-                window.location.href = '/pages/admin/dashboard.html';
-                break;
-            case this.userRoles.EMPLOYER:
-            case 'employer':
-                console.log('✅ Redirecting to EMPLOYER dashboard');
-                window.location.href = '/pages/employer/dashboard.html';
-                break;
-            case this.userRoles.JOB_SEEKER:
-            case 'job_seeker':
-                console.log('✅ Redirecting to JOB_SEEKER dashboard');
-                window.location.href = '/pages/jobseeker/dashboard.html';
-                break;
-            default:
-                console.log('⚠️ Unknown role, redirecting to home page. Role was:', role);
-                console.log('⚠️ Normalized role was:', normalizedRole);
-                // Default to job seeker dashboard for unknown roles
-                console.log('🔄 Defaulting to job seeker dashboard');
-                window.location.href = '/pages/jobseeker/dashboard.html';
+        // Enhanced role mapping - handle all possible variations
+        let redirectUrl = '/index.html'; // default fallback
+        
+        if (normalizedRole === 'admin' || normalizedRole === 'administrator') {
+            redirectUrl = '/pages/admin/dashboard.html';
+            console.log('✅ Redirecting to ADMIN dashboard');
+        } else if (normalizedRole === 'employer' || normalizedRole === 'recruiter') {
+            redirectUrl = '/pages/employer/dashboard.html';
+            console.log('✅ Redirecting to EMPLOYER dashboard');
+        } else if (normalizedRole === 'job_seeker' || normalizedRole === 'jobseeker' || normalizedRole === 'seeker') {
+            redirectUrl = '/pages/jobseeker/dashboard.html';
+            console.log('✅ Redirecting to JOB_SEEKER dashboard');
+        } else {
+            // If role is unclear, check user email to determine correct role
+            const user = this.getCurrentUser();
+            if (user && user.email) {
+                if (user.email.includes('admin')) {
+                    redirectUrl = '/pages/admin/dashboard.html';
+                    console.log('🔄 Email-based redirect: ADMIN dashboard');
+                } else if (user.email.includes('employer')) {
+                    redirectUrl = '/pages/employer/dashboard.html';
+                    console.log('🔄 Email-based redirect: EMPLOYER dashboard');
+                } else {
+                    redirectUrl = '/pages/jobseeker/dashboard.html';
+                    console.log('🔄 Email-based redirect: JOB_SEEKER dashboard (default)');
+                }
+            } else {
+                console.log('⚠️ Unknown role and no user email, defaulting to job seeker');
+                redirectUrl = '/pages/jobseeker/dashboard.html';
+            }
         }
+        
+        console.log(`🚀 Final redirect URL: ${redirectUrl}`);
+        window.location.href = redirectUrl;
     }
 
     // UI Management
