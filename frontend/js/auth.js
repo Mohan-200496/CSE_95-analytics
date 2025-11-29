@@ -97,6 +97,11 @@ class AuthManager {
                 this.accessToken = data.access_token;
                 this.setCurrentUser(data.user, rememberMe);
                 this.setAccessToken(data.access_token, rememberMe);
+                
+                console.log('🎉 Login successful! User data:', data.user);
+                console.log('🎭 User role from API:', data.user.role);
+                console.log('🎯 About to redirect with role:', data.user.role);
+                
                 // Don't redirect in test mode
                 if (!window.location.pathname.includes('test-auth')) {
                     this.redirectAfterLogin(data.user.role);
@@ -304,18 +309,40 @@ class AuthManager {
 
     // Redirect Logic
     redirectAfterLogin(role) {
-        switch (role) {
+        console.log('🔄 redirectAfterLogin called with role:', role);
+        console.log('🎭 Available userRoles:', this.userRoles);
+        console.log('🔍 Role type:', typeof role);
+        console.log('🔍 Role comparison:');
+        console.log(`  - role === ADMIN (${this.userRoles.ADMIN}):`, role === this.userRoles.ADMIN);
+        console.log(`  - role === EMPLOYER (${this.userRoles.EMPLOYER}):`, role === this.userRoles.EMPLOYER);
+        console.log(`  - role === JOB_SEEKER (${this.userRoles.JOB_SEEKER}):`, role === this.userRoles.JOB_SEEKER);
+        
+        // Normalize role (handle both string and object cases)
+        const normalizedRole = typeof role === 'string' ? role : role?.value || role?.name || String(role);
+        console.log('🔧 Normalized role:', normalizedRole);
+        
+        switch (normalizedRole) {
             case this.userRoles.ADMIN:
+            case 'admin':
+                console.log('✅ Redirecting to ADMIN dashboard');
                 window.location.href = '/pages/admin/dashboard.html';
                 break;
             case this.userRoles.EMPLOYER:
+            case 'employer':
+                console.log('✅ Redirecting to EMPLOYER dashboard');
                 window.location.href = '/pages/employer/dashboard.html';
                 break;
             case this.userRoles.JOB_SEEKER:
+            case 'job_seeker':
+                console.log('✅ Redirecting to JOB_SEEKER dashboard');
                 window.location.href = '/pages/jobseeker/dashboard.html';
                 break;
             default:
-                window.location.href = '/index.html';
+                console.log('⚠️ Unknown role, redirecting to home page. Role was:', role);
+                console.log('⚠️ Normalized role was:', normalizedRole);
+                // Default to job seeker dashboard for unknown roles
+                console.log('🔄 Defaulting to job seeker dashboard');
+                window.location.href = '/pages/jobseeker/dashboard.html';
         }
     }
 

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Role Debug - Punjab Rozgar Portal</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .debug-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #1d4ed8;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .info { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Role & Authentication Debug Tool</h1>
+    
+    <div class="debug-card">
+        <h2>Database Role Management</h2>
+        <p>Fix user roles in the database if they're incorrect:</p>
+        <button class="test-button" onclick="fixUserRoles()">Fix User Roles in Database</button>
+        <button class="test-button" onclick="debugDatabase()">Debug Database</button>
+        <div id="roleResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="debug-card">
+        <h2>Test Login Responses</h2>
+        <p>Check what roles are being returned by the API for different test users:</p>
+        
+        <button class="test-button" onclick="testLogin('admin@test.com', 'admin123')">Test Admin Login</button>
+        <button class="test-button" onclick="testLogin('employer@test.com', 'employer123')">Test Employer Login</button>
+        <button class="test-button" onclick="testLogin('jobseeker@test.com', 'jobseeker123')">Test Job Seeker Login</button>
+        <button class="test-button" onclick="testLogin('test@example.com', 'test123')">Test Legacy User</button>
+        
+        <div id="loginResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="debug-card">
+        <h2>Environment & Configuration</h2>
+        <button class="test-button" onclick="checkEnvironment()">Check Environment</button>
+        <div id="envResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="debug-card">
+        <h2>Current User State</h2>
+        <button class="test-button" onclick="checkCurrentUser()">Check Current User</button>
+        <button class="test-button" onclick="clearUserData()">Clear User Data</button>
+        <div id="userResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="debug-card">
+        <h2>Backend Connection</h2>
+        <button class="test-button" onclick="testBackendConnection()">Test Backend Health</button>
+        <div id="backendResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script src="../../config/environment.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script>
+        function showResult(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.className = `result ${type}`;
+            element.textContent = content;
+            element.style.display = 'block';
+        }
+
+        async function fixUserRoles() {
+            showResult('roleResult', 'Fixing user roles in database...', 'info');
+            
+            try {
+                const apiUrl = window.ENV_CONFIG?.apiUrl || 'https://punjab-rozgar-api.onrender.com';
+                const fixUrl = `${apiUrl}/api/v1/auth/fix-user-roles`;
+                
+                console.log('Calling fix-user-roles endpoint:', fixUrl);
+                
+                const response = await fetch(fixUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors'
+                });
+
+                const data = await response.json();
+                console.log('Fix roles response:', data);
+
+                if (response.ok) {
+                    const fixInfo = `
+ROLE FIX COMPLETED:
+✅ Status: SUCCESS
+🔧 Fixed users: ${data.fixed ? data.fixed.join('\n                 ') : 'None needed fixing'}
+📧 Credentials available:
+   ${data.credentials?.admin || 'N/A'}
+   ${data.credentials?.employer || 'N/A'} 
+   ${data.credentials?.jobseeker || 'N/A'}
+
+💡 Now try logging in again with these credentials!
+
+Full response:
+${JSON.stringify(data, null, 2)}`;
+                    showResult('roleResult', fixInfo, 'success');
+                } else {
+                    showResult('roleResult', `ROLE FIX FAILED:\n${data.message || data.detail || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Role fix error:', error);
+                showResult('roleResult', `ROLE FIX ERROR:\n${error.message}`, 'error');
+            }
+        }
+
+        async function debugDatabase() {
+            showResult('roleResult', 'Debugging database...', 'info');
+            
+            try {
+                const apiUrl = window.ENV_CONFIG?.apiUrl || 'https://punjab-rozgar-api.onrender.com';
+                const debugUrl = `${apiUrl}/api/v1/auth/debug-db`;
+                
+                console.log('Calling debug-db endpoint:', debugUrl);
+                
+                const response = await fetch(debugUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors'
+                });
+
+                const data = await response.json();
+                console.log('Database debug response:', data);
+
+                if (response.ok) {
+                    const debugInfo = `
+DATABASE DEBUG:
+✅ Status: ${data.status}
+📊 Total Jobs: ${data.total_jobs}
+🕒 Timestamp: ${data.timestamp}
+
+Full response:
+${JSON.stringify(data, null, 2)}`;
+                    showResult('roleResult', debugInfo, 'success');
+                } else {
+                    showResult('roleResult', `DATABASE DEBUG FAILED:\n${data.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Database debug error:', error);
+                showResult('roleResult', `DATABASE DEBUG ERROR:\n${error.message}`, 'error');
+            }
+        }
+
+        async function testLogin(email, password) {
+            const resultDiv = document.getElementById('loginResult');
+            showResult('loginResult', 'Testing login...', 'info');
+            
+            try {
+                const apiUrl = window.ENV_CONFIG?.apiUrl || 'https://punjab-rozgar-api.onrender.com';
+                console.log('Testing login with API URL:', apiUrl);
+                
+                const response = await fetch(`${apiUrl}/api/v1/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                console.log('Login response:', data);
+
+                if (response.ok && data.success) {
+                    const debugInfo = `
+LOGIN SUCCESS for ${email}:
+✅ Status: ${response.status}
+👤 User ID: ${data.user.user_id}
+📧 Email: ${data.user.email}
+🎭 Role: ${data.user.role}
+👤 Name: ${data.user.name}
+🏢 Company: ${data.user.company_name || 'N/A'}
+📅 Last Login: ${data.user.last_login || 'Never'}
+🔑 Token: ${data.access_token ? 'Present' : 'Missing'}
+
+REDIRECT CHECK:
+Expected redirect for ${data.user.role}:
+- admin → /pages/admin/dashboard.html
+- employer → /pages/employer/dashboard.html  
+- job_seeker → /pages/jobseeker/dashboard.html
+
+Raw User Object:
+${JSON.stringify(data.user, null, 2)}`;
+                    showResult('loginResult', debugInfo, 'success');
+                    
+                    // Also check what authManager would do
+                    if (window.authManager) {
+                        console.log('Setting user in authManager for testing...');
+                        window.authManager.setCurrentUser(data.user, false);
+                    }
+                } else {
+                    showResult('loginResult', `LOGIN FAILED for ${email}:\n${data.message || data.detail || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Login test error:', error);
+                showResult('loginResult', `LOGIN ERROR for ${email}:\n${error.message}`, 'error');
+            }
+        }
+
+        function checkEnvironment() {
+            const envInfo = `
+ENVIRONMENT CONFIGURATION:
+🌍 Window ENV_CONFIG: ${window.ENV_CONFIG ? 'Present' : 'Missing'}
+🔗 API URL: ${window.ENV_CONFIG?.apiUrl || 'Not set'}
+🏠 Environment: ${window.ENV_CONFIG?.environment || 'Unknown'}
+🌐 Hostname: ${window.location.hostname}
+📍 Pathname: ${window.location.pathname}
+
+DETECTED API CONFIGURATION:
+${window.authManager ? `AuthManager API URL: ${window.authManager.apiBaseUrl}` : 'AuthManager not available'}
+
+USER AGENT:
+${navigator.userAgent}`;
+            showResult('envResult', envInfo, 'info');
+        }
+
+        function checkCurrentUser() {
+            const localStorage_user = localStorage.getItem('user');
+            const sessionStorage_user = sessionStorage.getItem('user');
+            const localStorage_token = localStorage.getItem('access_token');
+            const sessionStorage_token = sessionStorage.getItem('access_token');
+            
+            let currentUserInfo = `
+STORAGE STATE:
+localStorage user: ${localStorage_user ? 'Present' : 'Empty'}
+sessionStorage user: ${sessionStorage_user ? 'Present' : 'Empty'}
+localStorage token: ${localStorage_token ? 'Present' : 'Empty'}
+sessionStorage token: ${sessionStorage_token ? 'Present' : 'Empty'}
+
+AUTH MANAGER STATE:
+AuthManager available: ${window.authManager ? 'Yes' : 'No'}`;
+
+            if (window.authManager) {
+                currentUserInfo += `
+Current user: ${window.authManager.currentUser ? 'Logged in' : 'Not logged in'}
+Is logged in: ${window.authManager.isLoggedIn()}`;
+                
+                if (window.authManager.currentUser) {
+                    currentUserInfo += `
+User details: ${JSON.stringify(window.authManager.currentUser, null, 2)}`;
+                }
+            }
+
+            if (localStorage_user) {
+                try {
+                    const parsedUser = JSON.parse(localStorage_user);
+                    currentUserInfo += `\n\nLOCAL STORAGE USER:\n${JSON.stringify(parsedUser, null, 2)}`;
+                } catch (e) {
+                    currentUserInfo += `\nLOCAL STORAGE USER: Invalid JSON - ${e.message}`;
+                }
+            }
+
+            if (sessionStorage_user) {
+                try {
+                    const parsedUser = JSON.parse(sessionStorage_user);
+                    currentUserInfo += `\n\nSESSION STORAGE USER:\n${JSON.stringify(parsedUser, null, 2)}`;
+                } catch (e) {
+                    currentUserInfo += `\nSESSION STORAGE USER: Invalid JSON - ${e.message}`;
+                }
+            }
+
+            showResult('userResult', currentUserInfo, 'info');
+        }
+
+        function clearUserData() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('access_token');
+            sessionStorage.removeItem('user');
+            sessionStorage.removeItem('access_token');
+            
+            if (window.authManager) {
+                window.authManager.currentUser = null;
+                window.authManager.accessToken = null;
+            }
+            
+            showResult('userResult', 'All user data cleared from storage and authManager.', 'success');
+        }
+
+        async function testBackendConnection() {
+            showResult('backendResult', 'Testing backend connection...', 'info');
+            
+            try {
+                const apiUrl = window.ENV_CONFIG?.apiUrl || 'https://punjab-rozgar-api.onrender.com';
+                const healthUrl = `${apiUrl}/health`;
+                
+                console.log('Testing backend health at:', healthUrl);
+                
+                const response = await fetch(healthUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors'
+                });
+
+                const data = await response.json();
+                
+                const healthInfo = `
+BACKEND HEALTH CHECK:
+✅ Status: ${response.status}
+🏥 Health: ${data.status || 'Unknown'}
+🕒 Timestamp: ${data.timestamp || 'Not provided'}
+🗄️ Database: ${data.database || 'Unknown'}
+⏱️ Response Time: ${data.response_time || 'Unknown'}
+
+HEADERS:
+${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}
+
+FULL RESPONSE:
+${JSON.stringify(data, null, 2)}`;
+
+                showResult('backendResult', healthInfo, response.ok ? 'success' : 'error');
+            } catch (error) {
+                console.error('Backend test error:', error);
+                showResult('backendResult', `BACKEND CONNECTION FAILED:\n${error.message}`, 'error');
+            }
+        }
+
+        // Auto-check environment on load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkEnvironment();
+        });
+    </script>
+</body>
+</html>

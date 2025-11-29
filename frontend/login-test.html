@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Test - Punjab Rozgar Portal</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .test-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        input[type="email"], input[type="password"] {
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .test-button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .test-button:hover {
+            background: #1d4ed8;
+        }
+        .test-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .quick-test {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .quick-test button {
+            padding: 8px 15px;
+            font-size: 12px;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 12px;
+        }
+        .success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .info { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    </style>
+</head>
+<body>
+    <h1>🔐 Login Testing Tool</h1>
+    
+    <div class="test-card">
+        <h2>Manual Login Test</h2>
+        <form class="login-form" id="loginForm">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="test-button" id="loginBtn">
+                🔑 Test Login
+            </button>
+        </form>
+        
+        <div class="quick-test">
+            <h3>Quick Tests:</h3>
+            <button class="test-button" onclick="quickLogin('admin@test.com', 'admin123')">Admin</button>
+            <button class="test-button" onclick="quickLogin('employer@test.com', 'employer123')">Employer</button>
+            <button class="test-button" onclick="quickLogin('jobseeker@test.com', 'jobseeker123')">Job Seeker</button>
+            <button class="test-button" onclick="quickLogin('test@example.com', 'test123')">Legacy User</button>
+        </div>
+        
+        <div id="loginResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-card">
+        <h2>Console Output</h2>
+        <p>Check the browser console (F12) for detailed debugging output from the auth system.</p>
+        <button class="test-button" onclick="clearConsole()">Clear Console</button>
+        <button class="test-button" onclick="showCurrentUser()">Show Current User</button>
+        <button class="test-button" onclick="logout()">Logout</button>
+    </div>
+
+    <script src="../config/environment.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+        console.log('🚀 Login test page loaded');
+        console.log('🌍 Environment:', window.ENV_CONFIG);
+        console.log('🔧 AuthManager:', window.authManager);
+
+        function showResult(content, type = 'info') {
+            const element = document.getElementById('loginResult');
+            element.className = `result ${type}`;
+            element.textContent = content;
+            element.style.display = 'block';
+        }
+
+        async function testLogin(email, password) {
+            console.log('🔄 Starting login test for:', email);
+            showResult('Testing login...', 'info');
+            
+            const loginBtn = document.getElementById('loginBtn');
+            loginBtn.disabled = true;
+            loginBtn.textContent = '⏳ Testing...';
+            
+            try {
+                const result = await window.authManager.login(email, password, false);
+                
+                console.log('📊 Login result:', result);
+                
+                if (result.success) {
+                    const user = result.user;
+                    const resultText = `✅ LOGIN SUCCESS
+👤 Name: ${user.name}
+📧 Email: ${user.email}  
+🎭 Role: ${user.role}
+🆔 User ID: ${user.user_id}
+🏢 Company: ${user.company_name || 'N/A'}
+
+⏰ Current time: ${new Date().toISOString()}
+🔄 Redirect should happen automatically based on role...`;
+                    
+                    showResult(resultText, 'success');
+                    
+                    // Note: If we're here and no redirect happened, there's an issue
+                    console.warn('🚨 No redirect happened - check redirectAfterLogin function');
+                    
+                } else {
+                    showResult(`❌ LOGIN FAILED\n${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('💥 Login test error:', error);
+                showResult(`💥 TEST ERROR\n${error.message}`, 'error');
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = '🔑 Test Login';
+            }
+        }
+
+        function quickLogin(email, password) {
+            document.getElementById('email').value = email;
+            document.getElementById('password').value = password;
+            testLogin(email, password);
+        }
+
+        function clearConsole() {
+            console.clear();
+            console.log('🧹 Console cleared - ready for new tests');
+        }
+
+        function showCurrentUser() {
+            if (window.authManager && window.authManager.isLoggedIn()) {
+                const user = window.authManager.getCurrentUser();
+                console.log('👤 Current user:', user);
+                showResult(`Current User:\n${JSON.stringify(user, null, 2)}`, 'info');
+            } else {
+                console.log('👤 No user logged in');
+                showResult('No user currently logged in', 'info');
+            }
+        }
+
+        function logout() {
+            if (window.authManager) {
+                window.authManager.logout();
+                console.log('🚪 Logout completed');
+                showResult('Logged out successfully', 'success');
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const email = formData.get('email');
+            const password = formData.get('password');
+            testLogin(email, password);
+        });
+
+        // Show initial state
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📋 Page ready - showing current state');
+            showCurrentUser();
+        });
+    </script>
+</body>
+</html>

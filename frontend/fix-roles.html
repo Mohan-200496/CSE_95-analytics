@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Role Fix - Punjab Rozgar Portal</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+            max-width: 500px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .fix-card {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .fix-button {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 10px;
+            min-width: 200px;
+        }
+        .fix-button:hover {
+            background: #b91c1c;
+        }
+        .fix-button.success {
+            background: #16a34a;
+        }
+        .fix-button.success:hover {
+            background: #15803d;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: left;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .info { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    </style>
+</head>
+<body>
+    <div class="fix-card">
+        <h1>🔧 Quick Role Fix</h1>
+        <p><strong>If all users are redirecting to admin dashboard,<br>this will fix the database roles!</strong></p>
+        
+        <button class="fix-button" onclick="fixRoles()" id="fixBtn">
+            🚨 FIX USER ROLES NOW
+        </button>
+        
+        <button class="fix-button success" onclick="testLogin()" id="testBtn" style="display: none;">
+            ✅ TEST LOGIN NOW
+        </button>
+        
+        <div id="result" style="display: none;"></div>
+    </div>
+
+    <script src="../config/environment.js"></script>
+    <script>
+        function showResult(content, type = 'info') {
+            const element = document.getElementById('result');
+            element.className = `result ${type}`;
+            element.textContent = content;
+            element.style.display = 'block';
+        }
+
+        async function fixRoles() {
+            const fixBtn = document.getElementById('fixBtn');
+            const testBtn = document.getElementById('testBtn');
+            
+            fixBtn.disabled = true;
+            fixBtn.textContent = '⏳ Fixing roles...';
+            
+            try {
+                const apiUrl = window.ENV_CONFIG?.apiUrl || 'http://localhost:8001';
+                console.log('Using API URL:', apiUrl);
+                const response = await fetch(`${apiUrl}/api/v1/auth/fix-user-roles`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+
+                const data = await response.json();
+                console.log('Fix result:', data);
+
+                if (response.ok) {
+                    showResult(`✅ ROLES FIXED SUCCESSFULLY!
+
+Fixed users:
+${data.fixed ? data.fixed.join('\n') : 'No users needed fixing'}
+
+Test credentials:
+• Admin: admin@test.com / admin123
+• Employer: employer@test.com / employer123  
+• Job Seeker: jobseeker@test.com / jobseeker123
+
+✨ You can now test login!`, 'success');
+                    
+                    fixBtn.style.display = 'none';
+                    testBtn.style.display = 'inline-block';
+                } else {
+                    throw new Error(data.error || data.message || 'Fix failed');
+                }
+            } catch (error) {
+                console.error('Fix error:', error);
+                showResult(`❌ ROLE FIX FAILED
+${error.message}
+
+Please check:
+1. Backend server is running
+2. Database is accessible
+3. Network connection is working`, 'error');
+                
+                fixBtn.disabled = false;
+                fixBtn.textContent = '🚨 FIX USER ROLES NOW';
+            }
+        }
+
+        function testLogin() {
+            window.location.href = '../pages/auth/login.html';
+        }
+    </script>
+</body>
+</html>

@@ -48,9 +48,9 @@ class EnvironmentConfig {
     getConfig() {
         const configs = {
             development: {
-                API_BASE_URL: 'http://localhost:8000',
-                API_DOCS_URL: 'http://localhost:8000/docs',
-                WEBSOCKET_URL: 'ws://localhost:8000/ws',
+                API_BASE_URL: 'http://localhost:8001',
+                API_DOCS_URL: 'http://localhost:8001/docs',
+                WEBSOCKET_URL: 'ws://localhost:8001/ws',
                 ENVIRONMENT: 'development',
                 DEBUG: true
             },
