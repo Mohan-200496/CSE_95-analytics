@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Navigation Test</title>
+    <script src="https://punjab-rozgar-portal1.onrender.com/js/auth.js"></script>
+</head>
+<body>
+    <h1>Dashboard Navigation Test</h1>
+    <div id="debug-info"></div>
+    <div id="test-results"></div>
+    
+    <button onclick="testGoBack()">Test Dashboard Navigation</button>
+    <button onclick="testAuth()">Test Authentication</button>
+
+    <script>
+        function debugLog(message) {
+            const debugDiv = document.getElementById('debug-info');
+            debugDiv.innerHTML += '<div>' + message + '</div>';
+            console.log(message);
+        }
+
+        function testAuth() {
+            debugLog('🔍 Testing Authentication...');
+            
+            if (typeof authManager === 'undefined') {
+                debugLog('❌ AuthManager not defined');
+                return;
+            }
+            
+            debugLog('✅ AuthManager available');
+            debugLog('  - Logged in: ' + authManager.isLoggedIn());
+            
+            const user = authManager.getCurrentUser();
+            if (user) {
+                debugLog('  - User email: ' + user.email);
+                debugLog('  - User role (original): ' + user.role);
+                debugLog('  - User role (lowercase): ' + (user.role || '').toLowerCase().trim());
+            } else {
+                debugLog('❌ No user found');
+            }
+        }
+
+        function testGoBack() {
+            debugLog('🔄 Testing goBack function...');
+            
+            if (typeof authManager === 'undefined') {
+                debugLog('❌ AuthManager not available');
+                return;
+            }
+            
+            const user = authManager.getCurrentUser();
+            if (!user) {
+                debugLog('❌ No user logged in');
+                return;
+            }
+            
+            const role = (user.role || '').toLowerCase().trim();
+            debugLog('🎭 User role: "' + role + '"');
+            
+            let redirectUrl = '/index.html';
+            
+            if (role === 'admin' || role === 'administrator') {
+                redirectUrl = '/pages/admin/dashboard.html';
+                debugLog('✅ Should redirect to ADMIN dashboard');
+            } else if (role === 'employer' || role === 'recruiter') {
+                redirectUrl = '/pages/employer/dashboard.html';
+                debugLog('✅ Should redirect to EMPLOYER dashboard');
+            } else if (role === 'job_seeker' || role === 'jobseeker' || role === 'seeker') {
+                redirectUrl = '/pages/jobseeker/dashboard.html';
+                debugLog('✅ Should redirect to JOB_SEEKER dashboard');
+            } else {
+                // Fallback based on email
+                const email = user.email || '';
+                debugLog('🔍 Checking email fallback for: ' + email);
+                if (email.includes('admin')) {
+                    redirectUrl = '/pages/admin/dashboard.html';
+                    debugLog('🔄 Email-based redirect: ADMIN dashboard');
+                } else if (email.includes('employer')) {
+                    redirectUrl = '/pages/employer/dashboard.html';
+                    debugLog('🔄 Email-based redirect: EMPLOYER dashboard');
+                } else {
+                    redirectUrl = '/pages/jobseeker/dashboard.html';
+                    debugLog('🔄 Email-based redirect: JOB_SEEKER dashboard (default)');
+                }
+            }
+            
+            debugLog('🚀 Final redirect URL: ' + redirectUrl);
+            debugLog('⚠️ Redirecting in 3 seconds...');
+            
+            setTimeout(() => {
+                window.location.href = redirectUrl;
+            }, 3000);
+        }
+
+        // Auto-test on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                debugLog('🚀 Page loaded, testing authentication...');
+                testAuth();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

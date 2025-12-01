@@ -46,7 +46,7 @@
         const hostname = window.location.hostname;
         if (hostname.includes('onrender.com')) {
             console.log('🌐 Detected Render environment, using live API');
-            return 'https://cse-95-analytics.onrender.com/api/v1';
+            return 'https://punjab-rozgar-api.onrender.com/api/v1';
         }
         
         // Development fallback
@@ -346,23 +346,34 @@
         const userRole = this.currentUser.role.toLowerCase().trim();
         const requiredRole = role.toLowerCase().trim();
         
-        // Handle role variations
+        // Handle role variations including UPPERCASE backend values
         const roleMapping = {
-            'job_seeker': ['job_seeker', 'jobseeker', 'seeker'],
-            'employer': ['employer', 'recruiter'],
-            'admin': ['admin', 'administrator']
+            'job_seeker': ['job_seeker', 'jobseeker', 'seeker', 'JOB_SEEKER'],
+            'employer': ['employer', 'recruiter', 'EMPLOYER'],
+            'admin': ['admin', 'administrator', 'ADMIN']
         };
         
+        console.log('🔍 hasRole check:', {
+            userRole,
+            requiredRole,
+            roleMapping
+        });
+        
         // Check direct match first
-        if (userRole === requiredRole) return true;
+        if (userRole === requiredRole) {
+            console.log('✅ Direct role match found');
+            return true;
+        }
         
         // Check mapped variations
         for (const [key, variations] of Object.entries(roleMapping)) {
             if (variations.includes(requiredRole) && variations.includes(userRole)) {
+                console.log('✅ Mapped role match found:', key);
                 return true;
             }
         }
         
+        console.log('❌ No role match found');
         return false;
     }
 
@@ -685,10 +696,29 @@
     }
 
     requireRole(requiredRole, redirectUrl = '/index.html') {
-        if (!this.isLoggedIn() || !this.hasRole(requiredRole)) {
+        console.log('🔒 requireRole check:', {
+            requiredRole,
+            isLoggedIn: this.isLoggedIn(),
+            currentUser: this.getCurrentUser(),
+            hasRole: this.hasRole(requiredRole),
+            redirectUrl
+        });
+        
+        if (!this.isLoggedIn()) {
+            console.log('❌ User not logged in - redirecting to:', redirectUrl);
             window.location.href = redirectUrl;
             return false;
         }
+        
+        if (!this.hasRole(requiredRole)) {
+            console.log('❌ Role check failed - user does not have required role:', requiredRole);
+            console.log('   User role:', this.currentUser?.role);
+            alert(`Access denied. Only ${requiredRole}s and admins can post jobs.`);
+            window.location.href = redirectUrl;
+            return false;
+        }
+        
+        console.log('✅ Role check passed');
         return true;
     }
 

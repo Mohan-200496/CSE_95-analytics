@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Debug - Punjab Rozgar Portal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .debug-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .debug-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .btn {
+            background: #6c5ce7;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #5a4fcf;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .status.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .status.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            border: 1px solid #e9ecef;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Authentication Debug Tool</h1>
+        <p>This tool helps debug authentication and role issues with job posting.</p>
+
+        <div class="debug-section">
+            <h3>📊 Current Authentication Status</h3>
+            <div id="authStatus">Loading...</div>
+        </div>
+
+        <div class="debug-section">
+            <h3>👤 User Information</h3>
+            <div id="userInfo">Loading...</div>
+        </div>
+
+        <div class="debug-section">
+            <h3>🔐 Role Validation Tests</h3>
+            <div id="roleTests">Loading...</div>
+        </div>
+
+        <div class="debug-section">
+            <h3>🔗 API Configuration</h3>
+            <div id="apiConfig">Loading...</div>
+        </div>
+
+        <div class="debug-section">
+            <h3>🧪 Quick Tests</h3>
+            <button class="btn" onclick="testEmployerLogin()">Test Employer Login</button>
+            <button class="btn" onclick="testRoleCheck()">Test Role Check</button>
+            <button class="btn" onclick="testJobCreation()">Test Job Creation</button>
+            <button class="btn" onclick="clearAuth()">Clear Auth Data</button>
+            <div id="testResults"></div>
+        </div>
+    </div>
+
+    <!-- Include required scripts -->
+    <script src="../../config/environment.js"></script>
+    <script src="../../js/auth.js"></script>
+
+    <script>
+        let authManager;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize AuthManager
+            if (window.AuthManager) {
+                authManager = new window.AuthManager();
+                updateDebugInfo();
+            } else {
+                showError('AuthManager not available');
+            }
+        });
+
+        function updateDebugInfo() {
+            updateAuthStatus();
+            updateUserInfo();
+            updateRoleTests();
+            updateApiConfig();
+        }
+
+        function updateAuthStatus() {
+            const statusEl = document.getElementById('authStatus');
+            const isLoggedIn = authManager.isLoggedIn();
+            const hasToken = !!authManager.accessToken;
+            const tokenValid = hasToken ? authManager.validateToken() : false;
+
+            statusEl.innerHTML = `
+                <div class="status ${isLoggedIn ? 'success' : 'error'}">
+                    <strong>Logged In:</strong> ${isLoggedIn ? '✅ Yes' : '❌ No'}
+                </div>
+                <div class="status ${hasToken ? 'success' : 'error'}">
+                    <strong>Has Token:</strong> ${hasToken ? '✅ Yes' : '❌ No'}
+                </div>
+                <div class="status ${tokenValid ? 'success' : 'error'}">
+                    <strong>Token Valid:</strong> ${tokenValid ? '✅ Yes' : '❌ No'}
+                </div>
+            `;
+        }
+
+        function updateUserInfo() {
+            const userInfoEl = document.getElementById('userInfo');
+            const user = authManager.getCurrentUser();
+
+            if (user) {
+                userInfoEl.innerHTML = `
+                    <div class="status success">
+                        <strong>User Found:</strong> ✅ Yes
+                    </div>
+                    <pre>${JSON.stringify(user, null, 2)}</pre>
+                `;
+            } else {
+                userInfoEl.innerHTML = `
+                    <div class="status error">
+                        <strong>User Found:</strong> ❌ No user data available
+                    </div>
+                `;
+            }
+        }
+
+        function updateRoleTests() {
+            const roleTestsEl = document.getElementById('roleTests');
+            const user = authManager.getCurrentUser();
+            
+            if (user) {
+                const roles = ['admin', 'employer', 'job_seeker'];
+                let html = '';
+                
+                roles.forEach(role => {
+                    const hasRole = authManager.hasRole(role);
+                    html += `
+                        <div class="status ${hasRole ? 'success' : 'error'}">
+                            <strong>Has ${role} role:</strong> ${hasRole ? '✅ Yes' : '❌ No'}
+                        </div>
+                    `;
+                });
+
+                roleTestsEl.innerHTML = html;
+            } else {
+                roleTestsEl.innerHTML = `
+                    <div class="status error">
+                        No user to test roles
+                    </div>
+                `;
+            }
+        }
+
+        function updateApiConfig() {
+            const apiConfigEl = document.getElementById('apiConfig');
+            
+            apiConfigEl.innerHTML = `
+                <div class="status info">
+                    <strong>API Base URL:</strong> ${authManager.apiBaseUrl}
+                </div>
+                <div class="status info">
+                    <strong>Environment:</strong> ${window.EnvironmentConfig ? new window.EnvironmentConfig().environment : 'Not detected'}
+                </div>
+                <div class="status info">
+                    <strong>Current Host:</strong> ${window.location.hostname}
+                </div>
+            `;
+        }
+
+        async function testEmployerLogin() {
+            const resultsEl = document.getElementById('testResults');
+            resultsEl.innerHTML = '<div class="status info">Testing employer login...</div>';
+
+            try {
+                const result = await authManager.login('employer@test.com', 'employer123');
+                
+                if (result.success) {
+                    resultsEl.innerHTML = `
+                        <div class="status success">
+                            ✅ Employer login successful!
+                            <pre>${JSON.stringify(result.user, null, 2)}</pre>
+                        </div>
+                    `;
+                    updateDebugInfo(); // Refresh all debug info
+                } else {
+                    resultsEl.innerHTML = `
+                        <div class="status error">
+                            ❌ Employer login failed: ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultsEl.innerHTML = `
+                    <div class="status error">
+                        ❌ Login error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function testRoleCheck() {
+            const resultsEl = document.getElementById('testResults');
+            const user = authManager.getCurrentUser();
+
+            if (!user) {
+                resultsEl.innerHTML = `
+                    <div class="status error">
+                        ❌ No user logged in. Please login first.
+                    </div>
+                `;
+                return;
+            }
+
+            // Test the exact same role check as the job posting page
+            const roleCheckResult = authManager.requireRole('employer', '/pages/auth/login.html');
+            
+            resultsEl.innerHTML = `
+                <div class="status ${roleCheckResult ? 'success' : 'error'}">
+                    <strong>Role Check for 'employer':</strong> ${roleCheckResult ? '✅ Passed' : '❌ Failed'}
+                </div>
+                <div class="status info">
+                    <strong>Current User Role:</strong> ${user.role}
+                </div>
+                <div class="status info">
+                    <strong>hasRole('employer'):</strong> ${authManager.hasRole('employer')}
+                </div>
+                <div class="status info">
+                    <strong>hasRole('EMPLOYER'):</strong> ${authManager.hasRole('EMPLOYER')}
+                </div>
+            `;
+        }
+
+        async function testJobCreation() {
+            const resultsEl = document.getElementById('testResults');
+            const user = authManager.getCurrentUser();
+
+            if (!user) {
+                resultsEl.innerHTML = `
+                    <div class="status error">
+                        ❌ No user logged in. Please login first.
+                    </div>
+                `;
+                return;
+            }
+
+            resultsEl.innerHTML = '<div class="status info">Testing job creation API call...</div>';
+
+            const testJobData = {
+                title: 'Debug Test Job',
+                description: 'Test job for debugging role validation',
+                job_type: 'FULL_TIME',
+                category: 'Technology',
+                location_city: 'Lahore',
+                location_state: 'Punjab',
+                contact_email: user.email
+            };
+
+            try {
+                const response = await authManager.makeApiCall('/jobs/', {
+                    method: 'POST',
+                    body: JSON.stringify(testJobData)
+                });
+
+                if (response) {
+                    resultsEl.innerHTML = `
+                        <div class="status success">
+                            ✅ Job creation test successful!
+                            <pre>${JSON.stringify(response, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultsEl.innerHTML = `
+                        <div class="status error">
+                            ❌ Job creation failed: No response from API
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultsEl.innerHTML = `
+                    <div class="status error">
+                        ❌ Job creation error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function clearAuth() {
+            authManager.logout();
+            updateDebugInfo();
+            document.getElementById('testResults').innerHTML = `
+                <div class="status info">
+                    ✅ Authentication data cleared
+                </div>
+            `;
+        }
+
+        function showError(message) {
+            document.getElementById('authStatus').innerHTML = `
+                <div class="status error">
+                    ❌ Error: ${message}
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
