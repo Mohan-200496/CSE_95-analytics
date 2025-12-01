@@ -36,8 +36,8 @@ class PunjabRozgarAnalytics {
             return 'https://punjab-rozgar-api.up.railway.app/api/v1';
         }
         
-        // Default to localhost for development
-        return 'http://localhost:8000/api/v1';
+        // Default to production for development
+        return 'https://punjab-rozgar-api.onrender.com/api/v1';
     }
 
     init() {

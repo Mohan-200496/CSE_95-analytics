@@ -25,6 +25,49 @@ app.add_middleware(
 analytics_data = []
 user_sessions = {}
 
+# Mock data for testing
+mock_jobs = [
+    {
+        "job_id": "job_123456789abc",
+        "title": "Software Engineer",
+        "description": "Develop web applications",
+        "category": "Information Technology", 
+        "location_city": "Chandigarh",
+        "location_state": "Punjab",
+        "job_type": "full_time",
+        "salary_min": 50000,
+        "salary_max": 80000,
+        "employer_name": "Tech Company",
+        "status": "active",
+        "created_at": datetime.now().isoformat()
+    },
+    {
+        "job_id": "job_987654321def", 
+        "title": "Data Analyst",
+        "description": "Analyze business data",
+        "category": "Data Science",
+        "location_city": "Ludhiana", 
+        "location_state": "Punjab",
+        "job_type": "full_time",
+        "salary_min": 40000,
+        "salary_max": 60000,
+        "employer_name": "Analytics Corp",
+        "status": "active",
+        "created_at": datetime.now().isoformat()
+    }
+]
+
+mock_users = [
+    {
+        "user_id": "user_admin123",
+        "email": "admin@test.com",
+        "role": "admin",
+        "first_name": "Admin",
+        "last_name": "User",
+        "is_active": True
+    }
+]
+
 @app.get("/")
 async def root():
     """Root endpoint for health check"""
@@ -183,6 +226,62 @@ async def global_exception_handler(request, exc):
             "timestamp": datetime.now().isoformat()
         }
     )
+
+# Add test endpoints for integration testing
+@app.post("/api/v1/auth/register")
+async def register_user(user_data: dict):
+    import uuid
+    new_user = {
+        "user_id": f"user_{uuid.uuid4().hex[:8]}",
+        "email": user_data.get("email", "test@example.com"),
+        "role": user_data.get("role", "jobseeker"),
+        "first_name": user_data.get("first_name", "Test"),
+        "last_name": user_data.get("last_name", "User"),
+        "is_active": True,
+        "created_at": datetime.now().isoformat()
+    }
+    mock_users.append(new_user)
+    
+    return {
+        "success": True,
+        "message": "User registered successfully",
+        "user": new_user
+    }
+
+@app.get("/api/v1/jobs/recent")
+async def get_recent_jobs(limit: int = 10):
+    recent_jobs = sorted(mock_jobs, key=lambda x: x["created_at"], reverse=True)
+    return {
+        "jobs": recent_jobs[:limit],
+        "total": len(recent_jobs)
+    }
+
+@app.get("/api/v1/admin/stats") 
+async def get_admin_stats():
+    return {
+        "total_users": len(mock_users),
+        "total_jobs": len(mock_jobs),
+        "active_jobs": len([j for j in mock_jobs if j["status"] == "active"]),
+        "total_applications": 5,
+        "analytics_events": len(analytics_data),
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.get("/api/v1/applications")
+async def get_user_applications():
+    mock_applications = [
+        {
+            "application_id": "app_123",
+            "job_id": "job_123456789abc", 
+            "job_title": "Software Engineer",
+            "status": "pending",
+            "applied_at": datetime.now().isoformat()
+        }
+    ]
+    return {
+        "applications": mock_applications,
+        "total": len(mock_applications)
+    }
 
 if __name__ == "__main__":
     uvicorn.run(

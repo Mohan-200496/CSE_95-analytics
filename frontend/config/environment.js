@@ -48,9 +48,9 @@ class EnvironmentConfig {
     getConfig() {
         const configs = {
             development: {
-                API_BASE_URL: 'http://localhost:8001',
-                API_DOCS_URL: 'http://localhost:8001/docs',
-                WEBSOCKET_URL: 'ws://localhost:8001/ws',
+                API_BASE_URL: 'https://punjab-rozgar-api.onrender.com',
+                API_DOCS_URL: 'https://punjab-rozgar-api.onrender.com/docs',
+                WEBSOCKET_URL: 'wss://punjab-rozgar-api.onrender.com/ws',
                 ENVIRONMENT: 'development',
                 DEBUG: true
             },
