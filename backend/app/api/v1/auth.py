@@ -79,10 +79,10 @@ async def register_user(
             )
         
         # Validate role
-        if user_data.role not in ["job_seeker", "employer"]:
+        if user_data.role not in [UserRole.JOB_SEEKER.value, UserRole.EMPLOYER.value]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Role must be 'job_seeker' or 'employer'"
+                detail=f"Role must be '{UserRole.JOB_SEEKER.value}' or '{UserRole.EMPLOYER.value}'"
             )
         
         # Create new user
