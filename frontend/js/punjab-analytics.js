@@ -56,6 +56,12 @@ class PunjabRozgarAnalytics {
     }
 
     startTracking() {
+        // Skip analytics for localhost development
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            this.log('Analytics disabled for localhost development');
+            return;
+        }
+        
         // Track page load
         this.trackPageView();
         
@@ -406,6 +412,12 @@ class PunjabRozgarAnalytics {
         const events = [...this.eventQueue];
         this.eventQueue = [];
         
+        // Skip analytics for localhost development
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log('[Punjab Rozgar Analytics] Skipped event tracking for localhost');
+            return;
+        }
+        
         try {
             // Send each event individually since the API expects single events
             for (const event of events) {
@@ -526,7 +538,8 @@ window.trackSearch = function(query, results = 0, filters = {}) {
 
 // Auto-initialize with debug mode in development
 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    initPunjabAnalytics({ debug: true });
+    // Temporarily disabled to reduce console noise during integration testing
+    // initPunjabAnalytics({ debug: true });
 } else {
     initPunjabAnalytics();
 }

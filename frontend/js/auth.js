@@ -3,6 +3,7 @@
  * Handles user authentication, role management, and session persistence
  */
 
+if (typeof AuthManager === 'undefined') {
 class AuthManager {
     constructor() {
         this.currentUser = null;
@@ -731,7 +732,16 @@ document.addEventListener('click', function(event) {
 });
 
 // Initialize global auth manager
-const authManager = new AuthManager();
+//} // End AuthManager protection
+
+// Initialize global instance
+if (typeof window.authManager === 'undefined') {
+    const authManager = new AuthManager();
+    
+    // Make authManager globally available
+    window.authManager = authManager;
+    window.AuthManager = AuthManager;
+}
 
 // Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
