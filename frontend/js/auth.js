@@ -46,7 +46,7 @@
         const hostname = window.location.hostname;
         if (hostname.includes('onrender.com')) {
             console.log('🌐 Detected Render environment, using live API');
-            return 'https://punjab-rozgar-api.onrender.com/api/v1';
+            return 'https://cse-95-analytics.onrender.com/api/v1';
         }
         
         // Development fallback

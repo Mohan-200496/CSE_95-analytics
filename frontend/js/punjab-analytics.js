@@ -47,7 +47,7 @@
         // Fallback: detect from current hostname
         const hostname = window.location.hostname;
         if (hostname.includes('.onrender.com')) {
-            return 'https://punjab-rozgar-api.onrender.com/api/v1';
+            return 'https://cse-95-analytics.onrender.com/api/v1';
         }
         if (hostname.includes('.herokuapp.com')) {
             return 'https://punjab-rozgar-api.herokuapp.com/api/v1';
@@ -57,7 +57,7 @@
         }
         
         // Default to production for development
-        return 'https://punjab-rozgar-api.onrender.com/api/v1';
+        return 'https://cse-95-analytics.onrender.com/api/v1';
     }
 
     init() {
