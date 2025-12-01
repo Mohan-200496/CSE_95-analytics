@@ -1,13 +1,15 @@
 """
-Job recommendations API endpoints
+Hybrid GA+CF Recommendation API endpoints
+Provides job recommendation services using the Hybrid Genetic Algorithm + Collaborative Filtering engine
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func, desc, or_
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
+from pydantic import BaseModel, Field
 import random
 import logging
 
@@ -16,12 +18,45 @@ from app.models.job import Job, JobStatus, JobType
 from app.models.user import User, UserRole
 from app.core.security import verify_token
 from app.analytics.tracker import get_analytics_tracker
+from app.services.recommendation_service import (
+    get_hybrid_job_recommendations,
+    refresh_recommendation_models,
+    hybrid_engine
+)
 
 # Set up logger
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["recommendations"])
 security = HTTPBearer()
+
+
+class RecommendationRequest(BaseModel):
+    """Request model for job recommendations"""
+    max_recommendations: int = Field(default=10, ge=1, le=50, description="Maximum number of recommendations")
+    include_breakdown: bool = Field(default=True, description="Include recommendation score breakdown")
+    preferred_source: Optional[str] = Field(default="hybrid", description="Recommendation source preference")
+
+
+class RecommendationResponse(BaseModel):
+    """Response model for job recommendations"""
+    success: bool
+    recommendations: List[Dict[str, Any]]
+    total_count: int
+    user_id: str
+    request_id: str
+    generated_at: str
+    recommendation_engine: str
+    cache_hit: bool = False
+
+
+class ModelRefreshResponse(BaseModel):
+    """Response model for model refresh operations"""
+    status: str
+    message: str
+    timestamp: str
+    details: Optional[Dict[str, Any]] = None
+
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -54,42 +89,111 @@ async def test_recommendations_auth(
     }
 
 
-@router.get("/", response_model=dict)
+@router.post("/jobs", response_model=RecommendationResponse)
 async def get_job_recommendations(
-    limit: int = Query(10, ge=1, le=50),
-    session: AsyncSession = Depends(get_database),
+    request: RecommendationRequest,
     current_user: User = Depends(get_current_user),
-    analytics = Depends(get_analytics_tracker)
+    db: AsyncSession = Depends(get_database)
 ):
-    """Get personalized job recommendations for job seekers"""
+    """
+    Get personalized job recommendations using Hybrid GA+CF engine
     
-    # Check role with better error handling
-    user_role_str = current_user.role.value if hasattr(current_user.role, 'value') else str(current_user.role)
-    
-    if user_role_str != "job_seeker":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Job recommendations are only available for job seekers. Current role: {user_role_str}"
-        )
-    
+    Uses hybrid GA+CF recommendation engine to provide optimal job matches
+    based on user profile, skills, experience, and behavioral patterns.
+    """
     try:
-        # Enhanced recommendation algorithm
-        recommendations = await get_personalized_recommendations(
-            current_user, session, limit
+        # Validate user role (only job seekers can get recommendations)
+        user_role_str = current_user.role.value if hasattr(current_user.role, 'value') else str(current_user.role)
+        
+        if user_role_str != "job_seeker":
+            raise HTTPException(
+                status_code=403,
+                detail=f"Job recommendations are only available for job seekers. Current role: {user_role_str}"
+            )
+        
+        # Track recommendation request
+        analytics_tracker = get_analytics_tracker()
+        await analytics_tracker.track_event(
+            user_id=current_user.user_id,
+            event_name="recommendation_request",
+            properties={
+                "max_recommendations": request.max_recommendations,
+                "source": request.preferred_source,
+                "include_breakdown": request.include_breakdown
+            }
         )
         
-        # If no database jobs found, use mock data
-        if not recommendations:
-            recommendations = get_mock_recommendations(limit)
-            data_source = "mock"
-        else:
-            data_source = "database"
+        # Generate request ID for tracking
+        request_id = f"req_{current_user.user_id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
         
+        # Get hybrid recommendations
+        recommendations = await get_hybrid_job_recommendations(
+            session=db,
+            user_id=current_user.user_id,
+            max_recommendations=request.max_recommendations
+        )
+        
+        # Fallback to mock data if no recommendations found
+        if not recommendations:
+            recommendations = get_mock_recommendations(request.max_recommendations)
+            engine_used = "mock_fallback"
+        else:
+            engine_used = "hybrid_ga_cf"
+        
+        # Process recommendations based on request preferences
+        if not request.include_breakdown:
+            # Remove detailed breakdown for cleaner response
+            for rec in recommendations:
+                rec.pop('match_breakdown', None)
+        
+        # Track successful recommendation generation
+        await analytics_tracker.track_event(
+            user_id=current_user.user_id,
+            event_name="recommendation_generated",
+            properties={
+                "request_id": request_id,
+                "total_recommendations": len(recommendations),
+                "source": engine_used
+            }
+        )
+        
+        return RecommendationResponse(
+            success=True,
+            recommendations=recommendations,
+            total_count=len(recommendations),
+            user_id=current_user.user_id,
+            request_id=request_id,
+            generated_at=datetime.utcnow().isoformat(),
+            recommendation_engine=engine_used,
+            cache_hit=False  # TODO: Add cache hit detection
+        )
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Database error in recommendations: {e}")
-        # Fallback to mock data if database fails
-        recommendations = get_mock_recommendations(limit)
-        data_source = "mock_fallback"
+        logger.error(f"Error generating recommendations for user {current_user.user_id}: {str(e)}")
+        
+        # Fallback to mock recommendations
+        try:
+            recommendations = get_mock_recommendations(request.max_recommendations)
+            request_id = f"fallback_{current_user.user_id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+            
+            return RecommendationResponse(
+                success=True,
+                recommendations=recommendations,
+                total_count=len(recommendations),
+                user_id=current_user.user_id,
+                request_id=request_id,
+                generated_at=datetime.utcnow().isoformat(),
+                recommendation_engine="mock_fallback",
+                cache_hit=False
+            )
+        except Exception as fallback_error:
+            logger.error(f"Fallback also failed: {str(fallback_error)}")
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to generate recommendations. Please try again later."
+            )
     
     # Log analytics
     try:
@@ -438,3 +542,273 @@ def get_mock_recommendations(limit: int = 10):
     # Randomize the order for variety
     random.shuffle(mock_jobs)
     return mock_jobs[:limit]
+
+
+@router.get("/jobs/{user_id}", response_model=RecommendationResponse)
+async def get_user_recommendations(
+    user_id: str,
+    max_recommendations: int = Query(default=10, ge=1, le=50),
+    include_breakdown: bool = Query(default=True),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_database)
+):
+    """
+    Get job recommendations for a specific user (Admin/Employer only)
+    
+    Allows admins and employers to view recommendations for other users
+    for analytics and candidate matching purposes.
+    """
+    try:
+        # Validate permissions (only admins and employers)
+        user_role_str = current_user.role.value if hasattr(current_user.role, 'value') else str(current_user.role)
+        
+        if user_role_str not in ["admin", "employer"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Insufficient permissions to view user recommendations"
+            )
+        
+        # Generate request ID
+        request_id = f"admin_req_{user_id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+        
+        # Get recommendations
+        recommendations = await get_hybrid_job_recommendations(
+            session=db,
+            user_id=user_id,
+            max_recommendations=max_recommendations
+        )
+        
+        # Fallback to mock if needed
+        if not recommendations:
+            recommendations = get_mock_recommendations(max_recommendations)
+            engine_used = "mock_fallback"
+        else:
+            engine_used = "hybrid_ga_cf"
+        
+        # Process recommendations
+        if not include_breakdown:
+            for rec in recommendations:
+                rec.pop('match_breakdown', None)
+        
+        # Track admin recommendation access
+        analytics_tracker = get_analytics_tracker()
+        await analytics_tracker.track_event(
+            user_id=current_user.user_id,
+            event_name="admin_recommendation_access",
+            properties={
+                "target_user_id": user_id,
+                "request_id": request_id,
+                "total_recommendations": len(recommendations)
+            }
+        )
+        
+        return RecommendationResponse(
+            success=True,
+            recommendations=recommendations,
+            total_count=len(recommendations),
+            user_id=user_id,
+            request_id=request_id,
+            generated_at=datetime.utcnow().isoformat(),
+            recommendation_engine=engine_used
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating admin recommendations for user {user_id}: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to generate recommendations. Please try again later."
+        )
+
+
+@router.post("/track-interaction")
+async def track_recommendation_interaction(
+    job_id: str,
+    interaction_type: str,
+    recommendation_id: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_database)
+):
+    """
+    Track user interactions with recommended jobs
+    
+    Records user behavior (view, click, apply, save) for improving 
+    collaborative filtering recommendations.
+    """
+    try:
+        valid_interactions = ['view', 'click', 'apply', 'save', 'dismiss', 'like', 'dislike']
+        if interaction_type not in valid_interactions:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid interaction type. Must be one of: {', '.join(valid_interactions)}"
+            )
+        
+        # Track interaction
+        analytics_tracker = get_analytics_tracker()
+        await analytics_tracker.track_event(
+            user_id=current_user.user_id,
+            event_name=f"recommendation_{interaction_type}",
+            properties={
+                "job_id": job_id,
+                "recommendation_id": recommendation_id,
+                "interaction_type": interaction_type,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        )
+        
+        return {
+            "success": True,
+            "message": "Interaction tracked successfully",
+            "user_id": current_user.user_id,
+            "job_id": job_id,
+            "interaction_type": interaction_type
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error tracking recommendation interaction: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to track interaction"
+        )
+
+
+@router.post("/refresh-models", response_model=ModelRefreshResponse)
+async def refresh_recommendation_models_endpoint(
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_database)
+):
+    """
+    Refresh recommendation models with latest data (Admin only)
+    
+    Triggers retraining of both GA and CF models with the most recent
+    user interaction data and job postings.
+    """
+    try:
+        # Validate admin permissions
+        user_role_str = current_user.role.value if hasattr(current_user.role, 'value') else str(current_user.role)
+        
+        if user_role_str != "admin":
+            raise HTTPException(
+                status_code=403,
+                detail="Only admins can refresh recommendation models"
+            )
+        
+        # Add refresh task to background
+        background_tasks.add_task(refresh_recommendation_models, db)
+        
+        # Track model refresh request
+        analytics_tracker = get_analytics_tracker()
+        await analytics_tracker.track_event(
+            user_id=current_user.user_id,
+            event_name="model_refresh_requested",
+            properties={
+                "admin_user_id": current_user.user_id,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        )
+        
+        return ModelRefreshResponse(
+            status="initiated",
+            message="Model refresh initiated in background. This may take several minutes.",
+            timestamp=datetime.utcnow().isoformat(),
+            details={
+                "initiated_by": current_user.user_id,
+                "estimated_duration": "5-15 minutes"
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error initiating model refresh: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to initiate model refresh"
+        )
+
+
+@router.get("/engine-status")
+async def get_engine_status(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get current status of the hybrid recommendation engine
+    
+    Provides information about model training status, cache statistics,
+    and engine configuration.
+    """
+    try:
+        # Get engine status
+        status = {
+            "engine_type": "hybrid_ga_cf",
+            "ga_weight": hybrid_engine.ga_weight,
+            "cf_weight": hybrid_engine.cf_weight,
+            "cf_last_trained": hybrid_engine.cf_last_trained.isoformat() if hybrid_engine.cf_last_trained else None,
+            "cache_size": len(hybrid_engine.recommendation_cache),
+            "status": "operational",
+            "last_checked": datetime.utcnow().isoformat()
+        }
+        
+        return status
+        
+    except Exception as e:
+        logger.error(f"Error getting engine status: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to get engine status"
+        )
+
+
+@router.delete("/cache")
+async def clear_recommendation_cache(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Clear recommendation cache (Admin only)
+    
+    Forces fresh recommendation generation for all subsequent requests.
+    """
+    try:
+        # Validate admin permissions
+        user_role_str = current_user.role.value if hasattr(current_user.role, 'value') else str(current_user.role)
+        
+        if user_role_str != "admin":
+            raise HTTPException(
+                status_code=403,
+                detail="Only admins can clear recommendation cache"
+            )
+        
+        # Clear cache
+        cache_size_before = len(hybrid_engine.recommendation_cache)
+        hybrid_engine.clear_cache()
+        
+        # Track cache clear
+        analytics_tracker = get_analytics_tracker()
+        await analytics_tracker.track_event(
+            user_id=current_user.user_id,
+            event_name="recommendation_cache_cleared",
+            properties={
+                "cache_entries_cleared": cache_size_before,
+                "cleared_by": current_user.user_id
+            }
+        )
+        
+        return {
+            "success": True,
+            "message": "Recommendation cache cleared successfully",
+            "entries_cleared": cache_size_before,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error clearing cache: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to clear cache"
+        )

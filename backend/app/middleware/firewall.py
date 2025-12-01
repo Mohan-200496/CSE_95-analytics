@@ -55,7 +55,7 @@ class SecurityFirewall(BaseHTTPMiddleware):
             "X-Frame-Options": "DENY",
             "X-XSS-Protection": "1; mode=block",
             "Referrer-Policy": "strict-origin-when-cross-origin",
-            "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://punjab-rozgar-api.onrender.com;",
+            "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://punjab-rozgar-api.onrender.com;",
             "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
             "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
             "Cache-Control": "no-cache, no-store, must-revalidate, private",
@@ -177,9 +177,12 @@ class SecurityFirewall(BaseHTTPMiddleware):
         start_time = time.time()
         client_ip = self.get_client_ip(request)
         
-        # Skip security for health checks
+        # Skip security for health checks and docs with relaxed CSP
         if request.url.path in ["/health", "/api/docs", "/api/redoc", "/api/openapi.json"]:
             response = await call_next(request)
+            # Add relaxed CSP for docs to allow external resources
+            if request.url.path in ["/api/docs", "/api/redoc"]:
+                response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self';"
         else:
             try:
                 # 1. Check if IP is blocked
