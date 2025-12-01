@@ -309,7 +309,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Check if user is logged in
             if (!authManager.isLoggedIn()) {
-                window.location.href = '../auth/login.html';
+                window.location.href = '/pages/auth/login.html';
                 return;
             }
 
@@ -401,16 +401,28 @@
             // Try to go back to dashboard based on user role
             const user = authManager.getCurrentUser();
             if (user) {
-                const role = user.role;
-                if (role === 'admin') {
-                    window.location.href = '../admin/dashboard.html';
-                } else if (role === 'employer') {
-                    window.location.href = '../employer/dashboard.html';
+                const role = (user.role || '').toLowerCase().trim();
+                console.log('🔄 Profile goBack - User role:', role);
+                
+                if (role === 'admin' || role === 'administrator') {
+                    window.location.href = '/pages/admin/dashboard.html';
+                } else if (role === 'employer' || role === 'recruiter') {
+                    window.location.href = '/pages/employer/dashboard.html';
+                } else if (role === 'job_seeker' || role === 'jobseeker' || role === 'seeker') {
+                    window.location.href = '/pages/jobseeker/dashboard.html';
                 } else {
-                    window.location.href = '../jobseeker/dashboard.html';
+                    // Fallback based on email if role is unclear
+                    const email = user.email || '';
+                    if (email.includes('admin')) {
+                        window.location.href = '/pages/admin/dashboard.html';
+                    } else if (email.includes('employer')) {
+                        window.location.href = '/pages/employer/dashboard.html';
+                    } else {
+                        window.location.href = '/pages/jobseeker/dashboard.html';
+                    }
                 }
             } else {
-                window.location.href = '../index.html';
+                window.location.href = '/index.html';
             }
         }
     </script>
