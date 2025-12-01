@@ -71,10 +71,10 @@ def test_frontend_pages():
     
     pages = [
         "/",
-        "/frontend/index.html",
-        "/frontend/pages/auth/login.html", 
-        "/frontend/pages/employer/dashboard.html",
-        "/frontend/pages/jobseeker/dashboard.html"
+        "/index.html",
+        "/pages/auth/login.html", 
+        "/pages/employer/dashboard.html",
+        "/pages/jobseeker/dashboard.html"
     ]
     
     print("\n🖥️ Testing Frontend Pages")
