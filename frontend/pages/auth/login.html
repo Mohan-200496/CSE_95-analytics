@@ -539,6 +539,19 @@
 
     <!-- Environment Configuration -->
     <script src="../../config/environment.js"></script>
+    <!-- Initialize environment configuration -->
+    <script>
+        // Initialize environment configuration
+        if (window.EnvironmentConfig) {
+            try {
+                const envConfig = new window.EnvironmentConfig();
+                window.ENV_CONFIG = envConfig.config;
+                console.log('🔧 Environment config initialized:', window.ENV_CONFIG);
+            } catch (e) {
+                console.error('Failed to initialize environment config:', e);
+            }
+        }
+    </script>
     <!-- Auth Script -->
     <script src="../../js/auth.js"></script>
     

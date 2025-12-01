@@ -54,9 +54,9 @@
     getConfig() {
         const configs = {
             development: {
-                API_BASE_URL: 'https://punjab-rozgar-api.onrender.com',
-                API_DOCS_URL: 'https://punjab-rozgar-api.onrender.com/docs',
-                WEBSOCKET_URL: 'wss://punjab-rozgar-api.onrender.com/ws',
+                API_BASE_URL: 'http://localhost:8000',
+                API_DOCS_URL: 'http://localhost:8000/docs',
+                WEBSOCKET_URL: 'ws://localhost:8000/ws',
                 ENVIRONMENT: 'development',
                 DEBUG: true
             },
