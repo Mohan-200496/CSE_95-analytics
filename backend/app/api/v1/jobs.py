@@ -140,6 +140,8 @@ async def debug_job_creation(
             "error": str(e),
             "error_type": type(e).__name__
         }
+
+@router.post("/", response_model=JobPublicResponse)
 async def create_job(
     job_data: JobCreate,
     session: AsyncSession = Depends(get_database),
