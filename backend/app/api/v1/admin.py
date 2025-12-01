@@ -11,6 +11,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 import asyncio
 import json
+import logging
 
 from app.core.database import get_database
 from app.models.user import User, UserProfile, UserRole
@@ -23,6 +24,7 @@ from pydantic import BaseModel
 
 router = APIRouter(tags=["admin"])
 security = HTTPBearer()
+logger = logging.getLogger(__name__)
 
 # Pydantic schemas
 class AdminStatsResponse(BaseModel):
@@ -597,67 +599,94 @@ async def list_jobs_for_admin(
 ):
     """List all jobs for admin management"""
     
-    # Build query
-    query = select(Job)
-    
-    if status_filter:
-        try:
-            js = JobStatus(status_filter)
-            query = query.where(Job.status == js)
-        except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid job status filter")
-    
-    if job_type:
-        try:
-            from app.models.job import JobType
-            jt = JobType(job_type)
-            query = query.where(Job.job_type == jt)
-        except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid job type filter")
-    
-    if search:
-        search_filter = or_(
-            Job.title.ilike(f"%{search}%"),
-            Job.employer_name.ilike(f"%{search}%"),
-            Job.location_city.ilike(f"%{search}%")
+    try:
+        # Build query with explicit column selection to avoid missing column errors
+        query = select(
+            Job.id,
+            Job.job_id,
+            Job.title,
+            Job.employer_name,
+            Job.employer_id,
+            Job.location_city,
+            Job.job_type,
+            Job.salary_min,
+            Job.salary_max,
+            Job.salary_currency,
+            Job.salary_period,
+            Job.status,
+            Job.created_at,
+            Job.updated_at
         )
-        query = query.where(search_filter)
-    
-    # Order by creation date (newest first)
-    query = query.order_by(desc(Job.created_at))
-    
-    # Apply pagination
-    query = query.offset(skip).limit(limit)
-    
-    result = await session.execute(query)
-    jobs = result.scalars().all()
-    
-    # Get stats for each job
-    job_responses = []
-    for job in jobs:
-        # Get application count
-        app_count_result = await session.execute(
-            select(func.count(JobApplication.id)).where(JobApplication.job_id == job.job_id)
-        )
-        application_count = app_count_result.scalar() or 0
         
-        job_responses.append(JobManagementResponse(
-            job_id=job.job_id,
-            title=job.title,
-            employer_name=job.employer_name,
-            location_city=job.location_city,
-            job_type=job.job_type.value if job.job_type else None,
-            salary_min=job.salary_min,
-            salary_max=job.salary_max,
-            salary_currency=job.salary_currency,
-            salary_period=job.salary_period,
-            status=job.status.value if job.status else "draft",
-            created_at=job.created_at,
-            employer_id=job.employer_id,
-            application_count=application_count
-        ))
-    
-    return job_responses
+        if status_filter:
+            try:
+                js = JobStatus(status_filter)
+                query = query.where(Job.status == js)
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid job status filter")
+        
+        if job_type:
+            try:
+                from app.models.job import JobType
+                jt = JobType(job_type)
+                query = query.where(Job.job_type == jt)
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid job type filter")
+        
+        if search:
+            search_filter = or_(
+                Job.title.ilike(f"%{search}%"),
+                Job.employer_name.ilike(f"%{search}%"),
+                Job.location_city.ilike(f"%{search}%")
+            )
+            query = query.where(search_filter)
+        
+        # Order by creation date (newest first)
+        query = query.order_by(desc(Job.created_at))
+        
+        # Apply pagination
+        query = query.offset(skip).limit(limit)
+        
+        result = await session.execute(query)
+        jobs = result.all()
+        
+        # Get stats for each job
+        job_responses = []
+        for job_row in jobs:
+            # Get application count
+            try:
+                app_count_result = await session.execute(
+                    select(func.count(JobApplication.id)).where(JobApplication.job_id == job_row.job_id)
+                )
+                application_count = app_count_result.scalar() or 0
+            except Exception as e:
+                logger.warning(f"Failed to get application count for job {job_row.job_id}: {e}")
+                application_count = 0
+            
+            job_responses.append(JobManagementResponse(
+                job_id=job_row.job_id,
+                title=job_row.title,
+                employer_name=job_row.employer_name,
+                location_city=job_row.location_city,
+                job_type=job_row.job_type.value if job_row.job_type else None,
+                salary_min=job_row.salary_min,
+                salary_max=job_row.salary_max,
+                salary_currency=job_row.salary_currency or "INR",
+                salary_period=job_row.salary_period or "monthly",
+                status=job_row.status.value if job_row.status else "draft",
+                created_at=job_row.created_at,
+                employer_id=job_row.employer_id,
+                application_count=application_count
+            ))
+        
+        return job_responses
+        
+    except Exception as e:
+        logger.error(f"Error fetching jobs for admin: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail="Failed to fetch jobs. Database schema might be updating."
+        )
 
 class UpdateJobStatus(BaseModel):
     status: str

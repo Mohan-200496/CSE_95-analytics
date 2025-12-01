@@ -17,7 +17,7 @@ from contextlib import asynccontextmanager
 
 # Core imports
 from app.core.config import get_settings
-from app.core.database import get_database, create_tables, engine
+from app.core.database import get_database, create_tables, async_engine
 from app.core.logging import setup_logging
 from sqlalchemy import text
 
@@ -50,7 +50,7 @@ async def migrate_production_database():
     logger.info("🔄 Running production database migration...")
     
     try:
-        async with engine.begin() as conn:
+        async with async_engine.begin() as conn:
             # Check if jobs table exists and get columns
             result = await conn.execute(text("""
                 SELECT column_name 
@@ -59,6 +59,7 @@ async def migrate_production_database():
                 ORDER BY ordinal_position
             """))
             existing_columns = {row[0] for row in result}
+            logger.info(f"📋 Found existing columns: {existing_columns}")
             
             # Required columns that might be missing
             required_columns = {
@@ -85,16 +86,28 @@ async def migrate_production_database():
             }
             
             # Add missing columns
+            missing_columns = []
             for column, definition in required_columns.items():
                 if column not in existing_columns:
+                    missing_columns.append(column)
                     logger.info(f"➕ Adding missing column: {column}")
-                    await conn.execute(text(f"ALTER TABLE jobs ADD COLUMN {column} {definition}"))
-                    logger.info(f"✅ Added {column}")
+                    try:
+                        await conn.execute(text(f"ALTER TABLE jobs ADD COLUMN {column} {definition}"))
+                        logger.info(f"✅ Successfully added {column}")
+                    except Exception as e:
+                        logger.error(f"❌ Failed to add {column}: {e}")
+            
+            if missing_columns:
+                logger.info(f"🔧 Added {len(missing_columns)} missing columns: {missing_columns}")
+            else:
+                logger.info("✅ All required columns already exist")
             
             logger.info("✅ Production database migration completed")
             
     except Exception as e:
-        logger.warning(f"⚠️ Migration warning (might be normal): {e}")
+        logger.error(f"❌ Migration failed: {e}")
+        # Don't fail the startup, just log the error
+        raise
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
