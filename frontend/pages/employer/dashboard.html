@@ -752,6 +752,7 @@
     <script>
         // Protect this page for employers only
         document.addEventListener('DOMContentLoaded', function () {
+            // Protect this page for employers only
             if (!authManager.requireRole('employer', '/pages/auth/login.html')) return;
         });
     </script>
