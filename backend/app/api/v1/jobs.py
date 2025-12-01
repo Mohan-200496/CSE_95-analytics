@@ -213,7 +213,6 @@ async def test_create_job(
                 first_name="Test",
                 last_name="Employer",
                 role=UserRole.EMPLOYER,
-                user_type="employer",
                 company_name="Test Company",
                 is_active=True,
                 is_verified=True
@@ -224,13 +223,22 @@ async def test_create_job(
             logger.info(f"Created test user: {test_user.user_id}")
         
         # Prepare job type
-        raw_type = (job_data.job_type or "full_time").strip()
-        norm_type = raw_type.lower().replace("-", "_")
+        raw_type = (job_data.job_type or "FULL_TIME").strip()
+        # Normalize to uppercase for enum matching
+        norm_type = raw_type.upper().replace("-", "_")
         try:
-            jt = JobType(norm_type)
-        except ValueError:
+            # Try to find enum by value
+            jt = None
+            for job_type in JobType:
+                if job_type.value == norm_type:
+                    jt = job_type
+                    break
+            if jt is None:
+                # Try direct enum access by name
+                jt = JobType[norm_type]
+        except (ValueError, KeyError):
             jt = JobType.FULL_TIME  # Default fallback
-            logger.warning(f"Invalid job type '{raw_type}', using default: full_time")
+            logger.warning(f"Invalid job type '{raw_type}', using default: FULL_TIME")
         
         # Create job with minimal required fields
         job = Job(
