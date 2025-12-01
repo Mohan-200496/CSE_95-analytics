@@ -712,13 +712,6 @@
                         alert('Error creating job: ' + (apiError.message || 'Unknown error'));
                     }
                 }
-                        // Auth manager already handled the logout and redirect
-                        return;
-                    }
-                    
-                    console.error('❌ API call failed:', apiError);
-                    alert('Failed to create job. Please try again.');
-                }
             } catch (err) {
                 console.error('❌ Create job error', err);
                 alert('Network error while creating job');
