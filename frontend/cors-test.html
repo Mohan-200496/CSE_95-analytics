@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API CORS Test - Punjab Rozgar Portal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success { border-color: #28a745; background: #d4edda; }
+        .error { border-color: #dc3545; background: #f8d7da; }
+        .info { border-color: #17a2b8; background: #d1ecf1; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Punjab Rozgar Portal - API CORS Test</h1>
+    
+    <div class="test-container">
+        <h3>API Connectivity Tests</h3>
+        <p>Test the API endpoints to verify CORS configuration and connectivity.</p>
+        
+        <button onclick="testCorsEndpoint()">Test CORS Endpoint</button>
+        <button onclick="testHealthEndpoint()">Test Health Check</button>
+        <button onclick="testJobsEndpoint()">Test Jobs Endpoint</button>
+        <button onclick="testDebugJobEndpoint()">Test Debug Job Creation</button>
+        
+        <div id="result" class="result info">
+            Click a button above to test API connectivity...
+        </div>
+    </div>
+    
+    <div class="test-container">
+        <h3>Environment Information</h3>
+        <div id="envInfo" class="result">
+            <strong>Current URL:</strong> ${window.location.href}
+            <strong>API Base URL:</strong> ${getApiBaseUrl()}
+            <strong>User Agent:</strong> ${navigator.userAgent}
+            <strong>Origin:</strong> ${window.location.origin}
+        </div>
+    </div>
+
+    <script>
+        function getApiBaseUrl() {
+            // Check if we're on Render deployment
+            if (window.location.hostname.includes('onrender.com') || 
+                window.location.hostname.includes('github.io')) {
+                return 'https://punjab-rozgar-api.onrender.com/api/v1';
+            }
+            // Local development
+            return 'http://127.0.0.1:8001/api/v1';
+        }
+
+        function updateResult(content, className = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = content;
+            resultDiv.className = 'result ' + className;
+        }
+
+        async function testCorsEndpoint() {
+            updateResult('🔄 Testing CORS endpoint...', 'info');
+            
+            try {
+                const apiUrl = getApiBaseUrl();
+                const response = await fetch(`${apiUrl}/../cors-test`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+                
+                updateResult(`✅ CORS Test Successful!
+Status: ${response.status}
+Response: ${JSON.stringify(data, null, 2)}
+Headers: ${JSON.stringify(Object.fromEntries(response.headers), null, 2)}`, 'success');
+
+            } catch (error) {
+                updateResult(`❌ CORS Test Failed:
+Error: ${error.message}
+Type: ${error.name}
+Stack: ${error.stack}`, 'error');
+            }
+        }
+
+        async function testHealthEndpoint() {
+            updateResult('🔄 Testing health endpoint...', 'info');
+            
+            try {
+                const apiUrl = getApiBaseUrl();
+                const response = await fetch(`${apiUrl}/../health`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+                
+                updateResult(`✅ Health Check Successful!
+Status: ${response.status}
+Response: ${JSON.stringify(data, null, 2)}`, 'success');
+
+            } catch (error) {
+                updateResult(`❌ Health Check Failed:
+Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testJobsEndpoint() {
+            updateResult('🔄 Testing jobs endpoint...', 'info');
+            
+            try {
+                const apiUrl = getApiBaseUrl();
+                const response = await fetch(`${apiUrl}/jobs/recent?limit=3`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                updateResult(`✅ Jobs Endpoint Successful!
+Status: ${response.status}
+Jobs Found: ${data.data?.jobs?.length || 0}
+Response: ${JSON.stringify(data, null, 2)}`, 'success');
+
+            } catch (error) {
+                updateResult(`❌ Jobs Endpoint Failed:
+Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDebugJobEndpoint() {
+            updateResult('🔄 Testing debug job creation (requires auth)...', 'info');
+            
+            try {
+                const apiUrl = getApiBaseUrl();
+                const testJobData = {
+                    title: "Test Job",
+                    description: "Test job description",
+                    job_type: "full_time",
+                    category: "Information Technology",
+                    location_city: "Chandigarh"
+                };
+
+                const response = await fetch(`${apiUrl}/jobs/debug-job`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer test-token'  // This will fail auth but test CORS
+                    },
+                    body: JSON.stringify(testJobData)
+                });
+
+                const data = await response.json();
+                
+                updateResult(`✅ Debug Job Endpoint Accessible!
+Status: ${response.status}
+Response: ${JSON.stringify(data, null, 2)}
+Note: This may show auth errors, which is expected for CORS testing.`, 'success');
+
+            } catch (error) {
+                updateResult(`❌ Debug Job Endpoint Failed:
+Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Update environment info
+        document.addEventListener('DOMContentLoaded', function() {
+            const envInfo = document.getElementById('envInfo');
+            envInfo.innerHTML = `
+<strong>Current URL:</strong> ${window.location.href}
+<strong>API Base URL:</strong> ${getApiBaseUrl()}
+<strong>User Agent:</strong> ${navigator.userAgent}
+<strong>Origin:</strong> ${window.location.origin}
+<strong>Timestamp:</strong> ${new Date().toISOString()}
+            `.trim();
+        });
+    </script>
+</body>
+</html>
