@@ -55,6 +55,9 @@
     }
 
     init() {
+        // Clear any stale user data if role format is wrong
+        this.clearStaleUserData();
+        
         // Load user from localStorage on page load
         this.loadUserFromStorage();
         this.loadTokenFromStorage();
@@ -67,6 +70,29 @@
         
         // Setup test users if no user is logged in
         this.setupTestUsers();
+    }
+    
+    clearStaleUserData() {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            try {
+                const userData = JSON.parse(storedUser);
+                // Check if role is in old uppercase format (EMPLOYER, ADMIN, etc.)
+                if (userData.role && userData.role === userData.role.toUpperCase() && userData.role.length > 5) {
+                    console.log('🧹 Clearing stale user data with old role format:', userData.role);
+                    localStorage.removeItem('user');
+                    localStorage.removeItem('access_token');
+                    this.currentUser = null;
+                    this.accessToken = null;
+                }
+            } catch (e) {
+                console.warn('Failed to parse stored user data, clearing:', e);
+                localStorage.removeItem('user');
+                localStorage.removeItem('access_token');
+                this.currentUser = null;
+                this.accessToken = null;
+            }
+        }
     }
 
     // Authentication Methods
