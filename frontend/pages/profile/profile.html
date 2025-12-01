@@ -303,8 +303,8 @@
         </form>
     </div>
 
-    <script src="../config/environment.js"></script>
-    <script src="../js/auth.js"></script>
+    <script src="../../config/environment.js"></script>
+    <script src="../../js/auth.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Check if user is logged in
@@ -398,30 +398,50 @@
         }
 
         function goBack() {
+            console.log('🔄 goBack function called');
+            
+            // Check if authManager is available
+            if (typeof authManager === 'undefined') {
+                console.error('❌ AuthManager not available');
+                alert('Authentication system not loaded. Redirecting to login...');
+                window.location.href = '/pages/auth/login.html';
+                return;
+            }
+            
             // Try to go back to dashboard based on user role
             const user = authManager.getCurrentUser();
+            console.log('🎭 Current user:', user);
+            
             if (user) {
                 const role = (user.role || '').toLowerCase().trim();
                 console.log('🔄 Profile goBack - User role:', role);
                 
                 if (role === 'admin' || role === 'administrator') {
+                    console.log('✅ Redirecting to admin dashboard');
                     window.location.href = '/pages/admin/dashboard.html';
                 } else if (role === 'employer' || role === 'recruiter') {
+                    console.log('✅ Redirecting to employer dashboard');
                     window.location.href = '/pages/employer/dashboard.html';
                 } else if (role === 'job_seeker' || role === 'jobseeker' || role === 'seeker') {
+                    console.log('✅ Redirecting to jobseeker dashboard');
                     window.location.href = '/pages/jobseeker/dashboard.html';
                 } else {
                     // Fallback based on email if role is unclear
                     const email = user.email || '';
+                    console.log('🔍 Role unclear, checking email:', email);
                     if (email.includes('admin')) {
+                        console.log('🔄 Email-based redirect: admin dashboard');
                         window.location.href = '/pages/admin/dashboard.html';
                     } else if (email.includes('employer')) {
+                        console.log('🔄 Email-based redirect: employer dashboard');
                         window.location.href = '/pages/employer/dashboard.html';
                     } else {
+                        console.log('🔄 Email-based redirect: jobseeker dashboard (default)');
                         window.location.href = '/pages/jobseeker/dashboard.html';
                     }
                 }
             } else {
+                console.log('❌ No user found, redirecting to home');
                 window.location.href = '/index.html';
             }
         }
