@@ -4,7 +4,8 @@
  */
 class PunjabRozgarAnalytics {
     constructor(options = {}) {
-        this.apiUrl = options.apiUrl || 'http://localhost:8000/api/v1';
+        // Auto-detect environment and use appropriate API URL
+        this.apiUrl = this.getApiUrl(options.apiUrl);
         this.sessionId = this.generateSessionId();
         this.userId = this.getUserId();
         this.eventQueue = [];
@@ -12,6 +13,31 @@ class PunjabRozgarAnalytics {
         this.debug = options.debug || false;
         
         this.init();
+    }
+
+    getApiUrl(customUrl) {
+        if (customUrl) return customUrl;
+        
+        // Check if environment config is available
+        if (typeof window !== 'undefined' && window.EnvironmentConfig) {
+            const envConfig = new window.EnvironmentConfig();
+            return envConfig.config.API_BASE_URL + '/api/v1';
+        }
+        
+        // Fallback: detect from current hostname
+        const hostname = window.location.hostname;
+        if (hostname.includes('.onrender.com')) {
+            return 'https://punjab-rozgar-api.onrender.com/api/v1';
+        }
+        if (hostname.includes('.herokuapp.com')) {
+            return 'https://punjab-rozgar-api.herokuapp.com/api/v1';
+        }
+        if (hostname.includes('.railway.app')) {
+            return 'https://punjab-rozgar-api.up.railway.app/api/v1';
+        }
+        
+        // Default to localhost for development
+        return 'http://localhost:8000/api/v1';
     }
 
     init() {
@@ -383,33 +409,39 @@ class PunjabRozgarAnalytics {
         try {
             // Send each event individually since the API expects single events
             for (const event of events) {
-                const response = await fetch(`${this.apiUrl}/analytics/track`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        event: event.event_name,
-                        properties: {
-                            ...event.properties,
-                            event_type: event.event_type,
-                            page_url: event.page_url,
-                            session_id: event.session_id,
-                            user_id: event.user_id,
-                            timestamp: event.timestamp
+                try {
+                    const response = await fetch(`${this.apiUrl}/analytics/track`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
                         },
-                        user_id: event.user_id,
-                        session_id: event.session_id,
-                        timestamp: event.timestamp
-                    })
-                });
-                
-                if (!response.ok) {
-                    this.log('Analytics tracking failed for event:', event);
+                        body: JSON.stringify({
+                            event: event.event_name,
+                            properties: {
+                                ...event.properties,
+                                event_type: event.event_type,
+                                page_url: event.page_url,
+                                session_id: event.session_id,
+                                user_id: event.user_id,
+                                timestamp: event.timestamp
+                            },
+                            user_id: event.user_id,
+                            session_id: event.session_id,
+                            timestamp: event.timestamp
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        this.log('Analytics tracking failed for event:', event);
+                        // Re-queue failed event
+                        this.eventQueue.push(event);
+                    } else {
+                        this.log('Successfully sent analytics event:', event.event_name);
+                    }
+                } catch (eventError) {
+                    this.log('Failed to send event:', eventError);
                     // Re-queue failed event
                     this.eventQueue.push(event);
-                } else {
-                    this.log('Successfully sent analytics event:', event.event_name);
                 }
             }
         } catch (error) {
