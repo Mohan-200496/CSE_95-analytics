@@ -324,7 +324,7 @@ async def create_job(
         employer_type = EmployerType.PRIVATE
         employer_name = current_user.company_name or f"{getattr(current_user, 'first_name', '')} {getattr(current_user, 'last_name', '')}".strip()
 
-        # Create job with DRAFT status
+        # Create job as ACTIVE for immediate visibility (simplified workflow for development)
         job = Job(
             job_id=f"job_{uuid.uuid4().hex[:12]}",
             title=job_data.title,
@@ -355,8 +355,8 @@ async def create_job(
             contact_email=job_data.contact_email or current_user.email,
             contact_phone=job_data.contact_phone,
             resume_required=job_data.resume_required,
-            status=JobStatus.DRAFT,
-            published_at=None
+            status=JobStatus.ACTIVE,  # Create as active for immediate visibility
+            published_at=datetime.utcnow()  # Set published time
         )
 
         session.add(job)
@@ -450,6 +450,59 @@ async def publish_job(
         "message": "Job submitted for admin approval",
         "job_id": job.job_id,
         "status": "pending_approval"
+    }
+
+@router.post("/publish-all-drafts")
+async def publish_all_employer_drafts(
+    session: AsyncSession = Depends(get_database),
+    current_user: User = Depends(get_current_user),
+    analytics = Depends(get_analytics_tracker)
+):
+    """
+    Auto-publish all draft jobs for current employer (development helper)
+    In production, this would go through approval workflow
+    """
+    # Get all draft jobs for current employer
+    draft_jobs_result = await session.execute(
+        select(Job).where(
+            and_(
+                Job.employer_id == current_user.user_id,
+                Job.status == JobStatus.DRAFT
+            )
+        )
+    )
+    draft_jobs = draft_jobs_result.scalars().all()
+    
+    if not draft_jobs:
+        return {
+            "success": True,
+            "message": "No draft jobs to publish",
+            "count": 0
+        }
+    
+    # Update all drafts to active status
+    for job in draft_jobs:
+        job.status = JobStatus.ACTIVE
+        job.published_at = datetime.utcnow()
+        job.updated_at = datetime.utcnow()
+    
+    await session.commit()
+    
+    # Track analytics
+    await analytics.track_event(
+        user_id=current_user.user_id,
+        event_name="bulk_jobs_published",
+        properties={
+            "job_count": len(draft_jobs),
+            "job_ids": [job.job_id for job in draft_jobs]
+        }
+    )
+    
+    return {
+        "success": True,
+        "message": f"Published {len(draft_jobs)} jobs",
+        "count": len(draft_jobs),
+        "job_ids": [job.job_id for job in draft_jobs]
     }
 
 @router.get("/my-jobs", response_model=List[JobPublicResponse])
