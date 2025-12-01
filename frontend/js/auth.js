@@ -3,8 +3,13 @@
  * Handles user authentication, role management, and session persistence
  */
 
-if (typeof window.AuthManager === 'undefined') {
-class AuthManager {
+(function() {
+    'use strict';
+    
+    // Only define if not already defined
+    if (window.AuthManager) return;
+    
+    class AuthManager {
     constructor() {
         this.currentUser = null;
         this.userRoles = {
@@ -732,18 +737,16 @@ document.addEventListener('click', function(event) {
 });
 
 // Initialize global auth manager
-} // End AuthManager protection
-
 // Initialize global instance
-if (typeof window.authManager === 'undefined') {
-    const authManager = new AuthManager();
-    
-    // Make authManager globally available
-    window.authManager = authManager;
-    window.AuthManager = AuthManager;
-}
+window.AuthManager = AuthManager;
+const authManager = new AuthManager();
+
+// Make authManager globally available
+window.authManager = authManager;
+
+})(); // End IIFE
 
 // Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = AuthManager;
+    module.exports = window.AuthManager;
 }

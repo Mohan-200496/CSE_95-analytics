@@ -1,8 +1,13 @@
 // Punjab Rozgar Portal - Environment Configuration
 // Automatically detects and configures API endpoints for different deployment environments
 
-if (typeof window.EnvironmentConfig === 'undefined') {
-class EnvironmentConfig {
+(function() {
+    'use strict';
+    
+    // Only define if not already defined
+    if (window.EnvironmentConfig) return;
+    
+    class EnvironmentConfig {
     constructor() {
         this.environment = this.detectEnvironment();
         this.config = this.getConfig();
@@ -123,6 +128,7 @@ class EnvironmentConfig {
 }
 
 // Create global instance
+window.EnvironmentConfig = EnvironmentConfig;
 window.ENV_CONFIG = new EnvironmentConfig();
 
 // Always log configuration for debugging deployment issues
@@ -133,9 +139,9 @@ if (window.ENV_CONFIG.isDevelopment) {
     console.log('🔧 Development mode detected');
 }
 
-} // End EnvironmentConfig protection
+})(); // End IIFE
 
 // Export for module systems
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = EnvironmentConfig;
+    module.exports = window.EnvironmentConfig;
 }

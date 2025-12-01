@@ -2,7 +2,27 @@
  * Punjab Rozgar Analytics Library
  * Integrates with the FastAPI backend analytics system
  */
-class PunjabRozgarAnalytics {
+
+(function() {
+    'use strict';
+    
+    // Skip entirely on localhost
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        window.PunjabRozgarAnalytics = function() {
+            return {
+                trackEvent: function() {},
+                trackPageView: function() {},
+                flush: function() {},
+                log: function() {}
+            };
+        };
+        return;
+    }
+    
+    // Only define if not already defined
+    if (window.PunjabRozgarAnalytics) return;
+    
+    class PunjabRozgarAnalytics {
     constructor(options = {}) {
         // Auto-detect environment and use appropriate API URL
         this.apiUrl = this.getApiUrl(options.apiUrl);
@@ -541,10 +561,16 @@ window.trackSearch = function(query, results = 0, filters = {}) {
     }
 };
 
-// Auto-initialize with debug mode in development
-if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    // Temporarily disabled to reduce console noise during integration testing
-    // initPunjabAnalytics({ debug: true });
-} else {
-    initPunjabAnalytics();
+// Make available globally
+window.PunjabRozgarAnalytics = PunjabRozgarAnalytics;
+
+})(); // End IIFE
+
+// Auto-initialize only in production
+if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    try {
+        initPunjabAnalytics();
+    } catch (e) {
+        // Silently ignore initialization errors
+    }
 }

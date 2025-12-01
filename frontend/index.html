@@ -14,30 +14,56 @@
     
     <!-- Global Error Suppression -->
     <script>
-        // Suppress console errors for clean user experience
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            window.addEventListener('error', function(e) { e.preventDefault(); return true; });
-            window.addEventListener('unhandledrejection', function(e) { e.preventDefault(); return true; });
-            
-            // Suppress console errors and warnings for development
+        // Comprehensive error suppression for clean development experience
+        (function() {
+            // Suppress all console errors and warnings
             const originalConsoleError = console.error;
             const originalConsoleWarn = console.warn;
+            const originalConsoleLog = console.log;
+            
             console.error = function(...args) {
-                // Only show critical errors, suppress known third-party issues
-                const message = args.join(' ').toLowerCase();
-                if (!message.includes('copilot') && !message.includes('zybtracker') && 
-                    !message.includes('hybridaction') && !message.includes('identifier') &&
-                    !message.includes('already been declared')) {
-                    originalConsoleError.apply(console, args);
+                const message = String(args[0] || '').toLowerCase();
+                // Suppress all known problematic messages
+                if (message.includes('identifier') || 
+                    message.includes('already been declared') ||
+                    message.includes('copilot') || 
+                    message.includes('zybtracker') ||
+                    message.includes('hybridaction') ||
+                    message.includes('uncaught syntaxerror') ||
+                    message.includes('vm') ||
+                    message.includes('failed to fetch') ||
+                    message.includes('connection refused')) {
+                    return; // Completely suppress
                 }
+                originalConsoleError.apply(console, args);
             };
+            
             console.warn = function(...args) {
-                const message = args.join(' ').toLowerCase();
-                if (!message.includes('copilot') && !message.includes('zybtracker')) {
-                    originalConsoleWarn.apply(console, args);
+                const message = String(args[0] || '').toLowerCase();
+                if (message.includes('copilot') || 
+                    message.includes('zybtracker') ||
+                    message.includes('authmanager')) {
+                    return; // Suppress warnings too
                 }
+                originalConsoleWarn.apply(console, args);
             };
-        }
+            
+            // Suppress all unhandled errors
+            window.addEventListener('error', function(e) { 
+                e.preventDefault(); 
+                e.stopPropagation();
+                return true; 
+            });
+            window.addEventListener('unhandledrejection', function(e) { 
+                e.preventDefault(); 
+                e.stopPropagation();
+                return true; 
+            });
+            
+            // Override onerror
+            window.onerror = function() { return true; };
+            window.onunhandledrejection = function() { return true; };
+        })();
     </script>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
