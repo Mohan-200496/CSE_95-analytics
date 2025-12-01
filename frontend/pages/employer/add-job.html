@@ -677,6 +677,7 @@
                 console.log('  Access token exists:', !!authManager.accessToken);
                 console.log('  Auth headers:', authManager.getAuthHeaders());
                 console.log('  API URL:', authManager.apiBaseUrl);
+                console.log('  Payload:', JSON.stringify(payload, null, 2));
                 
                 // Check if user is actually logged in
                 if (!authManager.isLoggedIn() || !authManager.accessToken) {
@@ -688,7 +689,7 @@
                 // Use auth manager's makeApiCall which handles token validation and expiration
                 try {
                     console.log('🚀 Sending job data:', payload);
-                    const data = await authManager.makeApiCall('/jobs/', {
+                    const data = await authManager.makeApiCall('/api/v1/jobs/', {
                         method: 'POST',
                         body: JSON.stringify(payload)
                     });

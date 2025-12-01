@@ -413,7 +413,7 @@
                     
                     // Redirect to login page after a short delay
                     setTimeout(() => {
-                        window.location.href = '/frontend/pages/auth/login.html';
+                        window.location.href = '/pages/auth/login.html';
                     }, 2000);
                 }
                 
