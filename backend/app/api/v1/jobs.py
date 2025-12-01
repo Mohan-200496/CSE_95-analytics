@@ -96,7 +96,7 @@ async def get_current_user_optional(
     if not credentials:
         # Return a default user for development
         result = await session.execute(
-            select(User).where(User.role.in_([UserRole.EMPLOYER.value, UserRole.ADMIN.value]))
+            select(User).where(User.role.in_([UserRole.EMPLOYER.value, UserRole.ADMIN.value])).limit(1)
         )
         user = result.scalar_one_or_none()
         if user:
@@ -201,7 +201,7 @@ async def test_create_job(
         
         # Get a test user (employer or admin) from database
         result = await session.execute(
-            select(User).where(User.role.in_([UserRole.EMPLOYER.value, UserRole.ADMIN.value]))
+            select(User).where(User.role.in_([UserRole.EMPLOYER.value, UserRole.ADMIN.value])).limit(1)
         )
         test_user = result.scalar_one_or_none()
         
