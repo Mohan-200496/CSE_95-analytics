@@ -297,24 +297,6 @@
 <body>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Debug current user and role
-            console.log('=== EMPLOYER PAGE DEBUG ===');
-            console.log('Current user:', authManager.currentUser);
-            console.log('User from localStorage:', localStorage.getItem('user'));
-            console.log('Has employer role?', authManager.hasRole('employer'));
-            console.log('Is employer?', authManager.isEmployer());
-            
-            // Show debug info on page
-            const debugDiv = document.createElement('div');
-            debugDiv.style.cssText = 'background: #f0f0f0; padding: 10px; margin: 10px; font-family: monospace; font-size: 12px; border: 1px solid #ccc;';
-            debugDiv.innerHTML = `
-                <strong>DEBUG INFO:</strong><br>
-                User: ${JSON.stringify(authManager.currentUser, null, 2)}<br>
-                Has employer role: ${authManager.hasRole('employer')}<br>
-                Is employer: ${authManager.isEmployer()}
-            `;
-            document.body.insertBefore(debugDiv, document.body.firstChild);
-            
             if (!authManager.requireRole('employer', '/pages/auth/login.html')) return;
         });
     </script>

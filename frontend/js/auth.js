@@ -342,39 +342,29 @@
     hasRole(role) {
         if (!this.currentUser || !this.currentUser.role) return false;
         
-        // Normalize both the user's role and the required role for comparison
+        // Normalize both roles to lowercase for comparison
         const userRole = this.currentUser.role.toLowerCase().trim();
         const requiredRole = role.toLowerCase().trim();
         
-        // Handle role variations including UPPERCASE backend values
-        const roleMapping = {
-            'job_seeker': ['job_seeker', 'jobseeker', 'seeker', 'JOB_SEEKER'],
-            'employer': ['employer', 'recruiter', 'EMPLOYER'],
-            'admin': ['admin', 'administrator', 'ADMIN']
-        };
+        console.log('🔍 Role check:', { userRole, requiredRole });
         
-        console.log('🔍 hasRole check:', {
-            userRole,
-            requiredRole,
-            roleMapping
-        });
-        
-        // Check direct match first
+        // Direct match
         if (userRole === requiredRole) {
-            console.log('✅ Direct role match found');
+            console.log('✅ Role match found');
             return true;
         }
         
-        // Check mapped variations
-        for (const [key, variations] of Object.entries(roleMapping)) {
-            if (variations.includes(requiredRole) && variations.includes(userRole)) {
-                console.log('✅ Mapped role match found:', key);
-                return true;
-            }
-        }
+        // Handle common variations
+        const roleVariations = {
+            'job_seeker': userRole === 'job_seeker' || userRole === 'jobseeker',
+            'jobseeker': userRole === 'job_seeker' || userRole === 'jobseeker',
+            'employer': userRole === 'employer',
+            'admin': userRole === 'admin' || userRole === 'administrator'
+        };
         
-        console.log('❌ No role match found');
-        return false;
+        const hasAccess = roleVariations[requiredRole] || false;
+        console.log(hasAccess ? '✅ Role variation match' : '❌ No role match');
+        return hasAccess;
     }
 
     isAdmin() {
@@ -736,6 +726,7 @@
             isLoggedIn: this.isLoggedIn(),
             currentUser: this.getCurrentUser(),
             hasRole: this.hasRole(requiredRole),
+            isAdmin: this.isAdmin(),
             redirectUrl
         });
         
@@ -745,11 +736,21 @@
             return false;
         }
         
+        // Allow admin access to everything
+        if (this.isAdmin()) {
+            console.log('✅ Admin access granted');
+            return true;
+        }
+        
         if (!this.hasRole(requiredRole)) {
-            console.log('❌ Role check failed - user does not have required role:', requiredRole);
+            console.log('❌ Role check failed');
+            console.log('   Required role:', requiredRole);
             console.log('   User role:', this.currentUser?.role);
-            alert(`Access denied. Only ${requiredRole}s and admins can post jobs.`);
-            window.location.href = redirectUrl;
+            console.log('   Raw user object:', this.currentUser);
+            
+            const roleDisplayName = requiredRole === 'employer' ? 'employers' : `${requiredRole}s`;
+            alert(`Access denied. Only admins and ${roleDisplayName} can access this page.`);
+            window.location.href = '/pages/dashboard/index.html'; // Redirect to dashboard instead
             return false;
         }
         

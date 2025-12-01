@@ -116,7 +116,7 @@ class User(Base):
             'user_id': self.user_id,
             'email': self.email if include_sensitive else self.email,
             'phone': self.phone if include_sensitive else None,
-            'role': self.role.value if self.role else None,
+            'role': self.role.value.lower() if self.role else None,  # Convert to lowercase for frontend compatibility
             'status': self.status.value if self.status else None,
             'first_name': self.first_name,
             'last_name': self.last_name,
