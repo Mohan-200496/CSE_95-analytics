@@ -166,35 +166,45 @@ class RenderSettings(Settings):
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
     
-    # Render-specific hosts
-    ALLOWED_HOSTS: List[str] = ["punjab-rozgar-api.onrender.com", "0.0.0.0"]
+    # Render-specific hosts (SECURE)
+    ALLOWED_HOSTS: List[str] = [
+        "punjab-rozgar-api.onrender.com",
+        "punjab-rozgar-portal1.onrender.com",
+        "punjabrozgar.gov.in",
+        "www.punjabrozgar.gov.in"
+    ]
     ALLOWED_ORIGINS: List[str] = [
         "https://punjab-rozgar-portal1.onrender.com",
-        "https://punjab-rozgar-api.onrender.com",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "*"  # Allow all for development - restrict in production
+        "https://punjab-rozgar-api.onrender.com", 
+        "https://punjabrozgar.gov.in",
+        "https://www.punjabrozgar.gov.in"
     ]
     
-    # CORS settings - override the default CORS_ORIGINS
+    # CORS settings - SECURE for production
     CORS_ORIGINS: List[str] = [
         "https://punjab-rozgar-portal1.onrender.com",
         "https://punjab-rozgar-api.onrender.com",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "*"  # Allow all origins for now to fix CORS issues
+        "https://punjabrozgar.gov.in",
+        "https://www.punjabrozgar.gov.in"
     ]
     
     # Render PostgreSQL database (from environment variable)
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/punjab_rozgar")
     
-    # Use environment variables for security
+    # Enhanced security for production
     SECRET_KEY: str = os.getenv("SECRET_KEY", "punjab-rozgar-render-secret-key-2024")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15  # Shorter expiry for security
     
-    # Enable all features on Render
+    # Security features enabled
     ANALYTICS_ENABLED: bool = True
     ENABLE_ML_RECOMMENDATIONS: bool = True
+    
+    # Enhanced security settings
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_REQUESTS_PER_MINUTE: int = 60
+    RATE_LIMIT_REQUESTS_PER_HOUR: int = 1000
+    IP_BLOCKING_ENABLED: bool = True
+    FIREWALL_ENABLED: bool = True
 
 
 class TestingSettings(Settings):

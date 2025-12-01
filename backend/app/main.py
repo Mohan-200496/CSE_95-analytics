@@ -28,6 +28,7 @@ from app.api.v1.users import router as users_router
 from app.api.v1.analytics import router as analytics_router
 from app.api.v1.admin import router as admin_router
 from app.api.v1.simple_admin import router as simple_admin_router
+from app.api.v1.security import router as security_router
 from app.api.v1.applications import router as applications_router
 from app.api.v1.recommendations import router as recommendations_router
 
@@ -35,6 +36,7 @@ from app.api.v1.recommendations import router as recommendations_router
 from app.analytics.tracker import AnalyticsTracker
 from app.middleware.analytics import AnalyticsMiddleware
 from app.middleware.security import SecurityMiddleware
+from app.middleware.firewall import SecurityFirewall
 
 # Load settings
 settings = get_settings()
@@ -154,22 +156,45 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Security middleware (add these first) - TEMPORARILY DISABLED FOR MOBILE DEBUGGING
-# app.add_middleware(
-#     TrustedHostMiddleware,
-#     allowed_hosts=settings.ALLOWED_HOSTS
-# )
-# app.add_middleware(SecurityMiddleware)
-# app.add_middleware(AnalyticsMiddleware)
+# Security Firewall (First layer - highest priority)
+app.add_middleware(SecurityFirewall)
 
-# Configure CORS with maximum compatibility for deployment
+# Trusted Host Middleware (Production security)
+if not settings.DEBUG:
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=settings.ALLOWED_HOSTS
+    )
+
+# Analytics Middleware
+app.add_middleware(AnalyticsMiddleware)
+
+# Configure CORS with security in mind
+cors_origins = [
+    "https://punjab-rozgar-portal1.onrender.com",
+    "https://punjab-rozgar-api.onrender.com",
+    "https://punjabrozgar.gov.in",
+    "https://www.punjabrozgar.gov.in"
+]
+
+# Add localhost for development
+if settings.DEBUG:
+    cors_origins.extend([
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8080", 
+        "http://127.0.0.1:8080",
+        "http://localhost:5500",
+        "http://127.0.0.1:5500"
+    ])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for deployment
-    allow_credentials=False,  # Must be False when allow_origins is "*"
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"]
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Requested-With", "Accept"],
+    expose_headers=["X-Process-Time", "X-Request-ID"]
 )
 
 # Additional CORS handling for Render deployment
@@ -411,6 +436,12 @@ app.include_router(
     simple_admin_router,
     prefix="/api/v1/simple-admin",
     tags=["Simple Administration"]
+)
+
+app.include_router(
+    security_router,
+    prefix="/api/v1/security",
+    tags=["Security Monitoring"]
 )
 
 app.include_router(
