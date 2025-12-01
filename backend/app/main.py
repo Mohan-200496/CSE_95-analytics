@@ -17,8 +17,9 @@ from contextlib import asynccontextmanager
 
 # Core imports
 from app.core.config import get_settings
-from app.core.database import get_database, create_tables
+from app.core.database import get_database, create_tables, engine
 from app.core.logging import setup_logging
+from sqlalchemy import text
 
 # API route imports
 from app.api.v1.auth import router as auth_router
@@ -41,15 +42,82 @@ settings = get_settings()
 setup_logging()
 logger = logging.getLogger(__name__)
 
+async def migrate_production_database():
+    """Migrate production database to ensure all columns exist"""
+    if not os.getenv("RENDER"):  # Only run on production/Render
+        return
+    
+    logger.info("🔄 Running production database migration...")
+    
+    try:
+        async with engine.begin() as conn:
+            # Check if jobs table exists and get columns
+            result = await conn.execute(text("""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = 'jobs'
+                ORDER BY ordinal_position
+            """))
+            existing_columns = {row[0] for row in result}
+            
+            # Required columns that might be missing
+            required_columns = {
+                'resume_required': 'BOOLEAN DEFAULT true',
+                'application_url': 'TEXT',
+                'contact_email': 'VARCHAR(200)',
+                'contact_phone': 'VARCHAR(20)',
+                'views_count': 'INTEGER DEFAULT 0',
+                'applications_count': 'INTEGER DEFAULT 0',
+                'saves_count': 'INTEGER DEFAULT 0',
+                'shares_count': 'INTEGER DEFAULT 0',
+                'slug': 'VARCHAR(500)',
+                'meta_description': 'TEXT',
+                'featured': 'BOOLEAN DEFAULT false',
+                'urgent': 'BOOLEAN DEFAULT false',
+                'government_scheme': 'BOOLEAN DEFAULT false',
+                'reservation_category': 'VARCHAR(100)',
+                'age_limit_min': 'INTEGER',
+                'age_limit_max': 'INTEGER',
+                'benefits': 'TEXT',
+                'working_hours': 'VARCHAR(100)',
+                'interview_process': 'TEXT',
+                'additional_info': 'TEXT'
+            }
+            
+            # Add missing columns
+            for column, definition in required_columns.items():
+                if column not in existing_columns:
+                    logger.info(f"➕ Adding missing column: {column}")
+                    await conn.execute(text(f"ALTER TABLE jobs ADD COLUMN {column} {definition}"))
+                    logger.info(f"✅ Added {column}")
+            
+            logger.info("✅ Production database migration completed")
+            
+    except Exception as e:
+        logger.warning(f"⚠️ Migration warning (might be normal): {e}")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events"""
     # Startup
     logger.info("Starting Punjab Rozgar Portal Backend...")
     
+    # Detect deployment environment
+    if os.getenv("RENDER"):
+        logger.info("🌐 Running on Render.com")
+    elif os.getenv("DYNO"):
+        logger.info("🌐 Running on Heroku")
+    elif os.getenv("RAILWAY_ENVIRONMENT"):
+        logger.info("🌐 Running on Railway")
+    else:
+        logger.info("💻 Running locally")
+    
     # Initialize database
     await create_tables()
     logger.info("Database tables created/verified")
+    
+    # Run production database migration if needed
+    await migrate_production_database()
     
     # Initialize analytics tracker
     analytics_tracker = AnalyticsTracker()
