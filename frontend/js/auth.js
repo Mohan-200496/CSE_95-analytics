@@ -732,7 +732,7 @@ document.addEventListener('click', function(event) {
 });
 
 // Initialize global auth manager
-//} // End AuthManager protection
+} // End AuthManager protection
 
 // Initialize global instance
 if (typeof window.authManager === 'undefined') {

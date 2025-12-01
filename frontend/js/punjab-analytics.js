@@ -94,8 +94,13 @@ class PunjabRozgarAnalytics {
     }
 
     log(message, data = null) {
-        if (this.debug) {
-            console.log(`[Punjab Rozgar Analytics] ${message}`, data);
+        // Only log in debug mode and not on localhost
+        if (this.debug && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            try {
+                console.log(`[Punjab Rozgar Analytics] ${message}`, data);
+            } catch (e) {
+                // Silently ignore any logging errors
+            }
         }
     }
 
