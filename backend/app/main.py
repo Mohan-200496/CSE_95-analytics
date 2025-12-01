@@ -120,13 +120,13 @@ async def lifespan(app: FastAPI):
     
     # Detect deployment environment
     if os.getenv("RENDER"):
-        logger.info("🌐 Running on Render.com")
+        logger.info("Running on Render.com")
     elif os.getenv("DYNO"):
-        logger.info("🌐 Running on Heroku")
+        logger.info("Running on Heroku")
     elif os.getenv("RAILWAY_ENVIRONMENT"):
-        logger.info("🌐 Running on Railway")
+        logger.info("Running on Railway")
     else:
-        logger.info("💻 Running locally")
+        logger.info("Running locally")
     
     # Initialize database
     await create_tables()
