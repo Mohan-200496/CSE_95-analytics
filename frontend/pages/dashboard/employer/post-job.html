@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post a Job - Punjab Rozgar Portal</title>
+    
+    <!-- Environment Configuration -->
+    <script src="../../../config/environment.js"></script>
+    <!-- Auth Script -->
+    <script src="../../../js/auth.js"></script>
+    <!-- Local Job Storage -->
+    <script src="../../../js/local-job-storage.js"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --secondary-blue: #1e40af;
+            --success-green: #10b981;
+            --error-red: #ef4444;
+            --warning-orange: #f59e0b;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .form-container {
+            padding: 2rem;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+        }
+
+        .form-section h3 {
+            color: var(--gray-700);
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--gray-100);
+            padding-bottom: 0.5rem;
+        }
+
+        .form-row {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-row.two-col {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--gray-700);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 0.75rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        .btn {
+            background: var(--primary-blue);
+            color: white;
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--secondary-blue);
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            background: var(--gray-400);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--gray-500);
+            margin-right: 1rem;
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-600);
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .alert-success {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+
+        .required {
+            color: var(--error-red);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 1rem;
+            }
+            
+            .form-row.two-col {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-briefcase"></i> Post a New Job</h1>
+            <p>Create an attractive job posting to find the best candidates</p>
+        </div>
+
+        <div class="form-container">
+            <div id="alerts"></div>
+
+            <form id="job-form">
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h3><i class="fas fa-info-circle"></i> Basic Information</h3>
+                    
+                    <div class="form-group">
+                        <label for="title">Job Title <span class="required">*</span></label>
+                        <input type="text" id="title" name="title" required 
+                               placeholder="e.g., Senior Software Engineer">
+                    </div>
+
+                    <div class="form-row two-col">
+                        <div class="form-group">
+                            <label for="category">Category <span class="required">*</span></label>
+                            <select id="category" name="category" required>
+                                <option value="">Select Category</option>
+                                <option value="Technology">Technology</option>
+                                <option value="Healthcare">Healthcare</option>
+                                <option value="Education">Education</option>
+                                <option value="Finance">Finance</option>
+                                <option value="Engineering">Engineering</option>
+                                <option value="Sales & Marketing">Sales & Marketing</option>
+                                <option value="Human Resources">Human Resources</option>
+                                <option value="Operations">Operations</option>
+                                <option value="Government">Government</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="job_type">Job Type <span class="required">*</span></label>
+                            <select id="job_type" name="job_type" required>
+                                <option value="">Select Type</option>
+                                <option value="full_time">Full Time</option>
+                                <option value="part_time">Part Time</option>
+                                <option value="contract">Contract</option>
+                                <option value="internship">Internship</option>
+                                <option value="freelance">Freelance</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Job Description <span class="required">*</span></label>
+                        <textarea id="description" name="description" required 
+                                  placeholder="Provide a detailed description of the role, what the candidate will be doing, and what makes this opportunity exciting..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Location & Salary -->
+                <div class="form-section">
+                    <h3><i class="fas fa-map-marker-alt"></i> Location & Compensation</h3>
+                    
+                    <div class="form-row two-col">
+                        <div class="form-group">
+                            <label for="location_city">City <span class="required">*</span></label>
+                            <input type="text" id="location_city" name="location_city" required 
+                                   placeholder="e.g., Chandigarh">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="location_state">State</label>
+                            <input type="text" id="location_state" name="location_state" 
+                                   value="Punjab" placeholder="Punjab">
+                        </div>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="remote_allowed" name="remote_allowed">
+                        <label for="remote_allowed">Remote work allowed</label>
+                    </div>
+
+                    <div class="form-row two-col">
+                        <div class="form-group">
+                            <label for="salary_min">Minimum Salary (INR/month)</label>
+                            <input type="number" id="salary_min" name="salary_min" 
+                                   placeholder="e.g., 30000">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="salary_max">Maximum Salary (INR/month)</label>
+                            <input type="number" id="salary_max" name="salary_max" 
+                                   placeholder="e.g., 50000">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Requirements -->
+                <div class="form-section">
+                    <h3><i class="fas fa-graduation-cap"></i> Requirements & Experience</h3>
+                    
+                    <div class="form-row two-col">
+                        <div class="form-group">
+                            <label for="experience_min">Minimum Experience (years)</label>
+                            <input type="number" id="experience_min" name="experience_min" 
+                                   value="0" min="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="experience_max">Maximum Experience (years)</label>
+                            <input type="number" id="experience_max" name="experience_max" 
+                                   min="0">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="education_level">Education Level</label>
+                        <select id="education_level" name="education_level">
+                            <option value="">Any</option>
+                            <option value="High School">High School</option>
+                            <option value="Bachelor's Degree">Bachelor's Degree</option>
+                            <option value="Master's Degree">Master's Degree</option>
+                            <option value="PhD">PhD</option>
+                            <option value="Professional Certification">Professional Certification</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="requirements">Requirements</label>
+                        <textarea id="requirements" name="requirements" 
+                                  placeholder="List the key requirements, qualifications, and must-have skills for this position..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="responsibilities">Key Responsibilities</label>
+                        <textarea id="responsibilities" name="responsibilities" 
+                                  placeholder="Outline the main responsibilities and day-to-day tasks for this role..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="form-section">
+                    <h3><i class="fas fa-envelope"></i> Application & Contact</h3>
+                    
+                    <div class="form-row two-col">
+                        <div class="form-group">
+                            <label for="contact_email">Contact Email</label>
+                            <input type="email" id="contact_email" name="contact_email" 
+                                   placeholder="Will use your account email if empty">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contact_phone">Contact Phone</label>
+                            <input type="tel" id="contact_phone" name="contact_phone" 
+                                   placeholder="+91 98765 43210">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="application_deadline">Application Deadline</label>
+                        <input type="date" id="application_deadline" name="application_deadline">
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="resume_required" name="resume_required" checked>
+                        <label for="resume_required">Resume required for application</label>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="window.history.back()">
+                        <i class="fas fa-arrow-left"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn" id="submit-btn">
+                        <i class="fas fa-plus"></i> Post Job
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Wait for auth manager to be available
+        async function waitForAuthManager() {
+            return new Promise((resolve) => {
+                if (window.authManager) {
+                    resolve(window.authManager);
+                } else if (window.AuthManager) {
+                    const authManager = new window.AuthManager();
+                    window.authManager = authManager;
+                    resolve(authManager);
+                } else {
+                    setTimeout(() => waitForAuthManager().then(resolve), 100);
+                }
+            });
+        }
+
+        // Get API base URL
+        function getApiBaseUrl() {
+            if (window.ENV_CONFIG && window.ENV_CONFIG.apiUrl) {
+                return window.ENV_CONFIG.apiUrl + '/api/v1';
+            }
+            if (window.EnvironmentConfig) {
+                try {
+                    const envConfig = new window.EnvironmentConfig();
+                    return envConfig.config.API_BASE_URL + '/api/v1';
+                } catch (e) {
+                    console.warn('Failed to create EnvironmentConfig:', e);
+                }
+            }
+            return 'https://punjab-rozgar-api.onrender.com/api/v1';
+        }
+
+        // Show alert message
+        function showAlert(message, type = 'success') {
+            const alertsContainer = document.getElementById('alerts');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+                ${message}
+            `;
+            alertsContainer.innerHTML = '';
+            alertsContainer.appendChild(alert);
+            alert.style.display = 'block';
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Handle form submission
+        document.getElementById('job-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submit-btn');
+            const originalText = submitBtn.innerHTML;
+            
+            try {
+                // Ensure auth manager is available
+                const authManager = await waitForAuthManager();
+                
+                // Check if user is logged in
+                const currentUser = authManager.getCurrentUser();
+                if (!currentUser) {
+                    showAlert('Please log in to post a job', 'error');
+                    return;
+                }
+                
+                // Disable submit button
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Job...';
+                
+                // Get form data
+                const formData = new FormData(this);
+                const jobData = {};
+                
+                // Process form data
+                for (let [key, value] of formData.entries()) {
+                    if (value.trim() !== '') {
+                        if (key === 'remote_allowed' || key === 'resume_required') {
+                            jobData[key] = value === 'on';
+                        } else if (key === 'salary_min' || key === 'salary_max' || 
+                                 key === 'experience_min' || key === 'experience_max') {
+                            if (value && !isNaN(value)) {
+                                jobData[key] = parseInt(value);
+                            }
+                        } else {
+                            jobData[key] = value;
+                        }
+                    }
+                }
+                
+                // Set defaults
+                if (!jobData.remote_allowed) jobData.remote_allowed = false;
+                if (!jobData.resume_required) jobData.resume_required = true;
+                if (!jobData.location_state) jobData.location_state = 'Punjab';
+                if (!jobData.experience_min) jobData.experience_min = 0;
+                
+                console.log('Submitting job data:', jobData);
+                
+                // Get auth token
+                const token = authManager.getToken();
+                
+                let backendSuccess = false;
+                let backendResult = null;
+                
+                // Try backend API first
+                try {
+                    // Submit to API
+                    const response = await fetch(`${getApiBaseUrl()}/jobs/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': token ? `Bearer ${token}` : ''
+                        },
+                        body: JSON.stringify(jobData)
+                    });
+                    
+                    backendResult = await response.json();
+                    
+                    if (response.ok) {
+                        backendSuccess = true;
+                        showAlert(`Job "${jobData.title}" has been posted successfully via API! Job ID: ${backendResult.job_id}`, 'success');
+                    } else {
+                        throw new Error(backendResult.detail || backendResult.message || 'Backend API error');
+                    }
+                } catch (apiError) {
+                    console.warn('Backend API failed:', apiError.message);
+                    console.log('🔄 Falling back to local storage...');
+                    
+                    // Fallback to local storage
+                    if (window.localJobStorage) {
+                        try {
+                            const localResult = window.localJobStorage.addJob({
+                                ...jobData,
+                                employer_name: currentUser.company_name || `${currentUser.first_name} ${currentUser.last_name}`,
+                                employer_id: currentUser.user_id
+                            });
+                            
+                            if (localResult.success) {
+                                showAlert(
+                                    `Job "${jobData.title}" has been saved locally! Job ID: ${localResult.job_id}<br>
+                                    <small>Note: Job is stored locally and will sync with server when backend is available.</small>`,
+                                    'success'
+                                );
+                                backendSuccess = true; // Treat local storage as success
+                            } else {
+                                throw new Error(localResult.error || 'Local storage failed');
+                            }
+                        } catch (localError) {
+                            console.error('Local storage also failed:', localError);
+                            throw new Error(`Both backend API and local storage failed. Backend: ${apiError.message}, Local: ${localError.message}`);
+                        }
+                    } else {
+                        throw apiError; // No local storage available
+                    }
+                }
+                
+                if (backendSuccess) {
+                    // Reset form after successful submission
+                    setTimeout(() => {
+                        this.reset();
+                        // Redirect to jobs list after a delay
+                        window.location.href = '../employer/jobs.html';
+                    }, 3000);
+                }
+                
+            } catch (error) {
+                console.error('Error creating job:', error);
+                showAlert(`Error creating job: ${error.message}`, 'error');
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        });
+
+        // Set minimum date to today for deadline
+        document.addEventListener('DOMContentLoaded', function() {
+            const deadlineInput = document.getElementById('application_deadline');
+            const today = new Date().toISOString().split('T')[0];
+            deadlineInput.setAttribute('min', today);
+        });
+
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const authManager = await waitForAuthManager();
+                const currentUser = authManager.getCurrentUser();
+                
+                if (!currentUser) {
+                    showAlert('Please log in to access the job posting form', 'error');
+                    setTimeout(() => {
+                        window.location.href = '../../auth/login.html';
+                    }, 2000);
+                    return;
+                }
+                
+                if (currentUser.role !== 'employer' && currentUser.role !== 'admin') {
+                    showAlert('Only employers can post jobs', 'error');
+                    setTimeout(() => {
+                        window.location.href = '../../dashboard/job-seeker/';
+                    }, 2000);
+                    return;
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+            }
+        });
+    </script>
+</body>
+</html>

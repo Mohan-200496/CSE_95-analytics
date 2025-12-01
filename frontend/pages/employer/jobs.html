@@ -7,6 +7,8 @@
     
     <!-- Punjab Rozgar Authentication -->
     <script src="../../js/auth.js"></script>
+    <!-- Local Job Storage -->
+    <script src="../../js/local-job-storage.js"></script>
     
     <!-- Styles -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -488,16 +490,47 @@
         });
 
         function loadJobs() {
-            // Get jobs from localStorage
+            // Combine multiple sources of jobs
+            let allJobSources = [];
+            
+            // 1. Get jobs from localStorage (published via form)
             const publishedJobs = JSON.parse(localStorage.getItem('publishedJobs') || '[]');
+            allJobSources = allJobSources.concat(publishedJobs);
+            
+            // 2. Get jobs from local job storage (our new system)
+            if (window.localJobStorage) {
+                const localJobs = window.localJobStorage.getJobs();
+                allJobSources = allJobSources.concat(localJobs);
+            }
+            
+            // 3. Include mock jobs for demo
+            allJobSources = allJobSources.concat(mockJobs);
             
             // Filter jobs by current user (in real app, this would be done server-side)
-            const userJobs = publishedJobs.filter(job => 
-                job.createdBy === user.id || user.role === 'admin'
-            );
+            const userJobs = allJobSources.filter(job => {
+                // Check various possible user ID fields
+                return job.createdBy === user.id || 
+                       job.employer_id === user.user_id ||
+                       job.employer_id === user.id ||
+                       user.role === 'admin';
+            });
             
-            // Combine with mock jobs for demo
-            allJobs = [...userJobs, ...mockJobs];
+            // Remove duplicates based on job ID
+            const uniqueJobs = userJobs.reduce((acc, current) => {
+                const existingJob = acc.find(job => 
+                    (job.id === current.id) || 
+                    (job.job_id === current.job_id) ||
+                    (job.id === current.job_id) ||
+                    (job.job_id === current.id)
+                );
+                if (!existingJob) {
+                    acc.push(current);
+                }
+                return acc;
+            }, []);
+            
+            allJobs = uniqueJobs;
+            console.log(`📋 Loaded ${allJobs.length} jobs for user:`, user);
             
             renderJobs(allJobs);
         }
@@ -539,29 +572,57 @@
         }
 
         function createJobRow(job) {
+            // Handle both old and new job formats
             const title = job.title || job.jobTitle;
-            const company = job.company || 'Your Company';
-            const location = job.location;
-            const type = job.type || job.jobType;
-            const salary = job.salary || (job.salaryMin && job.salaryMax ? 
-                `PKR ${parseInt(job.salaryMin).toLocaleString()} - ${parseInt(job.salaryMax).toLocaleString()}` : 
-                'Not specified');
+            const company = job.company || job.employer_name || 'Your Company';
+            const location = job.location || `${job.location_city || ''}${job.location_state ? ', ' + job.location_state : ''}`;
+            const type = job.type || job.jobType || job.job_type;
             
-            const status = job.status || 'active';
+            // Handle salary display
+            let salary = 'Not specified';
+            if (job.salary) {
+                salary = job.salary;
+            } else if (job.salaryMin && job.salaryMax) {
+                salary = `PKR ${parseInt(job.salaryMin).toLocaleString()} - ${parseInt(job.salaryMax).toLocaleString()}`;
+            } else if (job.salary_min && job.salary_max) {
+                salary = `INR ${parseInt(job.salary_min).toLocaleString()} - ${parseInt(job.salary_max).toLocaleString()}`;
+            } else if (job.salary_min) {
+                salary = `INR ${parseInt(job.salary_min).toLocaleString()}+`;
+            }
+            
+            const status = (job.status || 'active').toLowerCase();
             const applications = job.applications || 0;
             const views = job.views || 0;
-            const postedDate = job.postedDate || job.createdAt;
+            const postedDate = job.postedDate || job.createdAt || job.created_at;
             
-            const formattedDate = new Date(postedDate).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            });
+            let formattedDate = 'Recently';
+            if (postedDate) {
+                try {
+                    formattedDate = new Date(postedDate).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                } catch (e) {
+                    formattedDate = 'Recently';
+                }
+            }
+
+            // Use appropriate ID field
+            const jobId = job.id || job.job_id;
+            
+            // Add a source indicator
+            let sourceIndicator = '';
+            if (job.job_id && job.job_id.startsWith('job_')) {
+                sourceIndicator = '<small style="color: #10b981;">📱 Local</small>';
+            } else if (job.id && job.id.startsWith('job_')) {
+                sourceIndicator = '<small style="color: #3b82f6;">☁️ Server</small>';
+            }
 
             return `
                 <tr>
                     <td>
-                        <div class="job-title">${title}</div>
+                        <div class="job-title">${title} ${sourceIndicator}</div>
                         <div class="job-meta">${company} • ${location} • ${type}</div>
                         <div class="job-meta">${salary}</div>
                     </td>
@@ -573,17 +634,18 @@
                     <td>${formattedDate}</td>
                     <td>
                         <div class="actions">
-                            <button class="btn btn-sm" onclick="viewJob('${job.id}')">
+                            <button class="btn btn-sm" onclick="viewJob('${jobId}')" title="View Job">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button class="btn btn-sm btn-warning" onclick="editJob('${job.id}')">
+                            <button class="btn btn-sm btn-warning" onclick="editJob('${jobId}')" title="Edit Job">
                                 <i class="fas fa-edit"></i>
                             </button>
                             <button class="btn btn-sm ${status === 'active' ? 'btn-warning' : 'btn-success'}" 
-                                    onclick="toggleJobStatus('${job.id}')">
+                                    onclick="toggleJobStatus('${jobId}')" 
+                                    title="${status === 'active' ? 'Pause' : 'Activate'} Job">
                                 <i class="fas fa-${status === 'active' ? 'pause' : 'play'}"></i>
                             </button>
-                            <button class="btn btn-sm btn-danger" onclick="deleteJob('${job.id}')">
+                            <button class="btn btn-sm btn-danger" onclick="deleteJob('${jobId}')" title="Delete Job">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>

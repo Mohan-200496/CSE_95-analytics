@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Management Test - Punjab Rozgar Portal</title>
+    
+    <!-- Include necessary scripts -->
+    <script src="config/environment.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/local-job-storage.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 2rem;
+            background: #f5f7fa;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        
+        .section h2 {
+            color: #1f2937;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .btn {
+            background: #3b82f6;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0.25rem;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            background: #2563eb;
+        }
+        
+        .btn-success { background: #10b981; }
+        .btn-success:hover { background: #059669; }
+        
+        .btn-warning { background: #f59e0b; }
+        .btn-warning:hover { background: #d97706; }
+        
+        .btn-danger { background: #ef4444; }
+        .btn-danger:hover { background: #dc2626; }
+        
+        .status {
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+        }
+        
+        .job-list {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .job-card {
+            background: #f9fafb;
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .job-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        
+        .job-meta {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .job-description {
+            color: #4b5563;
+            margin: 0.5rem 0;
+            line-height: 1.4;
+        }
+        
+        .code-block {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        input[type="text"], input[type="number"], textarea, select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 0.5rem 0;
+        }
+        
+        .navigation {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: #e0e7ff;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Job Management Test Page</h1>
+        <p>Test job creation and viewing functionality while the backend API is being fixed.</p>
+        
+        <!-- Navigation -->
+        <div class="navigation">
+            <h3>Quick Access</h3>
+            <a href="pages/dashboard/employer/post-job.html" class="btn btn-success">📝 Post Job Form</a>
+            <a href="pages/employer/jobs.html" class="btn">📋 Employer Jobs</a>
+            <a href="pages/jobseeker/browse-jobs.html" class="btn">🔍 Browse Jobs</a>
+        </div>
+
+        <!-- Status Section -->
+        <div class="section">
+            <h2>🚨 Current Status</h2>
+            <div class="status">
+                <p><strong>Backend API Issue:</strong> The backend has a database enum compatibility issue preventing job creation.</p>
+                <p><strong>Solution:</strong> Local storage system implemented as temporary workaround.</p>
+                <p><strong>Impact:</strong> Jobs created will be stored locally and visible in the frontend until backend is fixed.</p>
+            </div>
+        </div>
+
+        <!-- Quick Job Creation -->
+        <div class="section">
+            <h2>📝 Quick Job Creation</h2>
+            <p>Create a test job directly from this page:</p>
+            
+            <form id="quickJobForm">
+                <input type="text" id="jobTitle" placeholder="Job Title" required>
+                
+                <div class="form-row">
+                    <select id="jobCategory" required>
+                        <option value="">Select Category</option>
+                        <option value="Technology">Technology</option>
+                        <option value="Healthcare">Healthcare</option>
+                        <option value="Education">Education</option>
+                        <option value="Finance">Finance</option>
+                    </select>
+                    <select id="jobType" required>
+                        <option value="">Job Type</option>
+                        <option value="full_time">Full Time</option>
+                        <option value="part_time">Part Time</option>
+                        <option value="contract">Contract</option>
+                        <option value="internship">Internship</option>
+                    </select>
+                </div>
+                
+                <textarea id="jobDescription" placeholder="Job Description" rows="3" required></textarea>
+                
+                <div class="form-row">
+                    <input type="text" id="jobLocation" placeholder="City" required>
+                    <input type="number" id="jobSalary" placeholder="Minimum Salary (INR)">
+                </div>
+                
+                <button type="submit" class="btn btn-success">Create Test Job</button>
+            </form>
+            
+            <div id="quickJobResult"></div>
+        </div>
+
+        <!-- Local Storage Management -->
+        <div class="section">
+            <h2>📦 Local Storage Management</h2>
+            <div id="storageStats"></div>
+            
+            <div style="margin-top: 1rem;">
+                <button class="btn" onclick="refreshStats()">🔄 Refresh Stats</button>
+                <button class="btn btn-warning" onclick="exportJobs()">📤 Export Jobs</button>
+                <button class="btn btn-danger" onclick="clearJobs()">🗑️ Clear All Jobs</button>
+            </div>
+        </div>
+
+        <!-- Current Jobs Display -->
+        <div class="section">
+            <h2>📋 Current Jobs</h2>
+            <button class="btn" onclick="loadJobs()">🔄 Refresh Jobs</button>
+            <div id="jobsList"></div>
+        </div>
+
+        <!-- Console Commands -->
+        <div class="section">
+            <h2>💻 Console Commands</h2>
+            <p>Open browser console (F12) and try these commands:</p>
+            <div class="code-block">
+// Get storage statistics
+jobStorageHelpers.stats()
+
+// View all jobs
+jobStorageHelpers.all()
+
+// Get recent jobs
+jobStorageHelpers.recent(5)
+
+// Export jobs to file
+jobStorageHelpers.export()
+
+// Clear all jobs (careful!)
+jobStorageHelpers.clear()
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Wait for dependencies to load
+        setTimeout(initializePage, 500);
+        
+        function initializePage() {
+            console.log('🔧 Job Management Test Page Initialized');
+            refreshStats();
+            loadJobs();
+            setupQuickJobForm();
+        }
+        
+        function setupQuickJobForm() {
+            document.getElementById('quickJobForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                if (!window.localJobStorage) {
+                    showResult('❌ Local job storage not available', 'error');
+                    return;
+                }
+                
+                const jobData = {
+                    title: document.getElementById('jobTitle').value,
+                    category: document.getElementById('jobCategory').value,
+                    job_type: document.getElementById('jobType').value,
+                    description: document.getElementById('jobDescription').value,
+                    location_city: document.getElementById('jobLocation').value,
+                    location_state: 'Punjab',
+                    salary_min: parseInt(document.getElementById('jobSalary').value) || undefined,
+                    employer_name: 'Test Employer',
+                    employer_id: 'test_employer_123'
+                };
+                
+                const result = window.localJobStorage.addJob(jobData);
+                
+                if (result.success) {
+                    showResult(`✅ Job "${jobData.title}" created successfully! Job ID: ${result.job_id}`, 'success');
+                    document.getElementById('quickJobForm').reset();
+                    refreshStats();
+                    loadJobs();
+                } else {
+                    showResult(`❌ Failed to create job: ${result.error}`, 'error');
+                }
+            });
+        }
+        
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('quickJobResult');
+            resultDiv.innerHTML = `<div class="status" style="background: ${type === 'success' ? '#ecfdf5' : '#fef2f2'}; border-color: ${type === 'success' ? '#a7f3d0' : '#fca5a5'}; color: ${type === 'success' ? '#065f46' : '#991b1b'};">${message}</div>`;
+            
+            setTimeout(() => {
+                resultDiv.innerHTML = '';
+            }, 5000);
+        }
+        
+        function refreshStats() {
+            if (!window.localJobStorage) {
+                document.getElementById('storageStats').innerHTML = '<p>❌ Local job storage not available</p>';
+                return;
+            }
+            
+            const stats = window.localJobStorage.getStats();
+            document.getElementById('storageStats').innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                    <div class="job-card" style="text-align: center;">
+                        <div style="font-size: 2rem; color: #3b82f6; font-weight: bold;">${stats.total_jobs}</div>
+                        <div>Total Jobs</div>
+                    </div>
+                    <div class="job-card" style="text-align: center;">
+                        <div style="font-size: 2rem; color: #10b981; font-weight: bold;">${stats.active_jobs}</div>
+                        <div>Active Jobs</div>
+                    </div>
+                    <div class="job-card" style="text-align: center;">
+                        <div style="font-size: 1.2rem; color: #f59e0b; font-weight: bold;">${stats.categories.length}</div>
+                        <div>Categories</div>
+                    </div>
+                    <div class="job-card" style="text-align: center;">
+                        <div style="font-size: 1.2rem; color: #8b5cf6; font-weight: bold;">${(stats.storage_size / 1024).toFixed(1)}KB</div>
+                        <div>Storage Used</div>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <p><strong>Categories:</strong> ${stats.categories.join(', ') || 'None'}</p>
+                    <p><strong>Job Types:</strong> ${stats.job_types.join(', ') || 'None'}</p>
+                    <p><strong>Locations:</strong> ${stats.locations.join(', ') || 'None'}</p>
+                </div>
+            `;
+        }
+        
+        function loadJobs() {
+            if (!window.localJobStorage) {
+                document.getElementById('jobsList').innerHTML = '<p>❌ Local job storage not available</p>';
+                return;
+            }
+            
+            const jobs = window.localJobStorage.getRecentJobs(10);
+            
+            if (jobs.length === 0) {
+                document.getElementById('jobsList').innerHTML = '<p>📭 No jobs found. Create some jobs to see them here.</p>';
+                return;
+            }
+            
+            document.getElementById('jobsList').innerHTML = `
+                <div class="job-list">
+                    ${jobs.map(job => `
+                        <div class="job-card">
+                            <div class="job-title">${job.title}</div>
+                            <div class="job-meta">📍 ${job.location_city}${job.location_state ? ', ' + job.location_state : ''}</div>
+                            <div class="job-meta">🏢 ${job.employer_name || 'Unknown Employer'}</div>
+                            <div class="job-meta">💼 ${job.job_type} | 📂 ${job.category}</div>
+                            <div class="job-meta">💰 ${job.salary_min ? 'INR ' + job.salary_min.toLocaleString() + (job.salary_max ? ' - ' + job.salary_max.toLocaleString() : '+') : 'Salary not specified'}</div>
+                            <div class="job-meta">🕒 Created: ${new Date(job.created_at).toLocaleString()}</div>
+                            <div class="job-description">${job.description.substring(0, 150)}${job.description.length > 150 ? '...' : ''}</div>
+                            <div style="margin-top: 0.5rem;">
+                                <span style="background: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">
+                                    ${job.status}
+                                </span>
+                                <span style="background: #3b82f6; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; margin-left: 0.5rem;">
+                                    ID: ${job.job_id}
+                                </span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        function exportJobs() {
+            if (window.localJobStorage) {
+                window.localJobStorage.exportJobs();
+            }
+        }
+        
+        function clearJobs() {
+            if (confirm('Are you sure you want to clear all local jobs? This cannot be undone.')) {
+                if (window.localJobStorage) {
+                    window.localJobStorage.clearAllJobs();
+                    refreshStats();
+                    loadJobs();
+                    alert('All jobs cleared!');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

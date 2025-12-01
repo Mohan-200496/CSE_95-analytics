@@ -7,6 +7,8 @@
     
     <!-- Punjab Rozgar Authentication -->
     <script src="../../js/auth.js" onerror="console.log('Auth.js failed to load')"></script>
+    <!-- Local Job Storage -->
+    <script src="../../js/local-job-storage.js"></script>
     <!-- Punjab Rozgar Analytics -->
     <script src="../../js/punjab-analytics.js" onerror="console.log('Analytics.js failed to load')"></script>
     
@@ -663,8 +665,8 @@
 
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
-            allJobs = [...sampleJobs];
-            filteredJobs = [...allJobs];
+            // Load jobs from multiple sources
+            loadAllJobs();
             displayJobs();
             setupEventListeners();
             
@@ -676,6 +678,42 @@
                 });
             }
         });
+
+        function loadAllJobs() {
+            // Start with sample jobs
+            allJobs = [...sampleJobs];
+            
+            // Add local jobs if available
+            if (window.localJobStorage) {
+                const localJobs = window.localJobStorage.getJobs();
+                console.log(`📱 Found ${localJobs.length} local jobs`);
+                
+                // Convert local jobs to browse format
+                const convertedLocalJobs = localJobs.map(job => ({
+                    id: job.job_id,
+                    title: job.title,
+                    company: job.employer_name || 'Company',
+                    location: `${job.location_city || ''}${job.location_state ? ', ' + job.location_state : ''}`,
+                    type: job.job_type || 'full_time',
+                    salary: job.salary_min && job.salary_max ? 
+                        `INR ${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()}` :
+                        job.salary_min ? `INR ${job.salary_min.toLocaleString()}+` : 'Competitive',
+                    category: job.category || 'Technology',
+                    description: job.description,
+                    requirements: job.requirements || 'As per job description',
+                    posted_date: job.created_at ? job.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+                    experience: job.experience_min ? `${job.experience_min}+ years` : 'Fresher to experienced',
+                    remote_allowed: job.remote_allowed,
+                    isLocal: true // Mark as local job
+                }));
+                
+                // Add converted local jobs
+                allJobs = allJobs.concat(convertedLocalJobs);
+                console.log(`📋 Total jobs available: ${allJobs.length} (${convertedLocalJobs.length} local + ${sampleJobs.length} sample)`);
+            }
+            
+            filteredJobs = [...allJobs];
+        }
 
         function setupEventListeners() {
             // Filter buttons
@@ -809,7 +847,7 @@
                 }
                 
                 return `
-                    <div class="job-card ${themeClass}" onclick="viewJob('${job.job_id}')">
+                    <div class="job-card ${themeClass}" onclick="viewJob('${job.id || job.job_id}')">
                         <div class="job-header">
                             <div>
                                 <div class="job-title">${job.title}</div>
@@ -823,7 +861,10 @@
                             </div>
                             <div class="job-actions">
                                 <div class="job-salary">${job.salary}</div>
-                                <div class="job-type">${job.type}</div>
+                                <div class="job-type">
+                                    ${job.type}
+                                    ${job.isLocal ? '<small style="color: #10b981; margin-left: 8px;">📱 Local</small>' : ''}
+                                </div>
                             </div>
                         </div>
                         
@@ -844,10 +885,10 @@
                         </div>
                         
                         <div class="job-buttons">
-                            <button class="btn-apply" onclick="event.stopPropagation(); applyToJob('${job.job_id}')">
+                            <button class="btn-apply" onclick="event.stopPropagation(); applyToJob('${job.id || job.job_id}')">
                                 <i class="fas fa-paper-plane"></i> Apply Now
                             </button>
-                            <button class="btn-save" onclick="event.stopPropagation(); saveJob('${job.job_id}')">
+                            <button class="btn-save" onclick="event.stopPropagation(); saveJob('${job.id || job.job_id}')">
                                 <i class="fas fa-bookmark"></i> Save Job
                             </button>
                         </div>
