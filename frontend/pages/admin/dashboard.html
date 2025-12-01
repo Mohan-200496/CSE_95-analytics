@@ -1133,7 +1133,7 @@
                 }
                 
                 const user = authManager.getCurrentUser();
-                if (!user || user.role !== 'admin') {
+                if (!user || user.role.toLowerCase() !== 'admin') {
                     console.log('⚠️ User is not admin, redirecting to appropriate dashboard');
                     authManager.redirectAfterLogin(user?.role || 'job_seeker');
                     return;

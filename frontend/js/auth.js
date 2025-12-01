@@ -442,35 +442,35 @@
                               (role?.value || role?.name || String(role)).toLowerCase().trim();
         console.log('🔧 Normalized role:', normalizedRole);
         
-        // Enhanced role mapping - handle all possible variations
-        let redirectUrl = '/index.html'; // default fallback
+        // Enhanced role mapping - handle all possible variations INCLUDING UPPERCASE backend values
+        let redirectUrl = 'index.html'; // default fallback
         
         if (normalizedRole === 'admin' || normalizedRole === 'administrator') {
-            redirectUrl = '/pages/admin/dashboard.html';
+            redirectUrl = 'pages/admin/dashboard.html';
             console.log('✅ Redirecting to ADMIN dashboard');
         } else if (normalizedRole === 'employer' || normalizedRole === 'recruiter') {
-            redirectUrl = '/pages/employer/dashboard.html';
+            redirectUrl = 'pages/employer/dashboard.html';
             console.log('✅ Redirecting to EMPLOYER dashboard');
         } else if (normalizedRole === 'job_seeker' || normalizedRole === 'jobseeker' || normalizedRole === 'seeker') {
-            redirectUrl = '/pages/jobseeker/dashboard.html';
+            redirectUrl = 'pages/jobseeker/dashboard.html';
             console.log('✅ Redirecting to JOB_SEEKER dashboard');
         } else {
             // If role is unclear, check user email to determine correct role
             const user = this.getCurrentUser();
             if (user && user.email) {
                 if (user.email.includes('admin')) {
-                    redirectUrl = '/pages/admin/dashboard.html';
+                    redirectUrl = 'pages/admin/dashboard.html';
                     console.log('🔄 Email-based redirect: ADMIN dashboard');
                 } else if (user.email.includes('employer')) {
-                    redirectUrl = '/pages/employer/dashboard.html';
+                    redirectUrl = 'pages/employer/dashboard.html';
                     console.log('🔄 Email-based redirect: EMPLOYER dashboard');
                 } else {
-                    redirectUrl = '/pages/jobseeker/dashboard.html';
+                    redirectUrl = 'pages/jobseeker/dashboard.html';
                     console.log('🔄 Email-based redirect: JOB_SEEKER dashboard (default)');
                 }
             } else {
                 console.log('⚠️ Unknown role and no user email, defaulting to job seeker');
-                redirectUrl = '/pages/jobseeker/dashboard.html';
+                redirectUrl = 'pages/jobseeker/dashboard.html';
             }
         }
         

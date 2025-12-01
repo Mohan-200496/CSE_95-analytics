@@ -1951,7 +1951,7 @@
                 }
             } else {
                 console.log('⚠️ No user logged in for job seeker dashboard');
-                window.location.href = '/frontend/pages/auth/login.html';
+                window.location.href = '../../pages/auth/login.html';
             }
         }
 
@@ -2154,12 +2154,12 @@
             if (authManager) {
                 if (!authManager.isLoggedIn()) {
                     console.log('⚠️ User not logged in, redirecting to login');
-                    window.location.href = '/frontend/pages/auth/login.html';
+                    window.location.href = '../../pages/auth/login.html';
                     return;
                 }
                 
                 const user = authManager.getCurrentUser();
-                if (!user || user.role !== 'job_seeker') {
+                if (!user || user.role.toLowerCase() !== 'job_seeker') {
                     console.log('⚠️ User is not job seeker, redirecting to appropriate dashboard');
                     authManager.redirectAfterLogin(user?.role || 'job_seeker');
                     return;
