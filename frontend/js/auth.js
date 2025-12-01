@@ -237,6 +237,47 @@ class AuthManager {
 
     loadTokenFromStorage() {
         this.accessToken = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+        
+        // Validate token if it exists
+        if (this.accessToken) {
+            if (!this.validateToken()) {
+                this.accessToken = null;
+            }
+        }
+    }
+    
+    validateToken() {
+        if (!this.accessToken) return false;
+        
+        try {
+            // Parse JWT token to check expiration
+            const tokenParts = this.accessToken.split('.');
+            if (tokenParts.length !== 3) {
+                console.log('🚫 Invalid token format');
+                return false;
+            }
+            
+            const payload = JSON.parse(atob(tokenParts[1]));
+            const currentTime = Math.floor(Date.now() / 1000);
+            
+            if (payload.exp && payload.exp < currentTime) {
+                console.log('🕐 Token has expired');
+                return false;
+            }
+            
+            // Check if token expires in next 5 minutes (warn user)
+            if (payload.exp && (payload.exp - currentTime) < 300) {
+                console.log('⚠️ Token expires soon');
+                if (window.showMessage) {
+                    window.showMessage('Your session will expire soon. Please save your work.', 'warning');
+                }
+            }
+            
+            return true;
+        } catch (error) {
+            console.error('Error validating token:', error);
+            return false;
+        }
     }
 
     setAccessToken(token, persistent = false) {
@@ -300,6 +341,13 @@ class AuthManager {
     // API Helper Methods
     async makeApiCall(endpoint, options = {}) {
         try {
+            // Validate token before making request
+            if (this.accessToken && !this.validateToken()) {
+                console.log('🚫 Token validation failed, logging out');
+                this.logout();
+                throw new Error('Session expired');
+            }
+            
             const response = await fetch(`${this.apiBaseUrl}${endpoint}`, {
                 headers: this.getAuthHeaders(),
                 ...options
@@ -307,7 +355,28 @@ class AuthManager {
 
             if (response.status === 401) {
                 // Token expired or invalid
-                this.logout();
+                console.log('🔄 Received 401, handling token expiration');
+                
+                // Try to get the error message
+                const errorData = await response.json().catch(() => ({}));
+                
+                if (errorData.message && errorData.message.includes('expired')) {
+                    console.log('🕐 Token has expired, logging out user');
+                    this.logout();
+                    
+                    // Show user-friendly message
+                    if (window.showMessage) {
+                        window.showMessage('Your session has expired. Please log in again.', 'warning');
+                    } else {
+                        alert('Your session has expired. Please log in again.');
+                    }
+                    
+                    // Redirect to login page after a short delay
+                    setTimeout(() => {
+                        window.location.href = '/frontend/pages/auth/login.html';
+                    }, 2000);
+                }
+                
                 return null;
             }
 

@@ -681,31 +681,30 @@
                     return;
                 }
 
-                // Use trailing slash to avoid FastAPI 307 redirect (which drops CORS headers)
-                const res = await fetch(`${authManager.apiBaseUrl}/jobs/`, {
-                    method: 'POST',
-                    headers: authManager.getAuthHeaders(),
-                    body: JSON.stringify(payload)
-                });
-
-                console.log('🌐 API Response:');
-                console.log('  Status:', res.status);
-                console.log('  OK:', res.ok);
-                console.log('  Headers:', Object.fromEntries(res.headers.entries()));
-
-                const data = await res.json().catch(() => ({}));
-                console.log('  Data:', data);
-                
-                if (!res.ok) {
-                    const msg = data.detail || data.message || 'Failed to create job';
-                    console.error('❌ Job creation failed:', msg);
-                    alert(`Error: ${msg}`);
-                    return;
+                // Use auth manager's makeApiCall which handles token validation and expiration
+                try {
+                    const data = await authManager.makeApiCall('/jobs/', {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (data) {
+                        console.log('✅ Job created successfully:', data);
+                        alert('Job submitted successfully! It will be visible after admin approval.');
+                        window.location.href = 'jobs.html';
+                    } else {
+                        console.error('❌ Job creation failed: No response data');
+                        alert('Failed to create job. Please try again.');
+                    }
+                } catch (apiError) {
+                    if (apiError.message === 'Session expired') {
+                        // Auth manager already handled the logout and redirect
+                        return;
+                    }
+                    
+                    console.error('❌ API call failed:', apiError);
+                    alert('Failed to create job. Please try again.');
                 }
-
-                console.log('✅ Job created successfully:', data);
-                alert('Job submitted successfully! It will be visible after admin approval.');
-                window.location.href = 'jobs.html';
             } catch (err) {
                 console.error('❌ Create job error', err);
                 alert('Network error while creating job');
