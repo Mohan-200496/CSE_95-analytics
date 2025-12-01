@@ -82,9 +82,9 @@
                 DEBUG: false
             },
             render: {
-                API_BASE_URL: 'https://cse-95-analytics.onrender.com',
-                API_DOCS_URL: 'https://cse-95-analytics.onrender.com/docs',
-                WEBSOCKET_URL: 'wss://cse-95-analytics.onrender.com/ws',
+                API_BASE_URL: 'https://punjab-rozgar-api.onrender.com',
+                API_DOCS_URL: 'https://punjab-rozgar-api.onrender.com/docs',
+                WEBSOCKET_URL: 'wss://punjab-rozgar-api.onrender.com/ws',
                 ENVIRONMENT: 'production',
                 DEBUG: false
             },
