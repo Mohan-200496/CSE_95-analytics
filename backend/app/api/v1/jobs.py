@@ -100,7 +100,46 @@ async def get_current_user(
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
-@router.post("/", response_model=JobPublicResponse)
+@router.post("/debug-job", response_model=dict)
+async def debug_job_creation(
+    job_data: JobCreate,
+    session: AsyncSession = Depends(get_database),
+    current_user: User = Depends(get_current_user),
+    analytics = Depends(get_analytics_tracker)
+):
+    """Debug job creation endpoint to identify issues"""
+    
+    try:
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        return {
+            "status": "success",
+            "message": "Job creation debug successful",
+            "user_info": {
+                "user_id": current_user.user_id,
+                "email": current_user.email,
+                "role": str(current_user.role),
+                "role_type": type(current_user.role).__name__
+            },
+            "job_data": {
+                "title": job_data.title,
+                "job_type": job_data.job_type,
+                "category": job_data.category,
+                "location_city": job_data.location_city
+            },
+            "validations": {
+                "role_check": current_user.role in [UserRole.EMPLOYER, UserRole.ADMIN],
+                "job_type_valid": job_data.job_type in [e.value for e in JobType]
+            }
+        }
+    except Exception as e:
+        logger.error(f"Debug job creation error: {str(e)}")
+        return {
+            "status": "error",
+            "error": str(e),
+            "error_type": type(e).__name__
+        }
 async def create_job(
     job_data: JobCreate,
     session: AsyncSession = Depends(get_database),

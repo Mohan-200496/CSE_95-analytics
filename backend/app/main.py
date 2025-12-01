@@ -80,23 +80,47 @@ app = FastAPI(
 # app.add_middleware(SecurityMiddleware)
 # app.add_middleware(AnalyticsMiddleware)
 
-# Configure CORS with enhanced settings for frontend access
+# Configure CORS with maximum compatibility for deployment
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://punjab-rozgar-portal1.onrender.com",
-        "https://mohan-200496.github.io", 
-        "http://localhost:3000",
-        "http://localhost:8080",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:8080",
-        "*"  # Allow all for deployment debugging
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods
-    allow_headers=["*"],  # Allow all headers
+    allow_origins=["*"],  # Allow all origins for deployment
+    allow_credentials=False,  # Must be False when allow_origins is "*"
+    allow_methods=["*"],
+    allow_headers=["*"],
     expose_headers=["*"]
 )
+
+# Additional CORS handling for Render deployment
+@app.middleware("http")
+async def add_cors_headers(request: Request, call_next):
+    """Add CORS headers to all responses for Render deployment"""
+    
+    # Handle preflight requests immediately
+    if request.method == "OPTIONS":
+        response = JSONResponse(content={"status": "ok"})
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Max-Age"] = "86400"
+        return response
+    
+    # Process the request
+    try:
+        response = await call_next(request)
+    except Exception as e:
+        logger.error(f"Request processing error: {str(e)}")
+        response = JSONResponse(
+            status_code=500,
+            content={"detail": f"Internal server error: {str(e)}"}
+        )
+    
+    # Add CORS headers to all responses
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Expose-Headers"] = "*"
+    
+    return response
 
 # Add debugging middleware for requests
 @app.middleware("http")
@@ -104,36 +128,9 @@ async def debug_requests(request: Request, call_next):
     """Log all requests for debugging"""
     start_time = datetime.utcnow()
     logger.info(f"Request: {request.method} {request.url}")
-    logger.info(f"Headers: {dict(request.headers)}")
+    logger.info(f"Origin: {request.headers.get('origin', 'No origin header')}")
     
-    # Handle CORS preflight requests
-    if request.method == "OPTIONS":
-        response = JSONResponse(content={})
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "*"
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        return response
-    
-    try:
-        response = await call_next(request)
-        
-        # Add CORS headers to all responses
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "*"
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        
-    except Exception as e:
-        logger.error(f"Request error: {str(e)}")
-        response = JSONResponse(
-            status_code=500,
-            content={"detail": f"Internal server error: {str(e)}"}
-        )
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "*"
-        response.headers["Access-Control-Allow-Credentials"] = "true"
+    response = await call_next(request)
     
     process_time = (datetime.utcnow() - start_time).total_seconds()
     logger.info(f"Response: {response.status_code} in {process_time:.3f}s")
@@ -149,6 +146,27 @@ async def health_check():
         "timestamp": datetime.utcnow().isoformat(),
         "version": "1.0.0",
         "service": "Punjab Rozgar Portal API"
+    }
+
+# CORS test endpoint
+@app.get("/cors-test", tags=["System"])
+async def cors_test():
+    """Test CORS configuration"""
+    return {
+        "status": "success",
+        "message": "CORS is working correctly",
+        "timestamp": datetime.utcnow().isoformat(),
+        "cors_headers": "should be present in response"
+    }
+
+@app.post("/cors-test", tags=["System"])
+async def cors_test_post(data: dict = None):
+    """Test CORS with POST request"""
+    return {
+        "status": "success",
+        "message": "POST CORS is working correctly",
+        "received_data": data,
+        "timestamp": datetime.utcnow().isoformat()
     }
 
 # Database initialization endpoint
