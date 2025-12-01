@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Login Test - Punjab Rozgar Portal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            color: #6c5ce7;
+            margin-bottom: 30px;
+        }
+        .btn {
+            background: #6c5ce7;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+            width: 100%;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background: #5a4fcf;
+        }
+        .btn-secondary {
+            background: #74b9ff;
+        }
+        .btn-secondary:hover {
+            background: #0984e3;
+        }
+        .status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .status.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .status.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .user-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border: 1px solid #e9ecef;
+        }
+        .user-info strong {
+            color: #6c5ce7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Quick Login Test</h1>
+        
+        <div id="currentStatus">Loading...</div>
+        
+        <button class="btn" onclick="loginAsEmployer()">Login as Employer</button>
+        <button class="btn btn-secondary" onclick="checkStatus()">Check Current Status</button>
+        <button class="btn btn-secondary" onclick="goToJobPosting()">Go to Job Posting</button>
+        <button class="btn" onclick="logout()" style="background: #e17055;">Logout</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <!-- Include required scripts -->
+    <script src="../config/environment.js"></script>
+    <script src="../js/auth.js"></script>
+
+    <script>
+        let authManager;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.AuthManager) {
+                authManager = new window.AuthManager();
+                checkStatus();
+            } else {
+                showMessage('AuthManager not available', 'error');
+            }
+        });
+
+        function showMessage(message, type = 'info') {
+            document.getElementById('results').innerHTML = `
+                <div class="status ${type}">
+                    ${message}
+                </div>
+            `;
+        }
+
+        function checkStatus() {
+            const isLoggedIn = authManager.isLoggedIn();
+            const user = authManager.getCurrentUser();
+            const hasToken = !!authManager.accessToken;
+            
+            let statusHtml = '';
+            
+            if (isLoggedIn && user) {
+                statusHtml = `
+                    <div class="status success">
+                        ✅ Logged In
+                    </div>
+                    <div class="user-info">
+                        <strong>Name:</strong> ${user.name || user.first_name + ' ' + user.last_name}<br>
+                        <strong>Email:</strong> ${user.email}<br>
+                        <strong>Role:</strong> ${user.role}<br>
+                        <strong>User ID:</strong> ${user.user_id || user.id}<br>
+                        <strong>Has Token:</strong> ${hasToken ? 'Yes' : 'No'}
+                    </div>
+                `;
+                
+                // Check roles
+                const hasEmployerRole = authManager.hasRole('employer') || authManager.hasRole('EMPLOYER');
+                const hasAdminRole = authManager.hasRole('admin') || authManager.hasRole('ADMIN');
+                
+                statusHtml += `
+                    <div class="status ${hasEmployerRole || hasAdminRole ? 'success' : 'error'}">
+                        Can Post Jobs: ${hasEmployerRole || hasAdminRole ? 'Yes ✅' : 'No ❌'}
+                    </div>
+                `;
+                
+            } else {
+                statusHtml = `
+                    <div class="status error">
+                        ❌ Not Logged In
+                    </div>
+                `;
+            }
+            
+            document.getElementById('currentStatus').innerHTML = statusHtml;
+        }
+
+        async function loginAsEmployer() {
+            showMessage('Logging in as employer...', 'info');
+            
+            try {
+                const result = await authManager.login('employer@test.com', 'employer123');
+                
+                if (result.success) {
+                    showMessage('✅ Login successful!', 'success');
+                    checkStatus();
+                } else {
+                    showMessage(`❌ Login failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ Login error: ${error.message}`, 'error');
+                console.error('Login error:', error);
+            }
+        }
+
+        function logout() {
+            authManager.logout();
+            showMessage('Logged out successfully', 'info');
+            checkStatus();
+        }
+
+        function goToJobPosting() {
+            const user = authManager.getCurrentUser();
+            if (!user) {
+                showMessage('Please login first', 'error');
+                return;
+            }
+            
+            const hasEmployerRole = authManager.hasRole('employer') || authManager.hasRole('EMPLOYER');
+            const hasAdminRole = authManager.hasRole('admin') || authManager.hasRole('ADMIN');
+            
+            if (!hasEmployerRole && !hasAdminRole) {
+                showMessage('You need employer or admin role to post jobs', 'error');
+                return;
+            }
+            
+            window.location.href = '/pages/employer/add-job.html';
+        }
+    </script>
+</body>
+</html>

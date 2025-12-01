@@ -636,12 +636,32 @@
             console.log('  Current user:', authManager.getCurrentUser());
             console.log('  Access token:', authManager.accessToken ? 'Present' : 'Missing');
             
-            if (!authManager.requireRole('employer', '/pages/auth/login.html')) {
-                console.log('❌ Role check failed - redirecting to login');
+            const user = authManager.getCurrentUser();
+            if (user) {
+                console.log('  User role:', user.role);
+                console.log('  User role type:', typeof user.role);
+                console.log('  hasRole("employer"):', authManager.hasRole('employer'));
+                console.log('  hasRole("EMPLOYER"):', authManager.hasRole('EMPLOYER'));
+                console.log('  hasRole("admin"):', authManager.hasRole('admin'));
+            }
+            
+            // Enhanced role check with detailed logging
+            if (!authManager.isLoggedIn()) {
+                console.log('❌ User not logged in - showing alert');
+                alert('Please login first to access this page.');
+                window.location.href = '/pages/auth/login.html';
                 return;
             }
             
-            console.log('✅ Role check passed - user is employer');
+            if (!authManager.hasRole('employer') && !authManager.hasRole('EMPLOYER') && !authManager.hasRole('admin')) {
+                console.log('❌ Role check failed - user role:', user?.role);
+                console.log('   Available roles for user:', user);
+                alert('Access denied. Only admins and employers can post jobs.');
+                window.location.href = '/pages/auth/login.html';
+                return;
+            }
+            
+            console.log('✅ Role check passed - user can post jobs');
         });
 
         // Form submission -> Backend API
