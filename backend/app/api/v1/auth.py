@@ -78,15 +78,22 @@ async def register_user(
                 detail="User with this email already exists"
             )
         
-        # Validate role
-        if user_data.role not in [UserRole.JOB_SEEKER.value, UserRole.EMPLOYER.value]:
+        # Validate role and normalize
+        role_map = {
+            "job_seeker": UserRole.JOB_SEEKER,
+            "employer": UserRole.EMPLOYER,
+            "JOB_SEEKER": UserRole.JOB_SEEKER,
+            "EMPLOYER": UserRole.EMPLOYER
+        }
+        
+        if user_data.role not in role_map:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Role must be '{UserRole.JOB_SEEKER.value}' or '{UserRole.EMPLOYER.value}'"
+                detail=f"Role must be 'job_seeker', 'employer', 'JOB_SEEKER', or 'EMPLOYER'"
             )
         
         # Create new user
-        user_role = UserRole.JOB_SEEKER if user_data.role == "job_seeker" else UserRole.EMPLOYER
+        user_role = role_map[user_data.role]
         hashed_pw = hash_password(user_data.password)
         
         new_user = User(

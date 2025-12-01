@@ -145,7 +145,7 @@ async def lifespan(app: FastAPI):
     # Shutdown
     logger.info("Shutting down Punjab Rozgar Portal Backend...")
 
-# Create FastAPI application
+# Create FastAPI application with custom docs
 app = FastAPI(
     title="Punjab Rozgar Portal API",
     description="Employment portal backend with comprehensive analytics for Punjab government",
@@ -153,7 +153,13 @@ app = FastAPI(
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
-    lifespan=lifespan
+    lifespan=lifespan,
+    swagger_ui_parameters={
+        "deepLinking": True,
+        "displayRequestDuration": True,
+        "docExpansion": "none",
+        "operationsSorter": "alpha"
+    }
 )
 
 # Security Firewall (First layer - highest priority)
@@ -393,6 +399,131 @@ async def track_event(request: Request):
         tracker = request.app.state.analytics
         
         # Track the event
+        result = await tracker.track_event(
+            event_type=data.get("event_type", "unknown"),
+            user_id=data.get("user_id"),
+            session_id=data.get("session_id"),
+            metadata=data
+        )
+        
+        return {"success": True, "event_id": result}
+        
+    except Exception as e:
+        logger.error(f"Event tracking error: {e}")
+        return {"success": False, "error": "Failed to track event"}
+
+# Add tracker statistics endpoint to fix 404 errors
+@app.get("/hybridaction/zybTrackerStatisticsAction", tags=["Analytics"])
+async def tracker_statistics():
+    """Frontend tracker statistics endpoint"""
+    return {
+        "status": "ok", 
+        "message": "Tracker statistics endpoint",
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+# Database debug endpoint
+@app.get("/api/debug/users", tags=["System"])
+async def debug_users(db: AsyncSession = Depends(get_database)):
+    """Debug endpoint to check user accounts"""
+    try:
+        from app.models.user import User
+        from sqlalchemy import select
+        
+        result = await db.execute(select(User))
+        users = result.scalars().all()
+        
+        user_data = []
+        for user in users:
+            user_data.append({
+                "email": user.email,
+                "role": str(user.role),
+                "status": str(user.status) if hasattr(user, 'status') else "unknown",
+                "email_verified": getattr(user, 'email_verified', False)
+            })
+        
+        return {
+            "total_users": len(users),
+            "users": user_data
+        }
+        
+    except Exception as e:
+        logger.error(f"Debug users error: {e}")
+        return {"error": str(e)}
+
+# Fix user roles endpoint
+@app.post("/api/debug/fix-users", tags=["System"])
+async def fix_user_roles(db: AsyncSession = Depends(get_database)):
+    """Fix any user role enum issues"""
+    try:
+        from app.models.user import User, UserRole, AccountStatus
+        from passlib.context import CryptContext
+        from sqlalchemy import select, delete
+        
+        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        
+        # Delete all users first to clean up any corrupted data
+        await db.execute(delete(User))
+        await db.commit()
+        
+        # Create fresh demo users with correct enum values
+        admin_user = User(
+            user_id="admin_demo_001",
+            email="admin@test.com",
+            hashed_password=pwd_context.hash("admin123"[:72]),  # Truncate password
+            first_name="Admin",
+            last_name="User",
+            phone="+1234567890",
+            role=UserRole.ADMIN,
+            status=AccountStatus.ACTIVE,
+            email_verified=True,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        db.add(admin_user)
+        
+        employer_user = User(
+            user_id="employer_demo_001",
+            email="employer@test.com", 
+            hashed_password=pwd_context.hash("employer123"[:72]),  # Truncate password
+            first_name="Test",
+            last_name="Employer",
+            phone="+1234567891",
+            role=UserRole.EMPLOYER,
+            status=AccountStatus.ACTIVE,
+            email_verified=True,
+            company_name="Demo Tech Solutions",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        db.add(employer_user)
+        
+        jobseeker_user = User(
+            user_id="jobseeker_demo_001",
+            email="jobseeker@email.com",
+            hashed_password=pwd_context.hash("jobseeker123"[:72]),  # Truncate password
+            first_name="Test", 
+            last_name="JobSeeker",
+            phone="+1234567892",
+            role=UserRole.JOB_SEEKER,
+            status=AccountStatus.ACTIVE,
+            email_verified=True,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        db.add(jobseeker_user)
+        
+        await db.commit()
+        
+        return {
+            "message": "Users fixed successfully",
+            "created_users": 3
+        }
+        
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Fix users error: {e}")
+        return {"error": str(e)}
         event_id = await tracker.track_event(
             event_name=data.get("event"),
             properties=data.get("data", {}),

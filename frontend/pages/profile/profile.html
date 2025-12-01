@@ -418,31 +418,31 @@
                 
                 if (role === 'admin' || role === 'administrator') {
                     console.log('✅ Redirecting to admin dashboard');
-                    window.location.href = '/pages/admin/dashboard.html';
+                    window.location.href = '../admin/dashboard.html';
                 } else if (role === 'employer' || role === 'recruiter') {
                     console.log('✅ Redirecting to employer dashboard');
-                    window.location.href = '/pages/employer/dashboard.html';
+                    window.location.href = '../employer/dashboard.html';
                 } else if (role === 'job_seeker' || role === 'jobseeker' || role === 'seeker') {
                     console.log('✅ Redirecting to jobseeker dashboard');
-                    window.location.href = '/pages/jobseeker/dashboard.html';
+                    window.location.href = '../jobseeker/dashboard.html';
                 } else {
                     // Fallback based on email if role is unclear
                     const email = user.email || '';
                     console.log('🔍 Role unclear, checking email:', email);
                     if (email.includes('admin')) {
                         console.log('🔄 Email-based redirect: admin dashboard');
-                        window.location.href = '/pages/admin/dashboard.html';
+                        window.location.href = '../admin/dashboard.html';
                     } else if (email.includes('employer')) {
                         console.log('🔄 Email-based redirect: employer dashboard');
-                        window.location.href = '/pages/employer/dashboard.html';
+                        window.location.href = '../employer/dashboard.html';
                     } else {
                         console.log('🔄 Email-based redirect: jobseeker dashboard (default)');
-                        window.location.href = '/pages/jobseeker/dashboard.html';
+                        window.location.href = '../jobseeker/dashboard.html';
                     }
                 }
             } else {
                 console.log('❌ No user found, redirecting to home');
-                window.location.href = '/index.html';
+                window.location.href = '../../index.html';
             }
         }
     </script>

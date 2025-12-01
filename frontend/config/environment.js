@@ -54,9 +54,9 @@
     getConfig() {
         const configs = {
             development: {
-                API_BASE_URL: 'http://localhost:8000',
-                API_DOCS_URL: 'http://localhost:8000/docs',
-                WEBSOCKET_URL: 'ws://localhost:8000/ws',
+                API_BASE_URL: 'http://127.0.0.1:8000',
+                API_DOCS_URL: 'http://127.0.0.1:8000/docs',
+                WEBSOCKET_URL: 'ws://127.0.0.1:8000/ws',
                 ENVIRONMENT: 'development',
                 DEBUG: true
             },

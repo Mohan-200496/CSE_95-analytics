@@ -2121,7 +2121,7 @@
                         <i class="fas fa-user"></i>
                     </button>
                     <div class="dropdown-menu" id="userDropdown">
-                        <a href="pages/dashboard/dashboard.html" class="dropdown-item">
+                        <a href="#" onclick="goToDashboard()" class="dropdown-item">
                             <i class="fas fa-tachometer-alt"></i> Dashboard
                         </a>
                         <a href="pages/profile/profile.html" class="dropdown-item">
@@ -3195,6 +3195,28 @@
         function toggleUserDropdown() {
             const dropdown = document.getElementById('userDropdown');
             dropdown.classList.toggle('show');
+        }
+
+        // Navigate to Dashboard based on user role
+        function goToDashboard() {
+            if (typeof authManager !== 'undefined' && authManager.isLoggedIn()) {
+                const user = authManager.getCurrentUser();
+                const role = (user.role || '').toLowerCase().trim();
+                
+                if (role === 'admin' || role === 'administrator') {
+                    window.location.href = 'pages/admin/dashboard.html';
+                } else if (role === 'employer' || role === 'recruiter') {
+                    window.location.href = 'pages/employer/dashboard.html';
+                } else if (role === 'job_seeker' || role === 'jobseeker' || role === 'seeker') {
+                    window.location.href = 'pages/jobseeker/dashboard.html';
+                } else {
+                    // Fallback to jobseeker dashboard
+                    window.location.href = 'pages/jobseeker/dashboard.html';
+                }
+            } else {
+                // Not logged in, redirect to login
+                window.location.href = 'pages/auth/login.html';
+            }
         }
 
         // Toggle Mobile Menu

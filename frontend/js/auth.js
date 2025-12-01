@@ -476,40 +476,62 @@
                               (role?.value || role?.name || String(role)).toLowerCase().trim();
         console.log('🔧 Normalized role:', normalizedRole);
         
-        // Enhanced role mapping - handle all possible variations INCLUDING UPPERCASE backend values
-        let redirectUrl = '/index.html'; // default fallback - use absolute path
+        // Get current page location to determine relative path
+        const currentPath = window.location.pathname;
+        let basePath = '';
+        
+        // Determine how many levels deep we are
+        if (currentPath.includes('/pages/')) {
+            const pathParts = currentPath.split('/pages/')[1].split('/');
+            const depth = pathParts.length - 1; // -1 for the filename
+            basePath = '../'.repeat(depth);
+        } else {
+            basePath = 'pages/';
+        }
+        
+        // Enhanced role mapping with dynamic paths
+        let redirectUrl = basePath === 'pages/' ? 'index.html' : '../'.repeat(basePath.split('../').length - 1) + 'index.html'; // default fallback
         
         if (normalizedRole === 'admin' || normalizedRole === 'administrator') {
-            redirectUrl = '/pages/admin/dashboard.html';
+            redirectUrl = basePath + 'admin/dashboard.html';
             console.log('✅ Redirecting to ADMIN dashboard');
         } else if (normalizedRole === 'employer' || normalizedRole === 'recruiter') {
-            redirectUrl = '/pages/employer/dashboard.html';
+            redirectUrl = basePath + 'employer/dashboard.html';
             console.log('✅ Redirecting to EMPLOYER dashboard');
         } else if (normalizedRole === 'job_seeker' || normalizedRole === 'jobseeker' || normalizedRole === 'seeker') {
-            redirectUrl = '/pages/jobseeker/dashboard.html';
+            redirectUrl = basePath + 'jobseeker/dashboard.html';
             console.log('✅ Redirecting to JOB_SEEKER dashboard');
         } else {
             // If role is unclear, check user email to determine correct role
             const user = this.getCurrentUser();
             if (user && user.email) {
                 if (user.email.includes('admin')) {
-                    redirectUrl = '/pages/admin/dashboard.html';
+                    redirectUrl = basePath + 'admin/dashboard.html';
                     console.log('🔄 Email-based redirect: ADMIN dashboard');
                 } else if (user.email.includes('employer')) {
-                    redirectUrl = '/pages/employer/dashboard.html';
+                    redirectUrl = basePath + 'employer/dashboard.html';
                     console.log('🔄 Email-based redirect: EMPLOYER dashboard');
                 } else {
-                    redirectUrl = '/pages/jobseeker/dashboard.html';
+                    redirectUrl = basePath + 'jobseeker/dashboard.html';
                     console.log('🔄 Email-based redirect: JOB_SEEKER dashboard (default)');
                 }
             } else {
                 console.log('⚠️ Unknown role and no user email, defaulting to job seeker');
-                redirectUrl = '/pages/jobseeker/dashboard.html';
+                redirectUrl = basePath + 'jobseeker/dashboard.html';
             }
         }
         
         console.log(`🚀 Final redirect URL: ${redirectUrl}`);
         window.location.href = redirectUrl;
+    }
+
+    // Universal dashboard navigation function
+    goToDashboard() {
+        if (this.isLoggedIn()) {
+            window.location.href = this.getDashboardUrl();
+        } else {
+            window.location.href = '/pages/auth/login.html';
+        }
     }
 
     // UI Management
@@ -631,15 +653,28 @@
     }
 
     getDashboardUrl() {
+        // Get current page location to determine relative path
+        const currentPath = window.location.pathname;
+        let basePath = '';
+        
+        // Determine how many levels deep we are
+        if (currentPath.includes('/pages/')) {
+            const pathParts = currentPath.split('/pages/')[1].split('/');
+            const depth = pathParts.length - 1; // -1 for the filename
+            basePath = '../'.repeat(depth);
+        } else {
+            basePath = 'pages/';
+        }
+        
         switch (this.currentUser.role) {
             case this.userRoles.ADMIN:
-                return '/pages/admin/dashboard.html';
+                return basePath + 'admin/dashboard.html';
             case this.userRoles.EMPLOYER:
-                return '/pages/employer/dashboard.html';
+                return basePath + 'employer/dashboard.html';
             case this.userRoles.JOB_SEEKER:
-                return '/pages/jobseeker/dashboard.html';
+                return basePath + 'jobseeker/dashboard.html';
             default:
-                return '/index.html';
+                return basePath === 'pages/' ? 'index.html' : '../'.repeat(basePath.split('../').length - 1) + 'index.html';
         }
     }
 
