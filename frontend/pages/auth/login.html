@@ -543,6 +543,22 @@
     <script src="../../js/auth.js"></script>
     
     <script>
+        // Wait for scripts to load and ensure authManager is available
+        function waitForAuthManager() {
+            return new Promise((resolve) => {
+                if (window.authManager) {
+                    resolve(window.authManager);
+                } else if (window.AuthManager) {
+                    const authManager = new window.AuthManager();
+                    window.authManager = authManager;
+                    resolve(authManager);
+                } else {
+                    // Retry after a short delay
+                    setTimeout(() => waitForAuthManager().then(resolve), 100);
+                }
+            });
+        }
+        
         const form = document.getElementById('login-form');
         const errorMessage = document.getElementById('error-message');
         const successMessage = document.getElementById('success-message');
@@ -572,6 +588,9 @@
             loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
 
             try {
+                // Ensure authManager is available
+                const authManager = await waitForAuthManager();
+                
                 const result = await authManager.login(email, password, remember);
                 
                 if (result.success) {

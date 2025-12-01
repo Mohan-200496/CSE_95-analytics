@@ -31,6 +31,17 @@
             return window.ENV_CONFIG.apiUrl + '/api/v1';
         }
         
+        // Check alternative environment config
+        if (window.EnvironmentConfig) {
+            try {
+                const envConfig = new window.EnvironmentConfig();
+                console.log('🌐 Using EnvironmentConfig API URL:', envConfig.config.API_BASE_URL);
+                return envConfig.config.API_BASE_URL + '/api/v1';
+            } catch (e) {
+                console.warn('Failed to create EnvironmentConfig:', e);
+            }
+        }
+        
         // Fallback - try to detect environment manually
         const hostname = window.location.hostname;
         if (hostname.includes('onrender.com')) {
