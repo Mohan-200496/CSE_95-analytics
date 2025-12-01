@@ -746,3 +746,53 @@ async def process_event_background(event_name: str, properties: Dict[str, Any], 
         
     except Exception as e:
         logger.error(f"Background event processing failed: {e}")
+
+@router.get("/stats")
+async def get_analytics_stats(
+    request: Request,
+    period: str = Query("7d", description="Time period: 1h, 24h, 7d, 30d"),
+    db: AsyncSession = Depends(get_database)
+):
+    """
+    Get analytics statistics (public endpoint for testing)
+    
+    Returns general analytics metrics for system monitoring
+    """
+    try:
+        # Calculate time range based on period
+        now = datetime.utcnow()
+        if period == "1h":
+            start_time = now - timedelta(hours=1)
+        elif period == "24h":
+            start_time = now - timedelta(hours=24)
+        elif period == "7d":
+            start_time = now - timedelta(days=7)
+        elif period == "30d":
+            start_time = now - timedelta(days=30)
+        else:
+            start_time = now - timedelta(days=7)  # Default to 7 days
+        
+        # Get analytics data
+        stats = await get_analytics_summary(db, start_time, now)
+        
+        # Add system health metrics
+        stats.update({
+            "system_health": 95,  # Mock system health percentage
+            "api_status": "operational",
+            "database_status": "healthy",
+            "period": period,
+            "timestamp": now.isoformat()
+        })
+        
+        return {
+            "success": True,
+            "data": stats,
+            "message": f"Analytics stats for {period} retrieved successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Analytics stats failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to retrieve analytics statistics"
+        )
