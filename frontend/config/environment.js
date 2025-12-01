@@ -1,7 +1,7 @@
 // Punjab Rozgar Portal - Environment Configuration
 // Automatically detects and configures API endpoints for different deployment environments
 
-if (typeof EnvironmentConfig === 'undefined') {
+if (typeof window.EnvironmentConfig === 'undefined') {
 class EnvironmentConfig {
     constructor() {
         this.environment = this.detectEnvironment();

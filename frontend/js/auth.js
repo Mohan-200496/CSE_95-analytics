@@ -3,7 +3,7 @@
  * Handles user authentication, role management, and session persistence
  */
 
-if (typeof AuthManager === 'undefined') {
+if (typeof window.AuthManager === 'undefined') {
 class AuthManager {
     constructor() {
         this.currentUser = null;
