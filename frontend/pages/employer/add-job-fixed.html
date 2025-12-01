@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post a Job - Punjab Rozgar Portal</title>
+    <link rel="stylesheet" href="../../assets/css/main.css">
+    <script src="../../config/environment.js"></script>
+    <script src="../../js/auth.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #6c5ce7;
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+
+        .header .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .header .nav-links a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .header .nav-links a:hover {
+            opacity: 0.8;
+        }
+
+        .main-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .page-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .page-header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .auth-status {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .form-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+        }
+
+        .form-section h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .required {
+            color: #dc3545;
+        }
+
+        .help-text {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0.5rem;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .status {
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .status.warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .header .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <a href="../../index.html" class="logo">Punjab Rozgar</a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="../../index.html">Home</a></li>
+                    <li><a href="../jobs/browse.html">Jobs</a></li>
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="#" onclick="authManager.logout()">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>Post a New Job</h1>
+            <p>Find the perfect candidate for your team by posting a detailed job listing</p>
+        </div>
+
+        <!-- Authentication Status -->
+        <div class="auth-status">
+            <h3>Authentication Status</h3>
+            <div id="authStatusInfo">Checking authentication...</div>
+            <button class="btn btn-secondary" onclick="checkAuthStatus()">Refresh Status</button>
+            <button class="btn" onclick="quickLogin()" id="loginBtn">Quick Login as Employer</button>
+        </div>
+
+        <!-- Job Form -->
+        <div class="form-container" id="jobFormContainer" style="display: none;">
+            <form id="jobForm">
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h3>Basic Information</h3>
+                    
+                    <div class="form-group">
+                        <label for="jobTitle">Job Title <span class="required">*</span></label>
+                        <input type="text" id="jobTitle" name="jobTitle" required placeholder="e.g. Senior Software Developer">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="department">Department <span class="required">*</span></label>
+                            <select id="department" name="department" required>
+                                <option value="">Select Department</option>
+                                <option value="Information Technology">Information Technology</option>
+                                <option value="Engineering">Engineering</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Sales">Sales</option>
+                                <option value="Human Resources">Human Resources</option>
+                                <option value="Finance">Finance</option>
+                                <option value="Operations">Operations</option>
+                                <option value="Healthcare">Healthcare</option>
+                                <option value="Education">Education</option>
+                                <option value="Manufacturing">Manufacturing</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="jobType">Job Type <span class="required">*</span></label>
+                            <select id="jobType" name="jobType" required>
+                                <option value="">Select Job Type</option>
+                                <option value="FULL_TIME">Full-time</option>
+                                <option value="PART_TIME">Part-time</option>
+                                <option value="CONTRACT">Contract</option>
+                                <option value="TEMPORARY">Temporary</option>
+                                <option value="INTERNSHIP">Internship</option>
+                                <option value="FREELANCE">Freelance</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="jobDescription">Job Description <span class="required">*</span></label>
+                        <textarea id="jobDescription" name="jobDescription" required placeholder="Describe the role, responsibilities, and what the candidate will be doing..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Location & Compensation -->
+                <div class="form-section">
+                    <h3>Location & Compensation</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="location">Location <span class="required">*</span></label>
+                            <input type="text" id="location" name="location" required placeholder="e.g. Lahore, Punjab">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="workModel">Work Model</label>
+                            <select id="workModel" name="workModel">
+                                <option value="on_site">On-site</option>
+                                <option value="remote">Remote</option>
+                                <option value="hybrid">Hybrid</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="salaryMin">Minimum Salary (PKR)</label>
+                            <input type="number" id="salaryMin" name="salaryMin" placeholder="50000">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="salaryMax">Maximum Salary (PKR)</label>
+                            <input type="number" id="salaryMax" name="salaryMax" placeholder="80000">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Requirements -->
+                <div class="form-section">
+                    <h3>Requirements</h3>
+                    
+                    <div class="form-group">
+                        <label for="experience">Experience Level</label>
+                        <select id="experience" name="experience">
+                            <option value="">Select Experience Level</option>
+                            <option value="0">Entry Level (0-2 years)</option>
+                            <option value="3">Mid Level (3-5 years)</option>
+                            <option value="6">Senior Level (6-10 years)</option>
+                            <option value="10">Lead/Principal (10+ years)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="education">Education Requirements</label>
+                        <select id="education" name="education">
+                            <option value="">Select Education Level</option>
+                            <option value="high_school">High School</option>
+                            <option value="diploma">Diploma</option>
+                            <option value="bachelors">Bachelor's Degree</option>
+                            <option value="masters">Master's Degree</option>
+                            <option value="phd">PhD</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="requirements">Additional Requirements</label>
+                        <textarea id="requirements" name="requirements" placeholder="List any additional requirements, certifications, or qualifications..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success">Create Job</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        let authManager;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.AuthManager) {
+                authManager = new window.AuthManager();
+                checkAuthStatus();
+            } else {
+                showError('AuthManager not available');
+            }
+        });
+
+        function showMessage(message, type = 'info') {
+            document.getElementById('results').innerHTML = `
+                <div class="status ${type}">
+                    ${message}
+                </div>
+            `;
+        }
+
+        function showError(message) {
+            showMessage(message, 'error');
+        }
+
+        function checkAuthStatus() {
+            const statusEl = document.getElementById('authStatusInfo');
+            const formContainer = document.getElementById('jobFormContainer');
+            const loginBtn = document.getElementById('loginBtn');
+            
+            const isLoggedIn = authManager.isLoggedIn();
+            const user = authManager.getCurrentUser();
+            const hasToken = !!authManager.accessToken;
+            
+            if (isLoggedIn && user) {
+                const canPostJobs = user.role === 'EMPLOYER' || user.role === 'ADMIN' || 
+                                   user.role === 'employer' || user.role === 'admin';
+                
+                statusEl.innerHTML = `
+                    <div class="status success">
+                        ✅ <strong>Logged In</strong><br>
+                        <strong>Name:</strong> ${user.name || user.first_name + ' ' + user.last_name}<br>
+                        <strong>Email:</strong> ${user.email}<br>
+                        <strong>Role:</strong> ${user.role}<br>
+                        <strong>Can Post Jobs:</strong> ${canPostJobs ? 'Yes ✅' : 'No ❌'}
+                    </div>
+                `;
+                
+                if (canPostJobs) {
+                    formContainer.style.display = 'block';
+                    loginBtn.style.display = 'none';
+                } else {
+                    formContainer.style.display = 'none';
+                    loginBtn.style.display = 'inline-block';
+                    showMessage('You need employer or admin role to post jobs. Current role: ' + user.role, 'warning');
+                }
+            } else {
+                statusEl.innerHTML = `
+                    <div class="status error">
+                        ❌ <strong>Not Logged In</strong><br>
+                        Please login to access job posting functionality
+                    </div>
+                `;
+                formContainer.style.display = 'none';
+                loginBtn.style.display = 'inline-block';
+            }
+        }
+
+        async function quickLogin() {
+            showMessage('Logging in as employer...', 'info');
+            
+            try {
+                const result = await authManager.login('employer@test.com', 'employer123');
+                
+                if (result.success) {
+                    showMessage('✅ Login successful!', 'success');
+                    checkAuthStatus();
+                } else {
+                    showMessage(`❌ Login failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ Login error: ${error.message}`, 'error');
+                console.error('Login error:', error);
+            }
+        }
+
+        // Form submission
+        document.getElementById('jobForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const user = authManager.getCurrentUser();
+            if (!user) {
+                showMessage('Please login first', 'error');
+                return;
+            }
+            
+            showMessage('Creating job...', 'info');
+            
+            const formData = new FormData(this);
+            const payload = {
+                title: formData.get('jobTitle'),
+                description: formData.get('jobDescription'),
+                requirements: formData.get('requirements') || '',
+                job_type: formData.get('jobType') || 'FULL_TIME',
+                category: formData.get('department') || 'Other',
+                location_city: formData.get('location') || 'Lahore',
+                location_state: 'Punjab',
+                remote_allowed: formData.get('workModel') === 'remote',
+                salary_min: formData.get('salaryMin') ? parseInt(formData.get('salaryMin')) : null,
+                salary_max: formData.get('salaryMax') ? parseInt(formData.get('salaryMax')) : null,
+                experience_min: formData.get('experience') ? parseInt(formData.get('experience')) : 0,
+                education_level: formData.get('education') || null,
+                contact_email: user.email
+            };
+
+            try {
+                console.log('Submitting job:', payload);
+                
+                const response = await authManager.makeApiCall('/jobs/', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response) {
+                    showMessage(`✅ Job created successfully! Job ID: ${response.job_id}`, 'success');
+                    document.getElementById('jobForm').reset();
+                } else {
+                    showMessage('❌ Failed to create job. Please try again.', 'error');
+                }
+            } catch (error) {
+                console.error('Job creation error:', error);
+                showMessage(`❌ Error creating job: ${error.message}`, 'error');
+            }
+        });
+    </script>
+</body>
+</html>
