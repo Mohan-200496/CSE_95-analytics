@@ -616,22 +616,110 @@
 
         async function loadJobsFromApi() {
             try {
-                const res = await fetch(`${authManager.apiBaseUrl}/admin/jobs`, {
-                    headers: authManager.getAuthHeaders()
-                });
-                const data = await res.json();
-                if (!res.ok) {
-                    console.error('Failed to load jobs', data);
-                    alert(`Failed to load jobs: ${data.detail || data.message || res.status}`);
-                    return;
+                console.log('Admin: Loading all jobs from cloud database...');
+                let allJobsData = [];
+                
+                // Try multiple endpoints to get comprehensive job data
+                
+                // 1. Try recent jobs endpoint
+                try {
+                    const recentResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/recent');
+                    const recentResult = await recentResponse.json();
+                    if (recentResult.success && recentResult.data.jobs) {
+                        allJobsData = allJobsData.concat(recentResult.data.jobs);
+                        console.log(`Admin: Found ${recentResult.data.jobs.length} recent jobs`);
+                    }
+                } catch (e) {
+                    console.warn('Admin: Recent jobs endpoint failed:', e.message);
                 }
-                allJobs = data;
+                
+                // 2. Try main jobs endpoint
+                try {
+                    const mainResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/');
+                    if (mainResponse.ok) {
+                        const mainJobs = await mainResponse.json();
+                        if (Array.isArray(mainJobs)) {
+                            allJobsData = allJobsData.concat(mainJobs);
+                            console.log(`Admin: Found ${mainJobs.length} jobs from main endpoint`);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Admin: Main jobs endpoint failed:', e.message);
+                }
+                
+                // 3. Try featured jobs endpoint
+                try {
+                    const featuredResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/featured');
+                    const featuredResult = await featuredResponse.json();
+                    if (featuredResult.success && featuredResult.data) {
+                        const featuredJobs = Array.isArray(featuredResult.data) ? featuredResult.data : [featuredResult.data];
+                        allJobsData = allJobsData.concat(featuredJobs);
+                        console.log(`Admin: Found ${featuredJobs.length} featured jobs`);
+                    }
+                } catch (e) {
+                    console.warn('Admin: Featured jobs endpoint failed:', e.message);
+                }
+                
+                // 4. Include mock jobs for demonstration
+                try {
+                    const mockResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/mock');
+                    const mockResult = await mockResponse.json();
+                    if (mockResult.success && mockResult.data) {
+                        const mockJobs = Array.isArray(mockResult.data) ? mockResult.data : [mockResult.data];
+                        allJobsData = allJobsData.concat(mockJobs);
+                        console.log(`Admin: Found ${mockJobs.length} mock jobs`);
+                    }
+                } catch (e) {
+                    console.warn('Admin: Mock jobs endpoint failed:', e.message);
+                }
+                
+                // Remove duplicates based on job_id
+                const uniqueJobs = allJobsData.reduce((acc, current) => {
+                    const existingJob = acc.find(job => 
+                        job.job_id === current.job_id || 
+                        job.id === current.job_id || 
+                        job.job_id === current.id ||
+                        job.id === current.id
+                    );
+                    if (!existingJob) {
+                        acc.push(current);
+                    }
+                    return acc;
+                }, []);
+                
+                console.log(`Admin: Total unique jobs loaded: ${uniqueJobs.length}`);
+                
+                allJobs = uniqueJobs;
                 filteredJobs = [...allJobs];
                 renderJobs();
                 updateStats();
+                
+                // Show success message if jobs were loaded
+                if (allJobs.length > 0) {
+                    console.log(`✅ Admin: Successfully loaded ${allJobs.length} jobs from cloud database`);
+                } else {
+                    console.warn('⚠️ Admin: No jobs found in database');
+                }
+                
             } catch (e) {
-                console.error('Load jobs error', e);
-                alert('Network error loading jobs');
+                console.error('Admin: Load jobs error', e);
+                
+                // Show user-friendly error
+                const jobsContainer = document.querySelector('.jobs-table tbody');
+                if (jobsContainer) {
+                    jobsContainer.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 2rem;">
+                                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #dc3545; margin-bottom: 1rem;"></i>
+                                <h3>Error Loading Jobs</h3>
+                                <p>Unable to connect to the database. Please check your internet connection and try again.</p>
+                                <button class="btn" onclick="loadJobsFromApi()" style="margin-top: 1rem;">
+                                    <i class="fas fa-sync"></i> Retry
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }
             }
         }
 

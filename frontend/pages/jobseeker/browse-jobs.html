@@ -680,39 +680,159 @@
         });
 
         function loadAllJobs() {
-            // Start with sample jobs
-            allJobs = [...sampleJobs];
+            console.log('Job Seeker: Loading jobs from cloud database...');
+            loadJobsFromCloudDatabase();
+        }
+
+        async function loadJobsFromCloudDatabase() {
+            // Start with empty array
+            allJobs = [];
             
-            // Add local jobs if available
-            if (window.localJobStorage) {
-                const localJobs = window.localJobStorage.getJobs();
-                console.log(`📱 Found ${localJobs.length} local jobs`);
+            try {
+                // Load jobs from multiple cloud database endpoints
+                let cloudJobs = [];
                 
-                // Convert local jobs to browse format
-                const convertedLocalJobs = localJobs.map(job => ({
-                    id: job.job_id,
-                    title: job.title,
-                    company: job.employer_name || 'Company',
-                    location: `${job.location_city || ''}${job.location_state ? ', ' + job.location_state : ''}`,
-                    type: job.job_type || 'full_time',
-                    salary: job.salary_min && job.salary_max ? 
-                        `INR ${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()}` :
-                        job.salary_min ? `INR ${job.salary_min.toLocaleString()}+` : 'Competitive',
-                    category: job.category || 'Technology',
-                    description: job.description,
-                    requirements: job.requirements || 'As per job description',
-                    posted_date: job.created_at ? job.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
-                    experience: job.experience_min ? `${job.experience_min}+ years` : 'Fresher to experienced',
-                    remote_allowed: job.remote_allowed,
-                    isLocal: true // Mark as local job
-                }));
+                // 1. Try recent jobs endpoint (primary source)
+                try {
+                    const recentResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/recent');
+                    const recentResult = await recentResponse.json();
+                    if (recentResult.success && recentResult.data.jobs) {
+                        // Convert backend jobs to browse format
+                        const convertedRecent = recentResult.data.jobs.map(convertBackendJobToBrowseFormat);
+                        cloudJobs = cloudJobs.concat(convertedRecent);
+                        console.log(`📋 Found ${recentResult.data.jobs.length} recent jobs from cloud`);
+                    }
+                } catch (e) {
+                    console.warn('Recent jobs endpoint failed:', e.message);
+                }
                 
-                // Add converted local jobs
-                allJobs = allJobs.concat(convertedLocalJobs);
-                console.log(`📋 Total jobs available: ${allJobs.length} (${convertedLocalJobs.length} local + ${sampleJobs.length} sample)`);
+                // 2. Try main jobs endpoint
+                try {
+                    const mainResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/');
+                    if (mainResponse.ok) {
+                        const mainJobs = await mainResponse.json();
+                        if (Array.isArray(mainJobs)) {
+                            const convertedMain = mainJobs.map(convertBackendJobToBrowseFormat);
+                            cloudJobs = cloudJobs.concat(convertedMain);
+                            console.log(`📋 Found ${mainJobs.length} jobs from main endpoint`);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Main jobs endpoint failed:', e.message);
+                }
+                
+                // 3. Try featured jobs endpoint
+                try {
+                    const featuredResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/featured');
+                    const featuredResult = await featuredResponse.json();
+                    if (featuredResult.success && featuredResult.data) {
+                        const featuredJobs = Array.isArray(featuredResult.data) ? featuredResult.data : [featuredResult.data];
+                        const convertedFeatured = featuredJobs.map(convertBackendJobToBrowseFormat);
+                        cloudJobs = cloudJobs.concat(convertedFeatured);
+                        console.log(`📋 Found ${featuredJobs.length} featured jobs`);
+                    }
+                } catch (e) {
+                    console.warn('Featured jobs endpoint failed:', e.message);
+                }
+                
+                // 4. Include mock jobs for demo
+                try {
+                    const mockResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/mock');
+                    const mockResult = await mockResponse.json();
+                    if (mockResult.success && mockResult.data) {
+                        const mockJobs = Array.isArray(mockResult.data) ? mockResult.data : [mockResult.data];
+                        const convertedMock = mockJobs.map(convertBackendJobToBrowseFormat);
+                        cloudJobs = cloudJobs.concat(convertedMock);
+                        console.log(`📋 Found ${mockJobs.length} mock jobs`);
+                    }
+                } catch (e) {
+                    console.warn('Mock jobs endpoint failed:', e.message);
+                }
+                
+                // Remove duplicates
+                const uniqueCloudJobs = cloudJobs.reduce((acc, current) => {
+                    const existingJob = acc.find(job => 
+                        job.id === current.id || 
+                        (job.id && current.id && job.id === current.id)
+                    );
+                    if (!existingJob) {
+                        acc.push({...current, isCloudJob: true});
+                    }
+                    return acc;
+                }, []);
+                
+                console.log(`☁️ Total cloud jobs: ${uniqueCloudJobs.length}`);
+                
+                // Add cloud jobs first (priority)
+                allJobs = uniqueCloudJobs;
+                
+                // Add local jobs if available (lower priority)
+                if (window.localJobStorage) {
+                    const localJobs = window.localJobStorage.getJobs();
+                    if (localJobs.length > 0) {
+                        console.log(`📱 Found ${localJobs.length} local jobs`);
+                        
+                        const convertedLocalJobs = localJobs.map(job => ({
+                            id: job.job_id,
+                            title: job.title,
+                            company: job.employer_name || 'Company',
+                            location: `${job.location_city || ''}${job.location_state ? ', ' + job.location_state : ''}`,
+                            type: job.job_type || 'full_time',
+                            salary: job.salary_min && job.salary_max ? 
+                                `INR ${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()}` :
+                                job.salary_min ? `INR ${job.salary_min.toLocaleString()}+` : 'Competitive',
+                            category: job.category || 'Technology',
+                            description: job.description,
+                            requirements: job.requirements || 'As per job description',
+                            posted_date: job.created_at ? job.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+                            experience: job.experience_min ? `${job.experience_min}+ years` : 'Fresher to experienced',
+                            remote_allowed: job.remote_allowed,
+                            isLocal: true
+                        }));
+                        
+                        allJobs = allJobs.concat(convertedLocalJobs);
+                    }
+                }
+                
+                // Fallback to sample jobs if no data found
+                if (allJobs.length === 0) {
+                    console.warn('⚠️ No cloud or local jobs found, using sample data');
+                    allJobs = sampleJobs;
+                }
+                
+                console.log(`📊 Total jobs available for browsing: ${allJobs.length}`);
+                
+            } catch (error) {
+                console.error('Error loading jobs from cloud:', error);
+                // Fallback to sample data
+                allJobs = sampleJobs;
+                console.log('Falling back to sample jobs');
             }
             
             filteredJobs = [...allJobs];
+        }
+
+        // Helper function to convert backend job format to browse format
+        function convertBackendJobToBrowseFormat(backendJob) {
+            return {
+                id: backendJob.job_id || backendJob.id,
+                title: backendJob.title,
+                company: backendJob.employer_name || 'Company',
+                location: `${backendJob.location_city || ''}${backendJob.location_state ? ', ' + backendJob.location_state : ''}`,
+                type: backendJob.job_type || 'full_time',
+                salary: backendJob.salary_min && backendJob.salary_max ? 
+                    `INR ${backendJob.salary_min.toLocaleString()} - ${backendJob.salary_max.toLocaleString()}` :
+                    backendJob.salary_min ? `INR ${backendJob.salary_min.toLocaleString()}+` : 'Competitive',
+                category: backendJob.category || 'Technology',
+                description: backendJob.description || 'Job description not available',
+                requirements: backendJob.requirements || 'Requirements to be discussed',
+                posted_date: backendJob.created_at ? backendJob.created_at.split('T')[0] : 
+                           backendJob.published_at ? backendJob.published_at.split('T')[0] : 
+                           new Date().toISOString().split('T')[0],
+                experience: backendJob.experience_min ? `${backendJob.experience_min}+ years` : 'Fresher to experienced',
+                remote_allowed: backendJob.remote_allowed || false,
+                isCloudJob: true
+            };
         }
 
         function setupEventListeners() {
@@ -863,7 +983,9 @@
                                 <div class="job-salary">${job.salary}</div>
                                 <div class="job-type">
                                     ${job.type}
-                                    ${job.isLocal ? '<small style="color: #10b981; margin-left: 8px;">📱 Local</small>' : ''}
+                                    ${job.isCloudJob ? '<small style="color: #3b82f6; margin-left: 8px;">☁️ Live</small>' : 
+                                      job.isLocal ? '<small style="color: #10b981; margin-left: 8px;">📱 Local</small>' : 
+                                      '<small style="color: #6b7280; margin-left: 8px;">📄 Demo</small>'}
                                 </div>
                             </div>
                         </div>

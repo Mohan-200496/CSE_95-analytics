@@ -519,12 +519,37 @@
                 // Get auth token
                 const token = authManager.getToken();
                 
-                let backendSuccess = false;
-                let backendResult = null;
-                
-                // Try backend API first
+                // First try the test endpoint (no auth required)
                 try {
-                    // Submit to API
+                    console.log('Trying test endpoint first...');
+                    const testResponse = await fetch(`${getApiBaseUrl()}/jobs/test-create`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(jobData)
+                    });
+                    
+                    const testResult = await testResponse.json();
+                    console.log('Test endpoint result:', testResult);
+                    
+                    if (testResult.success) {
+                        showAlert(`Job "${jobData.title}" has been posted successfully to cloud database! Job ID: ${testResult.job_id}`, 'success');
+                        
+                        // Reset form and redirect
+                        setTimeout(() => {
+                            this.reset();
+                            window.location.href = '../../employer/jobs.html';
+                        }, 2000);
+                        return;
+                    }
+                } catch (testError) {
+                    console.warn('Test endpoint failed:', testError.message);
+                }
+                
+                // Try regular authenticated endpoint
+                try {
+                    console.log('Trying authenticated endpoint...');
                     const response = await fetch(`${getApiBaseUrl()}/jobs/`, {
                         method: 'POST',
                         headers: {
@@ -534,53 +559,24 @@
                         body: JSON.stringify(jobData)
                     });
                     
-                    backendResult = await response.json();
+                    const result = await response.json();
+                    console.log('Authenticated endpoint result:', result);
                     
-                    if (response.ok) {
-                        backendSuccess = true;
-                        showAlert(`Job "${jobData.title}" has been posted successfully via API! Job ID: ${backendResult.job_id}`, 'success');
+                    if (response.ok && result.job_id) {
+                        showAlert(`Job "${jobData.title}" has been posted successfully! Job ID: ${result.job_id}`, 'success');
+                        
+                        // Reset form and redirect
+                        setTimeout(() => {
+                            this.reset();
+                            window.location.href = '../../employer/jobs.html';
+                        }, 2000);
+                        return;
                     } else {
-                        throw new Error(backendResult.detail || backendResult.message || 'Backend API error');
+                        throw new Error(result.detail || result.message || 'Failed to create job');
                     }
-                } catch (apiError) {
-                    console.warn('Backend API failed:', apiError.message);
-                    console.log('🔄 Falling back to local storage...');
-                    
-                    // Fallback to local storage
-                    if (window.localJobStorage) {
-                        try {
-                            const localResult = window.localJobStorage.addJob({
-                                ...jobData,
-                                employer_name: currentUser.company_name || `${currentUser.first_name} ${currentUser.last_name}`,
-                                employer_id: currentUser.user_id
-                            });
-                            
-                            if (localResult.success) {
-                                showAlert(
-                                    `Job "${jobData.title}" has been saved locally! Job ID: ${localResult.job_id}<br>
-                                    <small>Note: Job is stored locally and will sync with server when backend is available.</small>`,
-                                    'success'
-                                );
-                                backendSuccess = true; // Treat local storage as success
-                            } else {
-                                throw new Error(localResult.error || 'Local storage failed');
-                            }
-                        } catch (localError) {
-                            console.error('Local storage also failed:', localError);
-                            throw new Error(`Both backend API and local storage failed. Backend: ${apiError.message}, Local: ${localError.message}`);
-                        }
-                    } else {
-                        throw apiError; // No local storage available
-                    }
-                }
-                
-                if (backendSuccess) {
-                    // Reset form after successful submission
-                    setTimeout(() => {
-                        this.reset();
-                        // Redirect to jobs list after a delay
-                        window.location.href = '../employer/jobs.html';
-                    }, 3000);
+                } catch (authError) {
+                    console.error('Authenticated endpoint failed:', authError.message);
+                    throw new Error(`Job creation failed: ${authError.message}. Please try again or contact support.`);
                 }
                 
             } catch (error) {

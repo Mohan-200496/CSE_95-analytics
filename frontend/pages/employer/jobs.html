@@ -490,49 +490,104 @@
         });
 
         function loadJobs() {
-            // Combine multiple sources of jobs
-            let allJobSources = [];
+            console.log('Loading jobs from cloud database...');
             
-            // 1. Get jobs from localStorage (published via form)
-            const publishedJobs = JSON.parse(localStorage.getItem('publishedJobs') || '[]');
-            allJobSources = allJobSources.concat(publishedJobs);
-            
-            // 2. Get jobs from local job storage (our new system)
-            if (window.localJobStorage) {
-                const localJobs = window.localJobStorage.getJobs();
-                allJobSources = allJobSources.concat(localJobs);
-            }
-            
-            // 3. Include mock jobs for demo
-            allJobSources = allJobSources.concat(mockJobs);
-            
-            // Filter jobs by current user (in real app, this would be done server-side)
-            const userJobs = allJobSources.filter(job => {
-                // Check various possible user ID fields
-                return job.createdBy === user.id || 
-                       job.employer_id === user.user_id ||
-                       job.employer_id === user.id ||
-                       user.role === 'admin';
-            });
-            
-            // Remove duplicates based on job ID
-            const uniqueJobs = userJobs.reduce((acc, current) => {
-                const existingJob = acc.find(job => 
-                    (job.id === current.id) || 
-                    (job.job_id === current.job_id) ||
-                    (job.id === current.job_id) ||
-                    (job.job_id === current.id)
-                );
-                if (!existingJob) {
-                    acc.push(current);
+            // Load jobs from backend API
+            loadJobsFromAPI();
+        }
+
+        async function loadJobsFromAPI() {
+            try {
+                console.log('Fetching jobs from backend API...');
+                
+                // Try multiple endpoints to get jobs
+                let jobs = [];
+                
+                // Try recent jobs endpoint
+                try {
+                    const recentResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/recent');
+                    const recentResult = await recentResponse.json();
+                    if (recentResult.success && recentResult.data.jobs) {
+                        jobs = jobs.concat(recentResult.data.jobs);
+                        console.log(`Found ${recentResult.data.jobs.length} recent jobs`);
+                    }
+                } catch (e) {
+                    console.warn('Recent jobs endpoint failed:', e.message);
                 }
-                return acc;
-            }, []);
-            
-            allJobs = uniqueJobs;
-            console.log(`📋 Loaded ${allJobs.length} jobs for user:`, user);
-            
-            renderJobs(allJobs);
+                
+                // Try main jobs endpoint
+                try {
+                    const mainResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/');
+                    if (mainResponse.ok) {
+                        const mainJobs = await mainResponse.json();
+                        if (Array.isArray(mainJobs)) {
+                            jobs = jobs.concat(mainJobs);
+                            console.log(`Found ${mainJobs.length} jobs from main endpoint`);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Main jobs endpoint failed:', e.message);
+                }
+                
+                // Try mock jobs endpoint for demo
+                try {
+                    const mockResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/mock');
+                    const mockResult = await mockResponse.json();
+                    if (mockResult.success && mockResult.data) {
+                        // Convert mock data to array format
+                        const mockJobs = Array.isArray(mockResult.data) ? mockResult.data : [mockResult.data];
+                        jobs = jobs.concat(mockJobs);
+                        console.log(`Found ${mockJobs.length} mock jobs`);
+                    }
+                } catch (e) {
+                    console.warn('Mock jobs endpoint failed:', e.message);
+                }
+                
+                // Remove duplicates based on job_id
+                const uniqueJobs = jobs.reduce((acc, current) => {
+                    const existingJob = acc.find(job => 
+                        job.job_id === current.job_id || job.id === current.job_id || job.job_id === current.id
+                    );
+                    if (!existingJob) {
+                        acc.push(current);
+                    }
+                    return acc;
+                }, []);
+                
+                console.log(`Total unique jobs loaded: ${uniqueJobs.length}`);
+                
+                // Filter by current user if not admin
+                let userJobs = uniqueJobs;
+                if (user.role !== 'admin') {
+                    userJobs = uniqueJobs.filter(job => 
+                        job.employer_id === user.user_id || 
+                        job.employer_id === user.id ||
+                        job.createdBy === user.id
+                    );
+                }
+                
+                allJobs = userJobs;
+                console.log(`Jobs for current user: ${allJobs.length}`);
+                
+                renderJobs(allJobs);
+                
+            } catch (error) {
+                console.error('Error loading jobs from API:', error);
+                
+                // Show error message
+                document.getElementById('jobsContainer').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Error Loading Jobs</h3>
+                        <p>Unable to connect to the server. Please try again later.</p>
+                        <button class="btn" onclick="loadJobs()">Retry</button>
+                    </div>
+                `;
+                
+                // Fallback to mock data for development
+                allJobs = mockJobs;
+                renderJobs(allJobs);
+            }
         }
 
         function renderJobs(jobs) {
