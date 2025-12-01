@@ -172,9 +172,11 @@ app.add_middleware(AnalyticsMiddleware)
 # Configure CORS with security in mind
 cors_origins = [
     "https://punjab-rozgar-portal1.onrender.com",
+    "https://cse-95-analytics.onrender.com", 
     "https://punjab-rozgar-api.onrender.com",
     "https://punjabrozgar.gov.in",
-    "https://www.punjabrozgar.gov.in"
+    "https://www.punjabrozgar.gov.in",
+    "*"  # Allow all origins for now to fix CORS issues
 ]
 
 # Add localhost for development
@@ -190,10 +192,10 @@ if settings.DEBUG:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
+    allow_origins=["*"],  # Allow all origins for now
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-Requested-With", "Accept"],
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
     expose_headers=["X-Process-Time", "X-Request-ID"]
 )
 
@@ -202,12 +204,16 @@ app.add_middleware(
 async def add_cors_headers(request: Request, call_next):
     """Add CORS headers to all responses for Render deployment"""
     
+    # Get the origin from the request
+    origin = request.headers.get("origin")
+    
     # Handle preflight requests immediately
     if request.method == "OPTIONS":
         response = JSONResponse(content={"status": "ok"})
-        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Origin"] = origin or "*"
         response.headers["Access-Control-Allow-Methods"] = "*"
         response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Max-Age"] = "86400"
         return response
     
