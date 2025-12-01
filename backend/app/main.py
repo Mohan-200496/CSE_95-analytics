@@ -27,6 +27,7 @@ from app.api.v1.jobs import router as jobs_router
 from app.api.v1.users import router as users_router
 from app.api.v1.analytics import router as analytics_router
 from app.api.v1.admin import router as admin_router
+from app.api.v1.simple_admin import router as simple_admin_router
 from app.api.v1.applications import router as applications_router
 from app.api.v1.recommendations import router as recommendations_router
 
@@ -129,8 +130,8 @@ async def lifespan(app: FastAPI):
     await create_tables()
     logger.info("Database tables created/verified")
     
-    # Run production database migration if needed
-    await migrate_production_database()
+    # Skip migration for now to prevent timeout
+    # await migrate_production_database()
     
     # Initialize analytics tracker
     analytics_tracker = AnalyticsTracker()
@@ -404,6 +405,12 @@ app.include_router(
     admin_router,
     prefix="/api/v1/admin",
     tags=["Administration"]
+)
+
+app.include_router(
+    simple_admin_router,
+    prefix="/api/v1/simple-admin",
+    tags=["Simple Administration"]
 )
 
 app.include_router(
