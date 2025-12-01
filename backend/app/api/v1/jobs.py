@@ -108,79 +108,101 @@ async def create_job(
     analytics = Depends(get_analytics_tracker)
 ):
     """Create a new job posting"""
+    
+    try:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Creating job for user: {current_user.user_id}, role: {current_user.role}")
+        logger.info(f"Job data: {job_data.model_dump()}")
+        
+        # Only employers and admins can create jobs
+        if current_user.role not in [UserRole.EMPLOYER, UserRole.ADMIN]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only employers can create job postings"
+            )
 
-    # Only employers and admins can create jobs
-    if current_user.role not in [UserRole.EMPLOYER, UserRole.ADMIN]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only employers can create job postings"
+        # Prepare enums and employer fields
+        # Normalize job_type (accept hyphenated or different cases from UI)
+        raw_type = (job_data.job_type or "").strip()
+        norm_type = raw_type.lower().replace("-", "_")
+        try:
+            jt = JobType(norm_type)
+        except ValueError:
+            allowed = ", ".join([e.value for e in JobType])
+            raise HTTPException(status_code=400, detail=f"Invalid job_type: '{raw_type}'. Allowed: {allowed}")
+
+        employer_type = EmployerType.PRIVATE
+        employer_name = current_user.company_name or f"{getattr(current_user, 'first_name', '')} {getattr(current_user, 'last_name', '')}".strip()
+
+        # Create job with DRAFT status
+        job = Job(
+            job_id=f"job_{uuid.uuid4().hex[:12]}",
+            title=job_data.title,
+            description=job_data.description,
+            requirements=job_data.requirements,
+            responsibilities=job_data.responsibilities,
+            job_type=jt,
+            category=job_data.category,
+            subcategory=job_data.subcategory,
+            location_city=job_data.location_city,
+            location_state=job_data.location_state or "Punjab",
+            remote_allowed=job_data.remote_allowed,
+            salary_min=job_data.salary_min,
+            salary_max=job_data.salary_max,
+            salary_currency=job_data.salary_currency,
+            salary_period=job_data.salary_period,
+            experience_min=job_data.experience_min,
+            experience_max=job_data.experience_max,
+            education_level=job_data.education_level,
+            skills_required=job_data.skills_required or [],
+            skills_preferred=job_data.skills_preferred or [],
+            employer_id=current_user.user_id,
+            employer_name=employer_name,
+            employer_type=employer_type,
+            application_deadline=job_data.application_deadline,
+            application_method=job_data.application_method,
+            application_url=job_data.application_url,
+            contact_email=job_data.contact_email or current_user.email,
+            contact_phone=job_data.contact_phone,
+            resume_required=job_data.resume_required,
+            status=JobStatus.DRAFT,
+            published_at=None
         )
 
-    # Prepare enums and employer fields
-    # Normalize job_type (accept hyphenated or different cases from UI)
-    raw_type = (job_data.job_type or "").strip()
-    norm_type = raw_type.lower().replace("-", "_")
-    try:
-        jt = JobType(norm_type)
-    except ValueError:
-        allowed = ", ".join([e.value for e in JobType])
-        raise HTTPException(status_code=400, detail=f"Invalid job_type: '{raw_type}'. Allowed: {allowed}")
+        session.add(job)
+        await session.commit()
+        await session.refresh(job)
+        
+        logger.info(f"Job created successfully: {job.job_id}")
 
-    employer_type = EmployerType.PRIVATE
-    employer_name = current_user.company_name or f"{getattr(current_user, 'first_name', '')} {getattr(current_user, 'last_name', '')}".strip()
+        # Track analytics
+        try:
+            await analytics.track_event(
+                user_id=current_user.user_id,
+                event_name="job_created",
+                properties={
+                    "job_id": job.job_id,
+                    "job_title": job.title,
+                    "category": job.category,
+                    "location_city": job.location_city
+                }
+            )
+        except Exception as analytics_error:
+            logger.warning(f"Analytics tracking failed: {analytics_error}")
 
-    # Create job with DRAFT status
-    job = Job(
-        job_id=f"job_{uuid.uuid4().hex[:12]}",
-        title=job_data.title,
-        description=job_data.description,
-        requirements=job_data.requirements,
-        responsibilities=job_data.responsibilities,
-        job_type=jt,
-        category=job_data.category,
-        subcategory=job_data.subcategory,
-        location_city=job_data.location_city,
-        location_state=job_data.location_state or "Punjab",
-        remote_allowed=job_data.remote_allowed,
-        salary_min=job_data.salary_min,
-        salary_max=job_data.salary_max,
-        salary_currency=job_data.salary_currency,
-        salary_period=job_data.salary_period,
-        experience_min=job_data.experience_min,
-        experience_max=job_data.experience_max,
-        education_level=job_data.education_level,
-        skills_required=job_data.skills_required or [],
-        skills_preferred=job_data.skills_preferred or [],
-        employer_id=current_user.user_id,
-        employer_name=employer_name,
-        employer_type=employer_type,
-        application_deadline=job_data.application_deadline,
-        application_method=job_data.application_method,
-        application_url=job_data.application_url,
-        contact_email=job_data.contact_email or current_user.email,
-        contact_phone=job_data.contact_phone,
-        resume_required=job_data.resume_required,
-        status=JobStatus.DRAFT,
-        published_at=None
-    )
-
-    session.add(job)
-    await session.commit()
-    await session.refresh(job)
-
-    # Track analytics
-    await analytics.track_event(
-        user_id=current_user.user_id,
-        event_name="job_created",
-        properties={
-            "job_id": job.job_id,
-            "job_title": job.title,
-            "category": job.category,
-            "location_city": job.location_city
-        }
-    )
-
-    return _to_public_response(job)
+        return _to_public_response(job)
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        logger.error(f"Error creating job: {str(e)}")
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error creating job: {str(e)}"
+        )
 
 # Alias without trailing slash to avoid 307 redirect and CORS header issues
 @router.post("", response_model=JobPublicResponse)

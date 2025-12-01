@@ -88,22 +88,13 @@ app.add_middleware(
         "https://mohan-200496.github.io", 
         "http://localhost:3000",
         "http://localhost:8080",
-        "*"  # Allow all for now
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8080",
+        "*"  # Allow all for deployment debugging
     ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
-    allow_headers=[
-        "Accept",
-        "Accept-Language", 
-        "Content-Language",
-        "Content-Type",
-        "Authorization",
-        "X-Requested-With",
-        "Origin",
-        "User-Agent",
-        "Access-Control-Request-Method",
-        "Access-Control-Request-Headers"
-    ],
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
     expose_headers=["*"]
 )
 
@@ -124,7 +115,25 @@ async def debug_requests(request: Request, call_next):
         response.headers["Access-Control-Allow-Credentials"] = "true"
         return response
     
-    response = await call_next(request)
+    try:
+        response = await call_next(request)
+        
+        # Add CORS headers to all responses
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        
+    except Exception as e:
+        logger.error(f"Request error: {str(e)}")
+        response = JSONResponse(
+            status_code=500,
+            content={"detail": f"Internal server error: {str(e)}"}
+        )
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
     
     process_time = (datetime.utcnow() - start_time).total_seconds()
     logger.info(f"Response: {response.status_code} in {process_time:.3f}s")
