@@ -6,7 +6,7 @@ SQLAlchemy setup with analytics-optimized schema
 import asyncio
 from typing import AsyncGenerator, Optional
 from sqlalchemy import create_engine, MetaData, event
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -67,7 +67,10 @@ else:
 
 # Session makers
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-AsyncSessionLocal = async_sessionmaker(
+
+# For SQLAlchemy 1.4 async sessions
+from sqlalchemy.orm import sessionmaker
+AsyncSessionLocal = sessionmaker(
     async_engine, 
     class_=AsyncSession, 
     expire_on_commit=False

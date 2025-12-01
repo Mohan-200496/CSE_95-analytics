@@ -692,9 +692,21 @@
                 // Load jobs from multiple cloud database endpoints
                 let cloudJobs = [];
                 
+                // Get authentication token for API requests
+                const token = authManager && authManager.getToken ? authManager.getToken() : null;
+                const headers = {};
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                    console.log('🔑 Using authentication token for API requests');
+                } else {
+                    console.log('ℹ️ No authentication token available, using public access');
+                }
+                
                 // 1. Try recent jobs endpoint (primary source)
                 try {
-                    const recentResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/recent');
+                    const recentResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/recent', { 
+                        headers: headers 
+                    });
                     const recentResult = await recentResponse.json();
                     if (recentResult.success && recentResult.data.jobs) {
                         // Convert backend jobs to browse format
@@ -706,9 +718,11 @@
                     console.warn('Recent jobs endpoint failed:', e.message);
                 }
                 
-                // 2. Try main jobs endpoint
+                // 2. Try main jobs endpoint with authentication
                 try {
-                    const mainResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/');
+                    const mainResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/', {
+                        headers: headers
+                    });
                     if (mainResponse.ok) {
                         const mainJobs = await mainResponse.json();
                         if (Array.isArray(mainJobs)) {
@@ -716,6 +730,8 @@
                             cloudJobs = cloudJobs.concat(convertedMain);
                             console.log(`📋 Found ${mainJobs.length} jobs from main endpoint`);
                         }
+                    } else {
+                        console.warn(`Main jobs endpoint returned: ${mainResponse.status} ${mainResponse.statusText}`);
                     }
                 } catch (e) {
                     console.warn('Main jobs endpoint failed:', e.message);
@@ -723,7 +739,9 @@
                 
                 // 3. Try featured jobs endpoint
                 try {
-                    const featuredResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/featured');
+                    const featuredResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/featured', {
+                        headers: headers
+                    });
                     const featuredResult = await featuredResponse.json();
                     if (featuredResult.success && featuredResult.data) {
                         const featuredJobs = Array.isArray(featuredResult.data) ? featuredResult.data : [featuredResult.data];
@@ -737,7 +755,9 @@
                 
                 // 4. Include mock jobs for demo
                 try {
-                    const mockResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/mock');
+                    const mockResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/mock', {
+                        headers: headers
+                    });
                     const mockResult = await mockResponse.json();
                     if (mockResult.success && mockResult.data) {
                         const mockJobs = Array.isArray(mockResult.data) ? mockResult.data : [mockResult.data];

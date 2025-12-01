@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Dashboard - Punjab Rozgar Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .security-header {
+            background: linear-gradient(135deg, #dc3545, #6c757d);
+            color: white;
+            padding: 2rem 0;
+        }
+        
+        .threat-level-high {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+        
+        .threat-level-medium {
+            background: linear-gradient(135deg, #fd7e14, #e55a00);
+            color: white;
+        }
+        
+        .threat-level-low {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            color: white;
+        }
+        
+        .security-card {
+            border-left: 4px solid #dc3545;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .security-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .metric-icon {
+            font-size: 2rem;
+            opacity: 0.8;
+        }
+        
+        .threat-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .blocked-ip {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .event-row {
+            transition: background-color 0.3s ease;
+        }
+        
+        .event-row:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+        
+        .refresh-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .status-safe { background-color: #28a745; }
+        .status-warning { background-color: #ffc107; }
+        .status-danger { background-color: #dc3545; }
+        
+        .real-time-indicator {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="../index.html">
+                <i class="fas fa-shield-alt"></i> Punjab Rozgar Portal
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="../dashboard/admin.html">
+                    <i class="fas fa-arrow-left"></i> Back to Admin
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Security Header -->
+    <div class="security-header text-center">
+        <div class="container">
+            <h1><i class="fas fa-shield-alt"></i> Security Dashboard</h1>
+            <p class="lead">Real-time security monitoring and threat intelligence</p>
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <span class="status-indicator status-safe real-time-indicator"></span>
+                        <span id="systemStatus">System Status: Secure</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div>
+                        <i class="fas fa-clock"></i>
+                        Last Updated: <span id="lastUpdate">Loading...</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div>
+                        <i class="fas fa-eye"></i>
+                        <span id="activeMonitoring">Active Monitoring</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container my-5">
+        <!-- Security Overview Cards -->
+        <div class="row mb-4">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card security-card threat-level-low">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="text-white-75 small">Total Requests (24h)</div>
+                                <div class="h2 mb-0 text-white" id="totalRequests">0</div>
+                            </div>
+                            <div class="metric-icon text-white">
+                                <i class="fas fa-network-wired"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card security-card threat-level-medium">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="text-white-75 small">Threats Detected</div>
+                                <div class="h2 mb-0 text-white" id="threatsDetected">0</div>
+                            </div>
+                            <div class="metric-icon text-white">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card security-card threat-level-high">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="text-white-75 small">Blocked IPs</div>
+                                <div class="h2 mb-0 text-white" id="blockedIps">0</div>
+                            </div>
+                            <div class="metric-icon text-white">
+                                <i class="fas fa-ban"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card security-card threat-level-low">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="text-white-75 small">Avg Threat Score</div>
+                                <div class="h2 mb-0 text-white" id="avgThreatScore">0</div>
+                            </div>
+                            <div class="metric-icon text-white">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="card security-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-area"></i> Security Activity (24h)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="activityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card security-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-pie"></i> Threat Types</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="threatTypeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Events and Threat Intelligence -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card security-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-list"></i> Recent Security Events</h5>
+                        <button class="btn btn-sm btn-outline-primary" onclick="refreshData()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Type</th>
+                                        <th>IP Address</th>
+                                        <th>Severity</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentEvents">
+                                    <!-- Events will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card security-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-crosshairs"></i> Top Threats</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="topThreats">
+                            <!-- Top threats will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card security-card mt-3">
+                    <div class="card-header">
+                        <h5><i class="fas fa-globe"></i> Geographic Distribution</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="geoDistribution">
+                            <!-- Geographic data will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Refresh Button -->
+    <button class="btn btn-primary btn-lg rounded-circle refresh-btn" onclick="refreshData()" title="Refresh Data">
+        <i class="fas fa-sync"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        class SecurityDashboard {
+            constructor() {
+                this.activityChart = null;
+                this.threatTypeChart = null;
+                this.refreshInterval = null;
+                this.init();
+            }
+
+            async init() {
+                await this.loadDashboardData();
+                this.initCharts();
+                this.startAutoRefresh();
+            }
+
+            async loadDashboardData() {
+                try {
+                    // Mock data for demonstration - replace with actual API call
+                    const mockData = this.generateMockSecurityData();
+                    
+                    this.updateMetrics(mockData.summary);
+                    this.updateRecentEvents(mockData.recent_events);
+                    this.updateTopThreats(mockData.threat_intelligence);
+                    this.updateGeographicDistribution(mockData.geographic_distribution);
+                    this.updateCharts(mockData);
+                    
+                    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+                } catch (error) {
+                    console.error('Error loading dashboard data:', error);
+                    this.showError('Failed to load security data');
+                }
+            }
+
+            generateMockSecurityData() {
+                // Generate realistic mock data for demonstration
+                return {
+                    summary: {
+                        total_events_24h: Math.floor(Math.random() * 500) + 100,
+                        active_threats: Math.floor(Math.random() * 10) + 2,
+                        blocked_ips: Math.floor(Math.random() * 5) + 1,
+                        threat_score_avg: Math.floor(Math.random() * 50) + 10
+                    },
+                    recent_events: this.generateMockEvents(),
+                    threat_intelligence: this.generateMockThreats(),
+                    geographic_distribution: {
+                        'Pakistan': 45,
+                        'India': 23,
+                        'China': 15,
+                        'USA': 8,
+                        'Russia': 5,
+                        'Other': 4
+                    },
+                    top_threat_types: {
+                        'SQL Injection': 25,
+                        'XSS Attempt': 18,
+                        'Rate Limiting': 12,
+                        'Brute Force': 8,
+                        'Command Injection': 5
+                    },
+                    hourly_activity: this.generateHourlyActivity()
+                };
+            }
+
+            generateMockEvents() {
+                const events = [];
+                const eventTypes = ['SQL Injection', 'XSS Attempt', 'Rate Limit', 'Brute Force', 'Suspicious Activity'];
+                const severities = ['low', 'medium', 'high'];
+                
+                for (let i = 0; i < 20; i++) {
+                    const date = new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000);
+                    events.push({
+                        timestamp: date.toISOString(),
+                        event_type: eventTypes[Math.floor(Math.random() * eventTypes.length)],
+                        severity: severities[Math.floor(Math.random() * severities.length)],
+                        ip_address: `192.168.1.${Math.floor(Math.random() * 255)}`,
+                        description: `Security event detected from suspicious IP`
+                    });
+                }
+                
+                return events.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            }
+
+            generateMockThreats() {
+                const threats = [];
+                
+                for (let i = 0; i < 10; i++) {
+                    threats.push({
+                        ip_address: `192.168.1.${Math.floor(Math.random() * 255)}`,
+                        threat_score: Math.floor(Math.random() * 100) + 20,
+                        threat_types: ['SQL Injection', 'XSS'],
+                        request_count: Math.floor(Math.random() * 50) + 5,
+                        blocked: Math.random() > 0.7
+                    });
+                }
+                
+                return threats.sort((a, b) => b.threat_score - a.threat_score);
+            }
+
+            generateHourlyActivity() {
+                const activity = {};
+                for (let i = 0; i < 24; i++) {
+                    const hour = String(i).padStart(2, '0') + ':00';
+                    activity[hour] = Math.floor(Math.random() * 50) + 5;
+                }
+                return activity;
+            }
+
+            updateMetrics(summary) {
+                document.getElementById('totalRequests').textContent = summary.total_events_24h.toLocaleString();
+                document.getElementById('threatsDetected').textContent = summary.active_threats.toLocaleString();
+                document.getElementById('blockedIps').textContent = summary.blocked_ips.toLocaleString();
+                document.getElementById('avgThreatScore').textContent = Math.round(summary.threat_score_avg);
+                
+                // Update system status based on threat level
+                const statusElement = document.getElementById('systemStatus');
+                const statusIndicator = statusElement.previousElementSibling;
+                
+                if (summary.active_threats > 5) {
+                    statusElement.textContent = 'System Status: High Alert';
+                    statusIndicator.className = 'status-indicator status-danger real-time-indicator';
+                } else if (summary.active_threats > 2) {
+                    statusElement.textContent = 'System Status: Monitoring';
+                    statusIndicator.className = 'status-indicator status-warning real-time-indicator';
+                } else {
+                    statusElement.textContent = 'System Status: Secure';
+                    statusIndicator.className = 'status-indicator status-safe real-time-indicator';
+                }
+            }
+
+            updateRecentEvents(events) {
+                const tbody = document.getElementById('recentEvents');
+                tbody.innerHTML = '';
+
+                events.slice(0, 15).forEach(event => {
+                    const row = document.createElement('tr');
+                    row.className = 'event-row';
+                    
+                    const severityBadge = this.getSeverityBadge(event.severity);
+                    const time = new Date(event.timestamp).toLocaleTimeString();
+                    
+                    row.innerHTML = `
+                        <td>${time}</td>
+                        <td><span class="badge bg-secondary">${event.event_type}</span></td>
+                        <td><code>${event.ip_address}</code></td>
+                        <td>${severityBadge}</td>
+                        <td>${event.description}</td>
+                    `;
+                    
+                    tbody.appendChild(row);
+                });
+            }
+
+            updateTopThreats(threats) {
+                const container = document.getElementById('topThreats');
+                container.innerHTML = '';
+
+                threats.slice(0, 8).forEach(threat => {
+                    const threatDiv = document.createElement('div');
+                    threatDiv.className = `d-flex justify-content-between align-items-center mb-2 p-2 rounded ${threat.blocked ? 'blocked-ip' : ''}`;
+                    
+                    const threatLevel = this.getThreatLevel(threat.threat_score);
+                    
+                    threatDiv.innerHTML = `
+                        <div>
+                            <strong>${threat.ip_address}</strong>
+                            <br>
+                            <small class="text-muted">${threat.request_count} requests</small>
+                            ${threat.blocked ? '<br><span class="badge bg-danger">BLOCKED</span>' : ''}
+                        </div>
+                        <div class="text-end">
+                            <div class="h6 mb-0">${threat.threat_score}</div>
+                            <small class="${threatLevel.class}">${threatLevel.text}</small>
+                        </div>
+                    `;
+                    
+                    container.appendChild(threatDiv);
+                });
+            }
+
+            updateGeographicDistribution(geoData) {
+                const container = document.getElementById('geoDistribution');
+                container.innerHTML = '';
+
+                Object.entries(geoData).forEach(([country, count]) => {
+                    const div = document.createElement('div');
+                    div.className = 'd-flex justify-content-between align-items-center mb-2';
+                    
+                    const percentage = Math.round((count / Object.values(geoData).reduce((a, b) => a + b, 0)) * 100);
+                    
+                    div.innerHTML = `
+                        <span>${country}</span>
+                        <div class="text-end">
+                            <span class="badge bg-info">${count}</span>
+                            <div class="progress mt-1" style="width: 60px; height: 4px;">
+                                <div class="progress-bar" style="width: ${percentage}%"></div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.appendChild(div);
+                });
+            }
+
+            initCharts() {
+                // Activity Chart
+                const activityCtx = document.getElementById('activityChart').getContext('2d');
+                this.activityChart = new Chart(activityCtx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Security Events',
+                            data: [],
+                            borderColor: '#dc3545',
+                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                // Threat Type Chart
+                const threatCtx = document.getElementById('threatTypeChart').getContext('2d');
+                this.threatTypeChart = new Chart(threatCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            data: [],
+                            backgroundColor: [
+                                '#dc3545',
+                                '#fd7e14',
+                                '#ffc107',
+                                '#28a745',
+                                '#6c757d'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+
+            updateCharts(data) {
+                // Update activity chart
+                if (this.activityChart) {
+                    this.activityChart.data.labels = Object.keys(data.hourly_activity);
+                    this.activityChart.data.datasets[0].data = Object.values(data.hourly_activity);
+                    this.activityChart.update();
+                }
+
+                // Update threat type chart
+                if (this.threatTypeChart) {
+                    this.threatTypeChart.data.labels = Object.keys(data.top_threat_types);
+                    this.threatTypeChart.data.datasets[0].data = Object.values(data.top_threat_types);
+                    this.threatTypeChart.update();
+                }
+            }
+
+            getSeverityBadge(severity) {
+                const badges = {
+                    'low': '<span class="badge bg-success">Low</span>',
+                    'medium': '<span class="badge bg-warning">Medium</span>',
+                    'high': '<span class="badge bg-danger">High</span>'
+                };
+                return badges[severity] || '<span class="badge bg-secondary">Unknown</span>';
+            }
+
+            getThreatLevel(score) {
+                if (score > 80) {
+                    return { class: 'text-danger', text: 'Critical' };
+                } else if (score > 50) {
+                    return { class: 'text-warning', text: 'High' };
+                } else if (score > 20) {
+                    return { class: 'text-info', text: 'Medium' };
+                } else {
+                    return { class: 'text-success', text: 'Low' };
+                }
+            }
+
+            startAutoRefresh() {
+                this.refreshInterval = setInterval(() => {
+                    this.loadDashboardData();
+                }, 30000); // Refresh every 30 seconds
+            }
+
+            showError(message) {
+                // Show error notification
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+                alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1050;';
+                alertDiv.innerHTML = `
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.body.appendChild(alertDiv);
+                
+                setTimeout(() => {
+                    alertDiv.remove();
+                }, 5000);
+            }
+        }
+
+        // Global functions
+        function refreshData() {
+            if (window.securityDashboard) {
+                window.securityDashboard.loadDashboardData();
+            }
+        }
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            window.securityDashboard = new SecurityDashboard();
+        });
+    </script>
+</body>
+</html>
