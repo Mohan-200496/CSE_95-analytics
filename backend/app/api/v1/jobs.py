@@ -96,7 +96,7 @@ async def get_current_user_optional(
     if not credentials:
         # Return a default user for development
         result = await session.execute(
-            select(User).where(User.role.in_(['employer', 'admin']))
+            select(User).where(User.role.in_([UserRole.EMPLOYER.value, UserRole.ADMIN.value]))
         )
         user = result.scalar_one_or_none()
         if user:
@@ -201,7 +201,7 @@ async def test_create_job(
         
         # Get a test user (employer or admin) from database
         result = await session.execute(
-            select(User).where(User.role.in_(['employer', 'admin']))
+            select(User).where(User.role.in_([UserRole.EMPLOYER.value, UserRole.ADMIN.value]))
         )
         test_user = result.scalar_one_or_none()
         
@@ -978,20 +978,20 @@ async def fix_database_enums(
         
         # Add missing userrole values
         userrole_fixes = [
-            "ALTER TYPE userrole ADD VALUE IF NOT EXISTS 'employer';",
-            "ALTER TYPE userrole ADD VALUE IF NOT EXISTS 'job_seeker';", 
-            "ALTER TYPE userrole ADD VALUE IF NOT EXISTS 'admin';",
-            "ALTER TYPE userrole ADD VALUE IF NOT EXISTS 'moderator';"
+            "ALTER TYPE userrole ADD VALUE IF NOT EXISTS 'EMPLOYER';",
+            "ALTER TYPE userrole ADD VALUE IF NOT EXISTS 'JOB_SEEKER';", 
+            "ALTER TYPE userrole ADD VALUE IF NOT EXISTS 'ADMIN';",
+            "ALTER TYPE userrole ADD VALUE IF NOT EXISTS 'MODERATOR';"
         ]
         
         # Add missing jobtype values  
         jobtype_fixes = [
-            "ALTER TYPE jobtype ADD VALUE IF NOT EXISTS 'full_time';",
-            "ALTER TYPE jobtype ADD VALUE IF NOT EXISTS 'part_time';",
-            "ALTER TYPE jobtype ADD VALUE IF NOT EXISTS 'contract';",
-            "ALTER TYPE jobtype ADD VALUE IF NOT EXISTS 'temporary';",
-            "ALTER TYPE jobtype ADD VALUE IF NOT EXISTS 'internship';",
-            "ALTER TYPE jobtype ADD VALUE IF NOT EXISTS 'freelance';"
+            "ALTER TYPE jobtype ADD VALUE IF NOT EXISTS 'FULL_TIME';",
+            "ALTER TYPE jobtype ADD VALUE IF NOT EXISTS 'PART_TIME';",
+            "ALTER TYPE jobtype ADD VALUE IF NOT EXISTS 'CONTRACT';",
+            "ALTER TYPE jobtype ADD VALUE IF NOT EXISTS 'TEMPORARY';",
+            "ALTER TYPE jobtype ADD VALUE IF NOT EXISTS 'INTERNSHIP';",
+            "ALTER TYPE jobtype ADD VALUE IF NOT EXISTS 'FREELANCE';"
         ]
         
         all_fixes = userrole_fixes + jobtype_fixes

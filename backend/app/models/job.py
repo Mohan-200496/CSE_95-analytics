@@ -15,43 +15,43 @@ from app.core.database import Base
 
 class JobType(Enum):
     """Job type enumeration"""
-    FULL_TIME = "FULL_TIME"
-    PART_TIME = "PART_TIME"
-    CONTRACT = "CONTRACT"
-    TEMPORARY = "TEMPORARY"
-    INTERNSHIP = "INTERNSHIP"
-    FREELANCE = "FREELANCE"
+    FULL_TIME = "full_time"
+    PART_TIME = "part_time"
+    CONTRACT = "contract"
+    TEMPORARY = "temporary"
+    INTERNSHIP = "internship"
+    FREELANCE = "freelance"
 
 
 class JobStatus(Enum):
     """Job posting status"""
-    DRAFT = "DRAFT"
-    PENDING_APPROVAL = "PENDING_APPROVAL"  # New status for admin approval
-    ACTIVE = "ACTIVE"
-    PAUSED = "PAUSED"
-    CLOSED = "CLOSED"
-    EXPIRED = "EXPIRED"
+    DRAFT = "draft"
+    PENDING_APPROVAL = "pending_approval"  # New status for admin approval
+    ACTIVE = "active"
+    PAUSED = "paused"
+    CLOSED = "closed"
+    EXPIRED = "expired"
 
 
 class EmployerType(Enum):
     """Employer type for government portal"""
-    GOVERNMENT = "GOVERNMENT"
-    PUBLIC_SECTOR = "PUBLIC_SECTOR"
-    PRIVATE = "PRIVATE"
-    NGO = "NGO"
-    STARTUP = "STARTUP"
+    GOVERNMENT = "government"
+    PUBLIC_SECTOR = "public_sector"
+    PRIVATE = "private"
+    NGO = "ngo"
+    STARTUP = "startup"
 
 
 class ApplicationStatus(Enum):
     """Job application status"""
-    APPLIED = "APPLIED"
-    REVIEWED = "REVIEWED"
-    SHORTLISTED = "SHORTLISTED"
-    INTERVIEW_SCHEDULED = "INTERVIEW_SCHEDULED"
-    INTERVIEWED = "INTERVIEWED"
-    SELECTED = "SELECTED"
-    REJECTED = "REJECTED"
-    WITHDRAWN = "WITHDRAWN"
+    APPLIED = "applied"
+    REVIEWED = "reviewed"
+    SHORTLISTED = "shortlisted"
+    INTERVIEW_SCHEDULED = "interview_scheduled"
+    INTERVIEWED = "interviewed"
+    SELECTED = "selected"
+    REJECTED = "rejected"
+    WITHDRAWN = "withdrawn"
 
 
 class Job(Base):
