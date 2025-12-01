@@ -245,16 +245,6 @@ async def create_job(
             detail=f"Error creating job: {str(e)}"
         )
 
-# Alias without trailing slash to avoid 307 redirect and CORS header issues
-@router.post("", response_model=JobPublicResponse)
-async def create_job_alias(
-    job_data: JobCreate,
-    session: AsyncSession = Depends(get_database),
-    current_user: User = Depends(get_current_user),
-    analytics = Depends(get_analytics_tracker)
-):
-    return await create_job(job_data, session, current_user, analytics)
-
 @router.put("/{job_id}/publish")
 async def publish_job(
     job_id: str,
