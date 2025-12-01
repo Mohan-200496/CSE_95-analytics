@@ -137,6 +137,9 @@
             }
             
             if (response.ok && data.success) {
+                // Force complete cleanup before setting new user data
+                this.logout(false); // Don't redirect during logout
+                
                 this.accessToken = data.access_token;
                 this.setCurrentUser(data.user, rememberMe);
                 this.setAccessToken(data.access_token, rememberMe);
@@ -210,7 +213,7 @@
         }
     }
 
-    logout() {
+    logout(redirect = true) {
         console.log('🚪 Logging out user...');
         this.currentUser = null;
         this.accessToken = null;
@@ -224,6 +227,11 @@
         
         // Show logout success message
         console.log('✅ User logged out successfully');
+        
+        if (!redirect) {
+            console.log('⏸️ Logout without redirect (login process)');
+            return;
+        }
         
         // Only redirect if we're in a protected area (not on public pages)
         const currentPath = window.location.pathname;
