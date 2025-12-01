@@ -15,18 +15,18 @@ from app.core.database import Base
 
 class UserRole(Enum):
     """User role enumeration"""
-    JOB_SEEKER = "job_seeker"
-    EMPLOYER = "employer" 
-    ADMIN = "admin"
-    MODERATOR = "moderator"
+    JOB_SEEKER = "JOB_SEEKER"
+    EMPLOYER = "EMPLOYER" 
+    ADMIN = "ADMIN"
+    MODERATOR = "MODERATOR"
 
 
 class AccountStatus(Enum):
     """Account status enumeration"""
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    SUSPENDED = "suspended"
-    PENDING_VERIFICATION = "pending_verification"
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    SUSPENDED = "SUSPENDED"
+    PENDING_VERIFICATION = "PENDING_VERIFICATION"
 
 
 class User(Base):
