@@ -1,6 +1,7 @@
 """
 Punjab Rozgar Portal - FastAPI Backend
 Main application entry point with analytics integration
+Updated: December 2, 2025
 """
 
 from fastapi import FastAPI, Request, HTTPException, Depends
