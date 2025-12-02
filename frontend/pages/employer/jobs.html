@@ -376,9 +376,14 @@
                     <h1>My Jobs</h1>
                     <p>Manage your job postings and track their performance</p>
                 </div>
-                <a href="add-job.html" class="btn btn-success">
-                    <i class="fas fa-plus"></i> Post New Job
-                </a>
+                <div>
+                    <a href="add-job.html" class="btn btn-success" style="margin-right: 10px;">
+                        <i class="fas fa-plus"></i> Post New Job
+                    </a>
+                    <button class="btn" onclick="loadJobsFromBackend()" title="Refresh jobs data">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
             </div>
 
             <!-- Stats Cards -->
@@ -522,6 +527,7 @@
                             if (Array.isArray(employerJobs)) {
                                 jobs = jobs.concat(employerJobs);
                                 console.log(`Found ${employerJobs.length} employer jobs`);
+                                console.log('Sample employer job data:', employerJobs[0]);
                             }
                         } else {
                             console.error('My-jobs endpoint failed:', response.status, response.statusText);

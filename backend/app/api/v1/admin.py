@@ -152,7 +152,7 @@ async def get_admin_stats(
     
     # Active jobs
     active_jobs_result = await session.execute(
-        select(func.count(Job.id)).where(Job.is_active == True)
+        select(func.count(Job.id)).where(Job.status == JobStatus.ACTIVE)
     )
     active_jobs = active_jobs_result.scalar() or 0
     

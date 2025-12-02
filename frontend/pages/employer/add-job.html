@@ -756,7 +756,11 @@
                     if (data) {
                         console.log('✅ Job created successfully:', data);
                         alert('Job posted successfully! Job ID: ' + (data.job_id || 'Generated'));
-                        window.location.href = 'jobs.html';
+                        // Redirect to jobs list after 2 seconds
+                        setTimeout(() => {
+                            window.location.href = 'my-jobs-simple.html';
+                        }, 2000);
+                        window.location.href = 'my-jobs-simple.html';
                     } else {
                         console.error('❌ Job creation failed: No response data');
                         alert('Failed to create job. Please try again.');

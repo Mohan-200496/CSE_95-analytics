@@ -486,8 +486,15 @@
         <main class="main-content">
             <!-- Page Header -->
             <div class="page-header">
-                <h1>Job Management</h1>
-                <p>Manage all job postings, applications, and approvals on the Punjab Rozgar Portal</p>
+                <div>
+                    <h1>Job Management</h1>
+                    <p>Manage all job postings, applications, and approvals on the Punjab Rozgar Portal</p>
+                </div>
+                <div>
+                    <button class="btn" onclick="loadJobsFromApi()" title="Refresh jobs data">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
             </div>
 
             <!-- Stats Cards -->
@@ -619,58 +626,66 @@
                 console.log('Admin: Loading all jobs from cloud database...');
                 let allJobsData = [];
                 
-                // Try multiple endpoints to get comprehensive job data
-                
-                // 1. Try recent jobs endpoint
-                try {
-                    const recentResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/recent');
-                    const recentResult = await recentResponse.json();
-                    if (recentResult.success && recentResult.data.jobs) {
-                        allJobsData = allJobsData.concat(recentResult.data.jobs);
-                        console.log(`Admin: Found ${recentResult.data.jobs.length} recent jobs`);
-                    }
-                } catch (e) {
-                    console.warn('Admin: Recent jobs endpoint failed:', e.message);
+                // Get authentication token
+                const token = authManager.getToken();
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
                 }
                 
-                // 2. Try main jobs endpoint
+                // 1. First try the dedicated admin jobs endpoint
                 try {
-                    const mainResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/');
-                    if (mainResponse.ok) {
-                        const mainJobs = await mainResponse.json();
-                        if (Array.isArray(mainJobs)) {
-                            allJobsData = allJobsData.concat(mainJobs);
-                            console.log(`Admin: Found ${mainJobs.length} jobs from main endpoint`);
+                    console.log('Admin: Trying admin jobs endpoint...');
+                    const adminResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/admin/jobs', {
+                        headers: headers
+                    });
+                    
+                    if (adminResponse.ok) {
+                        const adminJobs = await adminResponse.json();
+                        if (Array.isArray(adminJobs)) {
+                            allJobsData = adminJobs;
+                            console.log(`Admin: Found ${adminJobs.length} jobs from admin endpoint`);
+                            console.log('Admin: Sample job data:', adminJobs[0]);
                         }
+                    } else {
+                        console.warn('Admin jobs endpoint failed:', adminResponse.status, adminResponse.statusText);
                     }
                 } catch (e) {
-                    console.warn('Admin: Main jobs endpoint failed:', e.message);
+                    console.warn('Admin: Admin jobs endpoint failed:', e.message);
                 }
                 
-                // 3. Try featured jobs endpoint
-                try {
-                    const featuredResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/featured');
-                    const featuredResult = await featuredResponse.json();
-                    if (featuredResult.success && featuredResult.data) {
-                        const featuredJobs = Array.isArray(featuredResult.data) ? featuredResult.data : [featuredResult.data];
-                        allJobsData = allJobsData.concat(featuredJobs);
-                        console.log(`Admin: Found ${featuredJobs.length} featured jobs`);
+                // 2. If admin endpoint fails, try main jobs endpoint with auth
+                if (allJobsData.length === 0) {
+                    try {
+                        const mainResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/', {
+                            headers: headers
+                        });
+                        if (mainResponse.ok) {
+                            const mainJobs = await mainResponse.json();
+                            if (Array.isArray(mainJobs)) {
+                                allJobsData = mainJobs;
+                                console.log(`Admin: Found ${mainJobs.length} jobs from main endpoint`);
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Admin: Main jobs endpoint failed:', e.message);
                     }
-                } catch (e) {
-                    console.warn('Admin: Featured jobs endpoint failed:', e.message);
                 }
                 
-                // 4. Include mock jobs for demonstration
-                try {
-                    const mockResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/mock');
-                    const mockResult = await mockResponse.json();
-                    if (mockResult.success && mockResult.data) {
-                        const mockJobs = Array.isArray(mockResult.data) ? mockResult.data : [mockResult.data];
-                        allJobsData = allJobsData.concat(mockJobs);
-                        console.log(`Admin: Found ${mockJobs.length} mock jobs`);
+                // 3. Fallback to recent jobs if everything else fails
+                if (allJobsData.length === 0) {
+                    try {
+                        const recentResponse = await fetch('https://punjab-rozgar-api.onrender.com/api/v1/jobs/recent');
+                        const recentResult = await recentResponse.json();
+                        if (recentResult.success && recentResult.data.jobs) {
+                            allJobsData = recentResult.data.jobs;
+                            console.log(`Admin: Found ${recentResult.data.jobs.length} recent jobs as fallback`);
+                        }
+                    } catch (e) {
+                        console.warn('Admin: Recent jobs fallback failed:', e.message);
                     }
-                } catch (e) {
-                    console.warn('Admin: Mock jobs endpoint failed:', e.message);
                 }
                 
                 // Remove duplicates based on job_id
@@ -689,7 +704,27 @@
                 
                 console.log(`Admin: Total unique jobs loaded: ${uniqueJobs.length}`);
                 
-                allJobs = uniqueJobs;
+                // Normalize job data to ensure consistent field names
+                const normalizedJobs = uniqueJobs.map(job => ({
+                    job_id: job.job_id || job.id || `job_${Date.now()}_${Math.random()}`,
+                    title: job.title || 'Untitled Job',
+                    description: job.description || '',
+                    employer_name: job.employer_name || job.company_name || 'Unknown Company',
+                    employer_id: job.employer_id || job.created_by || '',
+                    location_city: job.location_city || job.location?.city || '',
+                    job_type: job.job_type || 'full_time',
+                    category: job.category || '',
+                    salary_min: job.salary_min || job.salary?.min || null,
+                    salary_max: job.salary_max || job.salary?.max || null,
+                    status: job.status || 'active',
+                    created_at: job.created_at || new Date().toISOString(),
+                    views: job.views || job.views_count || 0,
+                    application_count: job.application_count || job.applications_count || 0,
+                    featured: job.featured || false,
+                    urgent: job.urgent || false
+                }));
+                
+                allJobs = normalizedJobs;
                 filteredJobs = [...allJobs];
                 renderJobs();
                 updateStats();
