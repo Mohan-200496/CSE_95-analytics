@@ -340,6 +340,10 @@
         }
     }
 
+    getToken() {
+        return this.accessToken;
+    }
+
     getAuthHeaders() {
         return {
             'Content-Type': 'application/json',

@@ -490,8 +490,19 @@
 
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
-            loadJobs();
-            updateStats();
+            // Small delay to ensure all scripts are loaded
+            setTimeout(() => {
+                if (typeof authManager === 'undefined') {
+                    console.error('AuthManager not loaded, retrying...');
+                    setTimeout(() => {
+                        loadJobs();
+                        updateStats();
+                    }, 500);
+                } else {
+                    loadJobs();
+                    updateStats();
+                }
+            }, 100);
         });
 
         function loadJobs() {
@@ -505,8 +516,20 @@
             try {
                 console.log('Fetching jobs from backend API...');
                 
-                // Get authentication token
-                const token = authManager.getToken();
+                // Check if authManager is available
+                let token;
+                if (typeof authManager === 'undefined') {
+                    console.error('AuthManager not available, trying fallback...');
+                    // Fallback: try to get token directly from storage
+                    const fallbackToken = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+                    if (!fallbackToken) {
+                        throw new Error('Authentication manager not loaded and no token found. Please refresh the page and try again.');
+                    }
+                    token = fallbackToken;
+                } else {
+                    // Get authentication token
+                    token = authManager.getToken();
+                }
                 const headers = {};
                 if (token) {
                     headers['Authorization'] = `Bearer ${token}`;
